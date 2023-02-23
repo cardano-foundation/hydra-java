@@ -55,7 +55,7 @@ public class HydraWSClient extends WebSocketClient {
                 .permit(HydraTrigger.ReadyToCommit, HydraState.Initializing);
 
         stateMachineConfig.configure(HydraState.Initializing)
-                .permit(HydraTrigger.Open, HydraState.Open);
+                .permit(HydraTrigger.HeadIsOpen, HydraState.Open);
 
         return stateMachineConfig;
     }

@@ -5,6 +5,5 @@ public enum HydraTrigger {
     Connected,
     ReadyToCommit,
     HeadIsOpen,
-    Open
 
 }
