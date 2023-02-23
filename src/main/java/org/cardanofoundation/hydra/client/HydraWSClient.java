@@ -1,5 +1,8 @@
 package org.cardanofoundation.hydra.client;
 
+import com.github.oxo42.stateless4j.StateMachine;
+import com.github.oxo42.stateless4j.StateMachineConfig;
+import com.github.oxo42.stateless4j.delegates.Trace;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.HydraState;
@@ -12,47 +15,70 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
-
-import static org.cardanofoundation.hydra.client.model.query.request.base.Tag.NewTx;
+import java.util.Optional;
 
 @Slf4j
 // not thread safe yet
 public class HydraWSClient extends WebSocketClient {
 
-    private HydraStateEventListener hydraStateEventListener;
+    private Optional<HydraStateEventListener> hydraStateEventListener = Optional.empty();
 
-    private HydraQueryEventListener hydraQueryEventListener;
-
-    private HydraState hydraState = HydraState.Unknown;
+    private Optional<HydraQueryEventListener> hydraQueryEventListener = Optional.empty();
 
     private ResponseDeserializer responseDeserializer = new ResponseDeserializer();
 
+    private StateMachine<HydraState, HydraTrigger> stateMachine;
+
     public HydraWSClient(URI serverURI) {
         super(serverURI);
+
+        this.stateMachine = new StateMachine<>(HydraState.Unknown, createFSMConfig());
+        this.stateMachine.setTrace(new Trace<>() {
+
+            @Override
+            public void trigger(HydraTrigger trigger) {}
+
+            @Override
+            public void transition(HydraTrigger trigger, HydraState source, HydraState destination) {
+                hydraStateEventListener.ifPresent(s -> s.onStateChanged(source, destination));
+            }
+        });
+    }
+
+    private static StateMachineConfig<HydraState, HydraTrigger> createFSMConfig() {
+        val stateMachineConfig = new StateMachineConfig<HydraState, HydraTrigger>();
+
+        stateMachineConfig.configure(HydraState.Unknown)
+                .permit(HydraTrigger.Connected, HydraState.Idle);
+
+        stateMachineConfig.configure(HydraState.Idle)
+                .permit(HydraTrigger.ReadyToCommit, HydraState.Initializing);
+
+        stateMachineConfig.configure(HydraState.Initializing)
+                .permit(HydraTrigger.Open, HydraState.Open);
+
+        return stateMachineConfig;
     }
 
     public HydraState getHydraState() {
-        return hydraState;
+        return stateMachine.getState();
     }
 
     public void setHydraQueryEventListener(HydraQueryEventListener hydraQueryEventListener) {
-        this.hydraQueryEventListener = hydraQueryEventListener;
+        this.hydraQueryEventListener = Optional.ofNullable(hydraQueryEventListener);
     }
 
     public void setHydraStateEventListener(HydraStateEventListener hydraStateEventListener) {
-        this.hydraStateEventListener = hydraStateEventListener;
-    }
-
-    public void setResponseDeserializer(ResponseDeserializer responseDeserializer) {
-        this.responseDeserializer = responseDeserializer;
+        this.hydraStateEventListener = Optional.ofNullable(hydraStateEventListener);
     }
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
         log.info("Connection Established!");
         log.debug("onOpen -> ServerHandshake: {}", serverHandshake);
-        if (hydraStateEventListener != null) {
-            hydraStateEventListener.onStateChanged(HydraState.Unknown, HydraState.Unknown);
+        val trigger = HydraTrigger.Connected;
+        if (stateMachine.canFire(trigger)) {
+            stateMachine.fire(trigger);
         }
     }
 
@@ -62,23 +88,19 @@ public class HydraWSClient extends WebSocketClient {
         val response = responseDeserializer.deserialize(message);
 
         response.ifPresent(qr -> {
-            val prev = this.hydraState;
+            hydraQueryEventListener.ifPresent(s -> s.onQueryResponse(qr));
 
-            if (hydraQueryEventListener != null) {
-                hydraQueryEventListener.onQueryResponse(qr);
-            }
-            if (hydraState == HydraState.Idle && qr.getTag() == Tag.ReadyToCommit) {
-                this.hydraState = HydraState.Initializing;
+            if (qr.getTag() == Tag.ReadyToCommit) {
+                val trigger = HydraTrigger.ReadyToCommit;
+                if (stateMachine.canFire(trigger)) {
+                    stateMachine.fire(trigger);
+                }
             }
             if (qr.getTag() == Tag.HeadIsOpen) {
-                this.hydraState = HydraState.Open;
-            }
-            if (qr.getTag() == Tag.Greetings) {
-                this.hydraState = HydraState.Idle;
-            }
-            // TODO further state changes
-            if (hydraStateEventListener != null && prev != this.hydraState) {
-                hydraStateEventListener.onStateChanged(prev, hydraState);
+                val trigger = HydraTrigger.HeadIsOpen;
+                if (stateMachine.canFire(trigger)) {
+                    stateMachine.fire(trigger);
+                }
             }
         });
     }
@@ -94,21 +116,37 @@ public class HydraWSClient extends WebSocketClient {
         log.error("websocket error: {}", ex.getMessage());
     }
 
-    public void init(int period) {
-        val request = new InitRequest(period);
-        send(request.getRequestBody());
+    public boolean init(int period) {
+        if (stateMachine.getState() == HydraState.Idle) {
+            val request = new InitRequest(period);
+            send(request.getRequestBody());
+            return true;
+        }
+
+        return false;
     }
 
-    public void commit(String utxoId, UTXO utxo) {
-        val request = new CommitRequest();
-        request.addUTXO(utxoId, utxo);
-        send(request.getRequestBody());
+    public boolean commit(String utxoId, UTXO utxo) {
+        if (stateMachine.getState() == HydraState.Initializing) {
+            val request = new CommitRequest();
+            request.addUTXO(utxoId, utxo);
+            send(request.getRequestBody());
+
+            return true;
+        }
+
+        return false;
     }
 
-    public void newTx(String transaction) {
-//        if (hydraState == HydraState.Open) {
+    public boolean newTx(String transaction) {
+        if (stateMachine.getState() == HydraState.Open) {
             val request = new NewTxRequest(transaction);
             send(request.getRequestBody());
-//        }
+
+            return true;
+        }
+
+        return false;
     }
+
 }
