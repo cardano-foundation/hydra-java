@@ -55,19 +55,26 @@ public class HydraWSClient extends WebSocketClient {
     }
 
     private void createResponseHandlers() {
-        handlers.put(Tag.TxValid, TxValidResponse::create);
-        handlers.put(Tag.CommandFailed, CommandFailedResponse::create);
-        handlers.put(Tag.ReadyToCommit, ReadyToCommitResponse::create);
-        handlers.put(Tag.HeadIsOpen, HeadIsOpenResponse::create);
-        handlers.put(Tag.Committed, CommittedResponse::create);
-        handlers.put(Tag.PostTxOnChainFailed, PostChainTxFailedResponse::create);
+        handlers.put(Tag.Greetings, GreetingsResponse::create);
         handlers.put(Tag.PeerConnected, PeerConnectedResponse::create);
         handlers.put(Tag.PeerDisconnected, PeerDisconnectedResponse::create);
-        handlers.put(Tag.Greetings, GreetingsResponse::create);
-        handlers.put(Tag.RolledBack, RolledbackResponse::create);
-        handlers.put(Tag.TxSeen, TxSeenResponse::create);
+        handlers.put(Tag.ReadyToCommit, ReadyToCommitResponse::create);
+        handlers.put(Tag.Committed, CommittedResponse::create);
+        handlers.put(Tag.HeadIsOpen, HeadIsOpenResponse::create);
         handlers.put(Tag.HeadIsClosed, HeadIsClosedResponse::create);
+        handlers.put(Tag.HeadIsContested, HeadIsContestedResponse::create);
+        handlers.put(Tag.ReadyToFanout, ReadyToFanoutResponse::create);
+        handlers.put(Tag.HeadIsAborted, HeadIsAbortedResponse::create);
+        handlers.put(Tag.HeadIsFinalized, HeadIsFinalizedResponse::create);
+        handlers.put(Tag.TxSeen, TxSeenResponse::create);
+        handlers.put(Tag.TxValid, TxValidResponse::create);
+        handlers.put(Tag.TxInvalid, TxInvalidResponse::create);
+        handlers.put(Tag.TxExpired, TxExpiredResponse::create);
         handlers.put(Tag.GetUTxOResponse, GetUTxOResponse::create);
+        handlers.put(Tag.InvalidInput, InvalidInputResponse::create);
+        handlers.put(Tag.PostTxOnChainFailed, PostChainTxFailedResponse::create);
+        handlers.put(Tag.RolledBack, RolledbackResponse::create);
+        handlers.put(Tag.CommandFailed, CommandFailedResponse::create);
     }
 
     private static StateMachineConfig<HydraState, HydraTrigger> createFSMConfig() {
@@ -163,6 +170,18 @@ public class HydraWSClient extends WebSocketClient {
         return false;
     }
 
+    // Aborts a head before it is opened. This can only be done before all participants have committed. Once opened, the head can't be aborted anymore but it can be closed using: Close.
+    public boolean abort() {
+        if (stateMachine.getState() == HydraState.Idle) {
+            val request = new AbortHeadRequest();
+            send(request.getRequestBody());
+
+            return true;
+        }
+
+        return false;
+    }
+
     // Join an initialized head. This is how parties get to inject funds inside a head. Note however that the utxo is an object and can be empty should a participant wants to join a head without locking any funds.
     public boolean commit(String utxoId, UTXO utxo) {
         if (stateMachine.getState() == HydraState.Initializing) {
@@ -212,10 +231,23 @@ public class HydraWSClient extends WebSocketClient {
         return false;
     }
 
-    // Aborts a head before it is opened. This can only be done before all participants have committed. Once opened, the head can't be aborted anymore but it can be closed using: Close.
-    public boolean abort() {
-        if (stateMachine.getState() == HydraState.Idle) {
-            val request = new AbortHeadRequest();
+    // Challenge the latest snapshot announced as a result of a head closure from another participant. Note that this necessarily contest with the latest snapshot known of your local Hydra node. Participants can only contest once.
+    public boolean contest() {
+        if (stateMachine.getState() == HydraState.Closed) { // ??? head state
+            val request = new ContestHeadRequest();
+            send(request.getRequestBody());
+
+            return true;
+        }
+
+        return false;
+    }
+
+
+    // Finalize a head after the contestation period passed. This will distribute the final (as closed and maybe contested) head state back on the layer 1.
+    public boolean fanOut() {
+        if (stateMachine.getState() == HydraState.Closed) { // ??? head state
+            val request = new ContestHeadRequest();
             send(request.getRequestBody());
 
             return true;

@@ -9,9 +9,10 @@ import org.cardanofoundation.hydra.client.model.query.response.base.QueryRespons
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
 @Getter
+// A new transaction was observed inside the head. Note that a node observes its own transactions.
 public class TxSeenResponse extends QueryResponse {
 
-    Transaction transaction;
+    private final Transaction transaction;
 
     public TxSeenResponse(Transaction transaction) {
         super(Tag.TxSeen);

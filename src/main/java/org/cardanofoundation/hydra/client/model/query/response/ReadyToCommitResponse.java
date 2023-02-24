@@ -13,6 +13,7 @@ import java.util.List;
 
 @Getter
 @Setter
+// A `Init` transaction has been observed on-chain by the given party who's now ready to commit into the initialized head.
 public class ReadyToCommitResponse extends QueryResponse {
 
     List<Party> parties;

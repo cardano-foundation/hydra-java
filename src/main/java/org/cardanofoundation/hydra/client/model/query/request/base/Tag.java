@@ -19,6 +19,16 @@ public enum Tag {
 
     HeadIsClosed("HeadIsClosed", List.of(Type.Status, Type.Response), List.of(Scope.Global)),
 
+    HeadIsAborted("HeadIsAborted", List.of(Type.Status, Type.Response), List.of(Scope.Global)),
+
+    HeadIsFinalized("HeadIsFinalized", List.of(Type.Status, Type.Response), List.of(Scope.Global)),
+
+    HeadIsContested("HeadIsContested", List.of(Type.Status, Type.Response), List.of(Scope.Global)),
+
+    InvalidInput("InvalidInput", List.of(Type.Response), List.of(Scope.Local)),
+
+    ReadyToFanout("ReadyToFanout", List.of(Type.Status, Type.Response), List.of(Scope.Global)),
+
     GetUTxO("GetUTxO", List.of(Type.Request), List.of(Scope.Local, Scope.Global)),
 
     GetUTxOResponse("GetUTxOResponse", List.of(Type.Response), List.of(Scope.Local, Scope.Global)),
@@ -39,11 +49,19 @@ public enum Tag {
 
     Abort("Abort", List.of(Type.Request), List.of(Scope.Local, Scope.Global)),
 
-    TxValid("TxValid", List.of(Type.Response), List.of(Scope.Local)),
+    TxValid("TxValid", List.of(Type.Response), List.of(Scope.Global)),
 
-    TxSeen("TxSeen", List.of(Type.Status), List.of(Scope.Global)), // status message that some other hydra head operator broadcast transaction
+    TxExpired("TxExpired", List.of(Type.Response), List.of(Scope.Global)),
 
-    Close("Close", List.of(Type.Request), List.of(Scope.Global));
+    TxInvalid("TxInvalid", List.of(Type.Response), List.of(Scope.Global)),
+
+    TxSeen("TxSeen", List.of(Type.Status), List.of(Scope.Local)), // status message that some other hydra head operator broadcast transaction
+
+    Close("Close", List.of(Type.Request), List.of(Scope.Global)),
+
+    Contest("Contest", List.of(Type.Request), List.of(Scope.Global)),
+
+    Fanout("Fanout", List.of(Type.Request), List.of(Scope.Global));
 
     private final String value;
     private final List<Type> types;

@@ -1,6 +1,7 @@
 package org.cardanofoundation.hydra.client.model.query.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
@@ -9,40 +10,34 @@ import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.Map;
 
-// Emitted as a result of a `GetUTxO` to reflect the current UTxO of the underlying node.
-public class GetUTxOResponse extends QueryResponse {
+@Getter
+// One of the participant did `Abort` the head before all commits were done or collected.
+public class HeadIsAbortedResponse extends QueryResponse {
 
     private final Map<String, UTXO> utxo;
 
-    public GetUTxOResponse(Map<String, UTXO> utxo) {
-        super(Tag.GetUTxOResponse);
+    public HeadIsAbortedResponse(Map<String, UTXO> utxo) {
+        super(Tag.HeadIsAborted);
         this.utxo = utxo;
     }
 
-    public static GetUTxOResponse create(JsonNode raw) {
+    public static HeadIsAbortedResponse create(JsonNode raw) {
         val utxo = MoreJson.<UTXO>convertStringMap(raw.get("utxo"));
 
-        return new GetUTxOResponse(utxo);
+        return new HeadIsAbortedResponse(utxo);
     }
 
     @Override
     public String toString() {
-        return "GetUTxO{" +
+        return "HeadIsAbortedResponse{" +
                 "utxo=" + utxo +
                 ", tag=" + tag +
                 '}';
     }
 
-    //    {
-//        "tag": "GetUTxOResponse",
-//        "utxo": {
-//        "09d34606abdcd0b10ebc89307cbfa0b469f9144194137b45b7a04b273961add8#687": {
-//            "address": "addr1w9htvds89a78ex2uls5y969ttry9s3k9etww0staxzndwlgmzuul5",
-//                    "value": {
-//                "lovelace": 7620669
-//            }
-//        }
-//    },
-//    }
-
 }
+
+//{
+//        "snapshotNumber": 1,
+//        "tag": "HeadIsContested"
+//}

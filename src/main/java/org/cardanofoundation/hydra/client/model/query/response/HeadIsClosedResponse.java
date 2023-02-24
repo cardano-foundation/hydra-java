@@ -10,11 +10,12 @@ import org.cardanofoundation.hydra.client.util.MoreJson;
 import java.time.ZonedDateTime;
 
 @Getter
+// A `Close` transaction has been observed on-chain, the head is now closed and the contestation phase begins.
 public class HeadIsClosedResponse extends QueryResponse {
 
-    private int snapshotNumber;
+    int snapshotNumber;
 
-    private ZonedDateTime contestationDeadline;
+    ZonedDateTime contestationDeadline;
 
     public HeadIsClosedResponse(int snapshotNumber, ZonedDateTime contestationDeadline) {
         super(Tag.HeadIsClosed);
@@ -29,6 +30,13 @@ public class HeadIsClosedResponse extends QueryResponse {
         return new HeadIsClosedResponse(snapshotNumber, contestationDeadline);
     }
 
+    @Override
+    public String toString() {
+        return "HeadIsClosed{" +
+                "contestationDeadline=" + contestationDeadline +
+                ", tag=" + tag +
+                '}';
+    }
 }
 
 //{

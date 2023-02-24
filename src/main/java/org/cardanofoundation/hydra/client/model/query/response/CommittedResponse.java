@@ -14,6 +14,7 @@ import java.util.Map;
 
 @Getter
 @Setter
+// A `Commit` from a head participant has been observed on-chain.
 public class CommittedResponse extends QueryResponse {
 
     Party party;

@@ -5,6 +5,7 @@ import lombok.val;
 import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
 import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
 
+// A peer is now connected to the head network.
 public class PeerConnectedResponse extends QueryResponse {
 
     private final String peer;

@@ -11,6 +11,7 @@ import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.Map;
 
+// All parties have committed, and a successful `CollectCom` transaction was observed on-chain. The head is now open; transactions can flow.
 @Getter
 public class HeadIsOpenResponse extends QueryResponse {
 

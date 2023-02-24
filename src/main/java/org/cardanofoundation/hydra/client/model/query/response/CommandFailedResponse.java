@@ -8,6 +8,7 @@ import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.Map;
 
+// Emitted by the server when a well-formed client input was not processable. For example, if trying to close a non opened head or, when trying to commit after having already committed.
 public class CommandFailedResponse extends QueryResponse {
 
     private JsonNode clientInput;

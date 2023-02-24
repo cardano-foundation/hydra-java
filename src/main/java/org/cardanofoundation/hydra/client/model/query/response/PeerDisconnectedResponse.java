@@ -5,6 +5,7 @@ import lombok.val;
 import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
 import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
 
+// A peer has disconnected from the head network.
 public class PeerDisconnectedResponse extends QueryResponse {
 
     private final String peer;

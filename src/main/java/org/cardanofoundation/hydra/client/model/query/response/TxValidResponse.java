@@ -9,9 +9,10 @@ import org.cardanofoundation.hydra.client.model.query.response.base.QueryRespons
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
 @Getter
+// An observed transaction is valid and can therefore be applied.
 public class TxValidResponse extends QueryResponse {
 
-    Transaction transaction;
+    private final Transaction transaction;
 
     public TxValidResponse(Transaction transaction) {
         super(Tag.TxValid);
