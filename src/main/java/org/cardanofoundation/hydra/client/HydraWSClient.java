@@ -1,9 +1,6 @@
 package org.cardanofoundation.hydra.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.oxo42.stateless4j.StateMachine;
-import com.github.oxo42.stateless4j.StateMachineConfig;
-import com.github.oxo42.stateless4j.delegates.Trace;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.HydraState;
@@ -32,7 +29,7 @@ public class HydraWSClient extends WebSocketClient {
 
     private Map<Tag, Function<JsonNode, QueryResponse>> handlers = new HashMap<>();
 
-    private StateMachine<HydraState, HydraTrigger> stateMachine;
+    private HydraState hydraState = HydraState.Unknown;
 
     public HydraWSClient(URI serverURI) {
         super(serverURI);
@@ -41,17 +38,7 @@ public class HydraWSClient extends WebSocketClient {
     }
 
     private void initStateMachine() {
-        this.stateMachine = new StateMachine<>(HydraState.Unknown, createFSMConfig());
-        this.stateMachine.setTrace(new Trace<>() {
-
-            @Override
-            public void trigger(HydraTrigger trigger) {}
-
-            @Override
-            public void transition(HydraTrigger trigger, HydraState source, HydraState destination) {
-                hydraStateEventListener.ifPresent(s -> s.onStateChanged(source, destination));
-            }
-        });
+        this.hydraState = HydraState.Unknown;
     }
 
     private void createResponseHandlers() {
@@ -77,23 +64,8 @@ public class HydraWSClient extends WebSocketClient {
         handlers.put(Tag.CommandFailed, CommandFailedResponse::create);
     }
 
-    private static StateMachineConfig<HydraState, HydraTrigger> createFSMConfig() {
-        val stateMachineConfig = new StateMachineConfig<HydraState, HydraTrigger>();
-
-        stateMachineConfig.configure(HydraState.Unknown)
-                .permit(HydraTrigger.Connected, HydraState.Idle);
-
-        stateMachineConfig.configure(HydraState.Idle)
-                .permit(HydraTrigger.ReadyToCommit, HydraState.Initializing);
-
-        stateMachineConfig.configure(HydraState.Initializing)
-                .permit(HydraTrigger.HeadIsOpen, HydraState.Open);
-
-        return stateMachineConfig;
-    }
-
     public HydraState getHydraState() {
-        return stateMachine.getState();
+        return hydraState;
     }
 
     public void setHydraQueryEventListener(HydraQueryEventListener hydraQueryEventListener) {
@@ -108,10 +80,7 @@ public class HydraWSClient extends WebSocketClient {
     public void onOpen(ServerHandshake serverHandshake) {
         log.info("Connection Established!");
         log.debug("onOpen -> ServerHandshake: {}", serverHandshake);
-        val trigger = HydraTrigger.Connected;
-        if (stateMachine.canFire(trigger)) {
-            stateMachine.fire(trigger);
-        }
+        hydraState = HydraState.Idle;
     }
 
     @Override
@@ -120,32 +89,23 @@ public class HydraWSClient extends WebSocketClient {
 
         val raw = MoreJson.read(message);
         val tagString = raw.get("tag").asText();
-        val tag = Tag.find(tagString);
+        val maybeTag = Tag.find(tagString);
 
-        if (tag.isEmpty()) {
-            log.warn("We don't support tag:{} yet, json:{}", tagString, message);
+        if (maybeTag.isEmpty()) {
+            log.warn("We don'tag support maybeTag:{} yet, json:{}", tagString, message);
             return;
         }
 
-        val t = tag.orElseThrow();
+        val tag = maybeTag.orElseThrow();
+        val queryResponse = handlers.get(tag).apply(raw);
 
-        val r = handlers.get(t).apply(raw);
+        hydraQueryEventListener.ifPresent(s -> s.onQueryResponse(queryResponse));
 
-        hydraQueryEventListener.ifPresent(s -> s.onQueryResponse(r));
-
-        if (r.getTag() == Tag.ReadyToCommit) {
-            val trigger = HydraTrigger.ReadyToCommit;
-            if (stateMachine.canFire(trigger)) {
-                stateMachine.fire(trigger);
-            }
-        }
-
-        if (r.getTag() == Tag.HeadIsOpen) {
-            val trigger = HydraTrigger.HeadIsOpen;
-            if (stateMachine.canFire(trigger)) {
-                stateMachine.fire(trigger);
-            }
-        }
+        queryResponse.getTag().getState().ifPresent(lState -> {
+            val prev = hydraState;
+            hydraState = lState;
+            hydraStateEventListener.ifPresent(l -> l.onStateChanged(prev, hydraState));
+        });
     }
 
     @Override
@@ -161,7 +121,7 @@ public class HydraWSClient extends WebSocketClient {
 
     // Initializes a new Head. This command is a no-op when a Head is already open and the server will output an CommandFailed message should this happen.
     public boolean init(int period) {
-        if (stateMachine.getState() == HydraState.Idle) {
+        if (hydraState == HydraState.Idle) {
             val request = new InitRequest(period);
             send(request.getRequestBody());
             return true;
@@ -172,7 +132,7 @@ public class HydraWSClient extends WebSocketClient {
 
     // Aborts a head before it is opened. This can only be done before all participants have committed. Once opened, the head can't be aborted anymore but it can be closed using: Close.
     public boolean abort() {
-        if (stateMachine.getState() == HydraState.Idle) {
+        if (hydraState == HydraState.Initializing) {
             val request = new AbortHeadRequest();
             send(request.getRequestBody());
 
@@ -184,7 +144,7 @@ public class HydraWSClient extends WebSocketClient {
 
     // Join an initialized head. This is how parties get to inject funds inside a head. Note however that the utxo is an object and can be empty should a participant wants to join a head without locking any funds.
     public boolean commit(String utxoId, UTXO utxo) {
-        if (stateMachine.getState() == HydraState.Initializing) {
+        if (hydraState == HydraState.Initializing) {
             val request = new CommitRequest();
             request.addUTXO(utxoId, utxo);
             send(request.getRequestBody());
@@ -197,7 +157,7 @@ public class HydraWSClient extends WebSocketClient {
 
     // Join an initialized head. This is how parties get to inject funds inside a head. Note however that the utxo is an object and can be empty should a participant wants to join a head without locking any funds.
     public boolean commit() {
-        if (stateMachine.getState() == HydraState.Initializing) {
+        if (hydraState == HydraState.Initializing) {
             val request = new CommitRequest();
             send(request.getRequestBody());
 
@@ -209,7 +169,7 @@ public class HydraWSClient extends WebSocketClient {
 
     // Submit a transaction through the head. Note that the transaction is only broadcast if well-formed and valid.
     public boolean newTx(String transaction) {
-        if (stateMachine.getState() == HydraState.Open) {
+        if (hydraState == HydraState.Open) {
             val request = new NewTxRequest(transaction);
             send(request.getRequestBody());
 
@@ -221,7 +181,7 @@ public class HydraWSClient extends WebSocketClient {
 
     // Terminate a head with the latest known snapshot. This effectively moves the head from the Open state to the Close state where the contestation phase begin. As a result of closing a head, no more transactions can be submitted via NewTx.
     public boolean closeHead() {
-        if (stateMachine.getState() == HydraState.Open) {
+        if (hydraState == HydraState.Open) {
             val request = new CloseHeadRequest();
             send(request.getRequestBody());
 
@@ -233,7 +193,7 @@ public class HydraWSClient extends WebSocketClient {
 
     // Challenge the latest snapshot announced as a result of a head closure from another participant. Note that this necessarily contest with the latest snapshot known of your local Hydra node. Participants can only contest once.
     public boolean contest() {
-        if (stateMachine.getState() == HydraState.Closed) { // ??? head state
+        if (hydraState == HydraState.Closed) {
             val request = new ContestHeadRequest();
             send(request.getRequestBody());
 
@@ -246,8 +206,8 @@ public class HydraWSClient extends WebSocketClient {
 
     // Finalize a head after the contestation period passed. This will distribute the final (as closed and maybe contested) head state back on the layer 1.
     public boolean fanOut() {
-        if (stateMachine.getState() == HydraState.Closed) { // ??? head state
-            val request = new ContestHeadRequest();
+        if (hydraState == HydraState.FanoutPossible) {
+            val request = new FanoutRequest();
             send(request.getRequestBody());
 
             return true;
@@ -258,7 +218,7 @@ public class HydraWSClient extends WebSocketClient {
 
     // Asynchronously access the current UTxO set of the Hydra node. This eventually triggers a UTxO event from the server.
     public boolean getUTXO() {
-        if (stateMachine.getState() == HydraState.Open) {
+        if (hydraState == HydraState.Open) {
             val request = new GetUTxORequest();
             send(request.getRequestBody());
 
