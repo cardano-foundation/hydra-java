@@ -1,67 +1,39 @@
 package org.cardanofoundation.hydra.client;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.HydraState;
 import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.query.request.*;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.*;
-import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
 @Slf4j
 // not thread safe yet
 public class HydraWSClient extends WebSocketClient {
 
+    private final static ResponseTagStateMapper RESPONSE_TAG_STATE_MAPPER = new ResponseTagStateMapper();
+
+    private final static ResponseTagHandlers RESPONSE_TAG_HANDLERS = new ResponseTagHandlers();
+
     private Optional<HydraStateEventListener> hydraStateEventListener = Optional.empty();
 
     private Optional<HydraQueryEventListener> hydraQueryEventListener = Optional.empty();
-
-    private Map<Tag, Function<JsonNode, QueryResponse>> handlers = new HashMap<>();
 
     private HydraState hydraState = HydraState.Unknown;
 
     public HydraWSClient(URI serverURI) {
         super(serverURI);
         initStateMachine();
-        createResponseHandlers();
     }
 
     private void initStateMachine() {
         this.hydraState = HydraState.Unknown;
-    }
-
-    private void createResponseHandlers() {
-        handlers.put(Tag.Greetings, GreetingsResponse::create);
-        handlers.put(Tag.PeerConnected, PeerConnectedResponse::create);
-        handlers.put(Tag.PeerDisconnected, PeerDisconnectedResponse::create);
-        handlers.put(Tag.ReadyToCommit, ReadyToCommitResponse::create);
-        handlers.put(Tag.Committed, CommittedResponse::create);
-        handlers.put(Tag.HeadIsOpen, HeadIsOpenResponse::create);
-        handlers.put(Tag.HeadIsClosed, HeadIsClosedResponse::create);
-        handlers.put(Tag.HeadIsContested, HeadIsContestedResponse::create);
-        handlers.put(Tag.ReadyToFanout, ReadyToFanoutResponse::create);
-        handlers.put(Tag.HeadIsAborted, HeadIsAbortedResponse::create);
-        handlers.put(Tag.HeadIsFinalized, HeadIsFinalizedResponse::create);
-        handlers.put(Tag.TxSeen, TxSeenResponse::create);
-        handlers.put(Tag.TxValid, TxValidResponse::create);
-        handlers.put(Tag.TxInvalid, TxInvalidResponse::create);
-        handlers.put(Tag.TxExpired, TxExpiredResponse::create);
-        handlers.put(Tag.GetUTxOResponse, GetUTxOResponse::create);
-        handlers.put(Tag.InvalidInput, InvalidInputResponse::create);
-        handlers.put(Tag.PostTxOnChainFailed, PostChainTxFailedResponse::create);
-        handlers.put(Tag.RolledBack, RolledbackResponse::create);
-        handlers.put(Tag.CommandFailed, CommandFailedResponse::create);
     }
 
     public HydraState getHydraState() {
@@ -92,19 +64,19 @@ public class HydraWSClient extends WebSocketClient {
         val maybeTag = Tag.find(tagString);
 
         if (maybeTag.isEmpty()) {
-            log.warn("We don'tag support maybeTag:{} yet, json:{}", tagString, message);
+            log.warn("We don't support tag:{} yet, json:{}", tagString, message);
             return;
         }
 
         val tag = maybeTag.orElseThrow();
-        val queryResponse = handlers.get(tag).apply(raw);
+        val queryResponse = RESPONSE_TAG_HANDLERS.responseHandlerFor(tag).orElseThrow().apply(raw);
 
-        hydraQueryEventListener.ifPresent(s -> s.onQueryResponse(queryResponse));
+        hydraQueryEventListener.ifPresent(hydraQueryEventListener -> hydraQueryEventListener.onResponse(queryResponse));
 
-        queryResponse.getTag().getState().ifPresent(lState -> {
-            val prev = hydraState;
-            hydraState = lState;
-            hydraStateEventListener.ifPresent(l -> l.onStateChanged(prev, hydraState));
+        RESPONSE_TAG_STATE_MAPPER.stateForTag(tag).ifPresent(newHydraState -> {
+            val prevState = hydraState;
+            hydraState = newHydraState;
+            hydraStateEventListener.ifPresent(l -> l.onStateChanged(prevState, hydraState));
         });
     }
 

@@ -3,11 +3,10 @@ package org.cardanofoundation.hydra.client.model.query.response;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.val;
-import org.cardanofoundation.hydra.client.Transaction;
+import org.cardanofoundation.hydra.client.model.Transaction;
 import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.ValidationError;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.Map;
@@ -15,7 +14,7 @@ import java.util.Map;
 @Getter
 // An observed transaction is invalid. Either it is not yet valid (because some other transactions need to be seen first), or it
 // is no longer valid (because of conflicting transactions observed in-between.
-public class TxInvalidResponse extends QueryResponse {
+public class TxInvalidResponse extends Response {
 
     private final Map<String, UTXO> utxo;
     private final Transaction transaction;

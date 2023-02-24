@@ -3,14 +3,13 @@ package org.cardanofoundation.hydra.client.model.query.response;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.val;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.model.Tag;
 
 @Getter
 //        A `Contest` transaction has been observed on-chain, that means the head
 //        state has been successfully contested and given snapshot number is now
 //        the latest accepted snapshot.
-public class HeadIsContestedResponse extends QueryResponse {
+public class HeadIsContestedResponse extends Response {
 
     private final int snapshotNumber;
 

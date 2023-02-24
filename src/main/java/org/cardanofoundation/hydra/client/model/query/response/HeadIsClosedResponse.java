@@ -3,15 +3,14 @@ package org.cardanofoundation.hydra.client.model.query.response;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.val;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.time.ZonedDateTime;
 
 @Getter
 // A `Close` transaction has been observed on-chain, the head is now closed and the contestation phase begins.
-public class HeadIsClosedResponse extends QueryResponse {
+public class HeadIsClosedResponse extends Response {
 
     int snapshotNumber;
 

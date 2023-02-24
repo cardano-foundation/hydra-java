@@ -2,14 +2,13 @@ package org.cardanofoundation.hydra.client.model.query.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.val;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.Map;
 
 // Emitted by the server when a well-formed client input was not processable. For example, if trying to close a non opened head or, when trying to commit after having already committed.
-public class CommandFailedResponse extends QueryResponse {
+public class CommandFailedResponse extends Response {
 
     private JsonNode clientInput;
 

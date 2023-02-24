@@ -1,4 +1,4 @@
-package org.cardanofoundation.hydra.client;
+package org.cardanofoundation.hydra.client.model;
 
 import lombok.Getter;
 import lombok.Setter;

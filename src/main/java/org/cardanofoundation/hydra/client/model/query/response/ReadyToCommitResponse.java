@@ -5,8 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.Party;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.List;
@@ -14,7 +13,7 @@ import java.util.List;
 @Getter
 @Setter
 // A `Init` transaction has been observed on-chain by the given party who's now ready to commit into the initialized head.
-public class ReadyToCommitResponse extends QueryResponse {
+public class ReadyToCommitResponse extends Response {
 
     List<Party> parties;
 

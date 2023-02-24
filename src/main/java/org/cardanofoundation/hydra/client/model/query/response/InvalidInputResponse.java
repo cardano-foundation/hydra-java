@@ -3,12 +3,11 @@ package org.cardanofoundation.hydra.client.model.query.response;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.val;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.model.Tag;
 
 @Getter
 // Emitted by the server when it has failed to parse some client input. It returns the malformed input as well as some hint about what went wrong.
-public class InvalidInputResponse extends QueryResponse {
+public class InvalidInputResponse extends Response {
 
     private final String reason;
     private final String input;
@@ -28,7 +27,7 @@ public class InvalidInputResponse extends QueryResponse {
 
     @Override
     public String toString() {
-        return "InvalidInputResponse{" +
+        return "InvalidInput{" +
                 "reason='" + reason + '\'' +
                 ", input='" + input + '\'' +
                 ", tag=" + tag +

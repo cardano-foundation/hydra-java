@@ -1,11 +1,11 @@
 package org.cardanofoundation.hydra.client.model.query.request;
 
 import lombok.val;
-import org.cardanofoundation.hydra.client.model.query.request.base.QueryRequest;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
+import org.cardanofoundation.hydra.client.model.Request;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.stringtemplate.v4.ST;
 
-public class FanoutRequest extends QueryRequest {
+public class FanoutRequest extends Request {
 
     public FanoutRequest() {
         super(Tag.Fanout);

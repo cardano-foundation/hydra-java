@@ -3,14 +3,13 @@ package org.cardanofoundation.hydra.client.model.query.response;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.UTXO;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.Map;
 
 // Emitted as a result of a `GetUTxO` to reflect the current UTxO of the underlying node.
-public class GetUTxOResponse extends QueryResponse {
+public class GetUTxOResponse extends Response {
 
     private final Map<String, UTXO> utxo;
 

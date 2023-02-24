@@ -1,23 +1,21 @@
 package org.cardanofoundation.hydra.client.model.query.request;
 
 import lombok.val;
+import org.cardanofoundation.hydra.client.model.Request;
 import org.cardanofoundation.hydra.client.model.UTXO;
-import org.cardanofoundation.hydra.client.model.query.request.base.QueryRequest;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 import org.stringtemplate.v4.ST;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class CommitRequest extends QueryRequest {
-
-    private static final Tag QUERY_TYPE = Tag.Commit;
+public class CommitRequest extends Request {
 
     private Map<String, UTXO> utxo;
 
     public CommitRequest() {
-        super(QUERY_TYPE);
+        super(Tag.Commit);
         utxo = new HashMap<>();
     }
 

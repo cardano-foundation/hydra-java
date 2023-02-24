@@ -2,13 +2,12 @@ package org.cardanofoundation.hydra.client.model.query.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.model.Tag;
 
 @Getter
 //   The contestation period has passed and the head can now be finalized by
 //   a fanout transaction.
-public class ReadyToFanoutResponse extends QueryResponse {
+public class ReadyToFanoutResponse extends Response {
 
     public ReadyToFanoutResponse() {
         super(Tag.ReadyToFanout);

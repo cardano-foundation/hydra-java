@@ -2,11 +2,10 @@ package org.cardanofoundation.hydra.client.model.query.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.val;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.model.Tag;
 
 // A peer has disconnected from the head network.
-public class PeerDisconnectedResponse extends QueryResponse {
+public class PeerDisconnectedResponse extends Response {
 
     private final String peer;
 

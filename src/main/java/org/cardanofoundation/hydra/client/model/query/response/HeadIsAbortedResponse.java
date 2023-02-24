@@ -4,15 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.UTXO;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.Map;
 
 @Getter
 // One of the participant did `Abort` the head before all commits were done or collected.
-public class HeadIsAbortedResponse extends QueryResponse {
+public class HeadIsAbortedResponse extends Response {
 
     private final Map<String, UTXO> utxo;
 

@@ -6,8 +6,7 @@ import lombok.Setter;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.Party;
 import org.cardanofoundation.hydra.client.model.UTXO;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.Map;
@@ -15,7 +14,7 @@ import java.util.Map;
 @Getter
 @Setter
 // A `Commit` from a head participant has been observed on-chain.
-public class CommittedResponse extends QueryResponse {
+public class CommittedResponse extends Response {
 
     Party party;
     Map<String, UTXO> utxo;

@@ -3,17 +3,15 @@ package org.cardanofoundation.hydra.client.model.query.response;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.val;
-import org.cardanofoundation.hydra.client.model.Party;
 import org.cardanofoundation.hydra.client.model.UTXO;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.Map;
 
 // All parties have committed, and a successful `CollectCom` transaction was observed on-chain. The head is now open; transactions can flow.
 @Getter
-public class HeadIsOpenResponse extends QueryResponse {
+public class HeadIsOpenResponse extends Response {
 
     private Map<String, UTXO> utxo;
 

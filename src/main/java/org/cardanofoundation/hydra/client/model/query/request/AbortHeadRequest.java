@@ -1,11 +1,11 @@
 package org.cardanofoundation.hydra.client.model.query.request;
 
 import lombok.val;
-import org.cardanofoundation.hydra.client.model.query.request.base.SubmitRequest;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
+import org.cardanofoundation.hydra.client.model.Request;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.stringtemplate.v4.ST;
 
-public class AbortHeadRequest extends SubmitRequest {
+public class AbortHeadRequest extends Request {
 
     public AbortHeadRequest() {
         super(Tag.Abort);

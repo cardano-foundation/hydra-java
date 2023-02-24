@@ -4,15 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.UTXO;
-import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.Map;
 
 @Getter
 // The head was already closed and the contestation period is now over.
-public class HeadIsFinalizedResponse extends QueryResponse {
+public class HeadIsFinalizedResponse extends Response {
 
     private final Map<String, UTXO> utxo;
 
