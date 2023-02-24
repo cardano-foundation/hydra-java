@@ -1,11 +1,14 @@
 package org.cardanofoundation.hydra.client.model.query.response;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.val;
 import org.cardanofoundation.hydra.client.model.Party;
 import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
 import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.Map;
 
@@ -20,6 +23,13 @@ public class CommittedResponse extends QueryResponse {
         super(Tag.Committed);
         this.party = party;
         this.utxo = utxo;
+    }
+
+    public static CommittedResponse create(JsonNode raw) {
+        val party = MoreJson.convert(raw.get("party"), Party.class);
+        val utxo = MoreJson.<UTXO>convertStringMap(raw.get("utxo"));
+
+        return new CommittedResponse(party, utxo);
     }
 
     public Map<String, UTXO> getUtxo() {

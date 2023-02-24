@@ -1,16 +1,22 @@
 package org.cardanofoundation.hydra.client.model.query.response;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
 import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
 
-public class Rolledback extends QueryResponse {
+public class RolledbackResponse extends QueryResponse {
 
-    public Rolledback() {
+    public RolledbackResponse() {
         super(Tag.RolledBack);
+    }
+
+    public static RolledbackResponse create(JsonNode raw) {
+        return new RolledbackResponse();
     }
 
     @Override
     public String toString() {
         return "Rolledback{" + "tag=" + tag + '}';
     }
+
 }

@@ -1,10 +1,13 @@
 package org.cardanofoundation.hydra.client.model.query.response;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.val;
 import org.cardanofoundation.hydra.client.model.Party;
 import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
 import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.List;
 
@@ -21,6 +24,13 @@ public class ReadyToCommitResponse extends QueryResponse {
 
     public List<Party> getParties() {
         return parties;
+    }
+
+    public static ReadyToCommitResponse create(JsonNode raw) {
+        val utxoNode = raw.get("parties");
+        val parties = MoreJson.<Party>convertList(utxoNode);
+
+        return new ReadyToCommitResponse(parties);
     }
 
     @Override

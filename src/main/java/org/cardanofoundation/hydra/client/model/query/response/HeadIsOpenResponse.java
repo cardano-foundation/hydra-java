@@ -1,10 +1,13 @@
 package org.cardanofoundation.hydra.client.model.query.response;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
-import lombok.ToString;
+import lombok.val;
+import org.cardanofoundation.hydra.client.model.Party;
 import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
 import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
+import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.Map;
 
@@ -13,13 +16,20 @@ public class HeadIsOpenResponse extends QueryResponse {
 
     private Map<String, UTXO> utxo;
 
-    public HeadIsOpenResponse(Tag tag, Map<String, UTXO> utxo) {
-        super(tag);
+    public HeadIsOpenResponse(Map<String, UTXO> utxo) {
+        super(Tag.HeadIsOpen);
         this.utxo = utxo;
     }
 
     public Map<String, UTXO> getUtxo() {
         return utxo;
+    }
+
+    public static HeadIsOpenResponse create(JsonNode raw) {
+        val utxoNode = raw.get("utxo");
+        val utxoMap = MoreJson.<UTXO>convertStringMap(utxoNode);
+
+        return new HeadIsOpenResponse(utxoMap);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.cardanofoundation.hydra.client.model.query.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.val;
 import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
 import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
 import org.cardanofoundation.hydra.client.util.MoreJson;
@@ -18,6 +19,12 @@ public class CommandFailedResponse extends QueryResponse {
 
     public Map<String, ?> getClientInput() {
         return MoreJson.convertStringMap(clientInput);
+    }
+
+    public static CommandFailedResponse create(JsonNode raw) {
+        val clientInputNode = raw.get("clientInput");
+
+        return new CommandFailedResponse(clientInputNode);
     }
 
     @Override

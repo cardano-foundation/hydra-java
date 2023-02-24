@@ -5,12 +5,12 @@ import lombok.val;
 import org.cardanofoundation.hydra.client.model.query.request.base.Tag;
 import org.cardanofoundation.hydra.client.model.query.response.base.QueryResponse;
 
-public class PeerConnectedResponse extends QueryResponse {
+public class PeerDisconnectedResponse extends QueryResponse {
 
     private final String peer;
 
-    public PeerConnectedResponse(String peer) {
-        super(Tag.PeerConnected);
+    public PeerDisconnectedResponse(String peer) {
+        super(Tag.PeerDisconnected);
         this.peer = peer;
     }
 
@@ -18,17 +18,18 @@ public class PeerConnectedResponse extends QueryResponse {
         return peer;
     }
 
-    public static PeerConnectedResponse create(JsonNode raw) {
+    public static PeerDisconnectedResponse create(JsonNode raw) {
         val peer = raw.get("peer").asText();
 
-        return new PeerConnectedResponse(peer);
+        return new PeerDisconnectedResponse(peer);
     }
 
     @Override
     public String toString() {
-        return "PeerConnected{" +
+        return "PeerDisconnected{" +
                 "peer='" + peer + '\'' +
                 ", tag=" + tag +
                 '}';
     }
+
 }
