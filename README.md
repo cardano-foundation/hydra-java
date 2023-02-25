@@ -39,9 +39,8 @@ hydraWSClient.init(); // fires init request for this client
 
 System.out.println(hydraWSClient.getState()); // HydraState.ReadyForCommit
 
+// when all head participants commit their UTxOs then Hydra head is open, you can also commit empty UTxO but at least one head operator needs to commit // something
 hydraWSClient.commit(); // commits empty UTxO
-// when all head participants commit their UTxOs then Hydra head is open
 
 System.out.println(hydraWSClient.getState()); // HydraState.Open
-// 
 ```
