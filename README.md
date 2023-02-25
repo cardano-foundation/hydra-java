@@ -21,6 +21,8 @@ You can access documentation regarding Hydra here: https://hydra.family/head-pro
 
 Hydra API specs: https://hydra.family/head-protocol/api-reference
 
+Hydra State Machine Diagram: https://hydra.family/head-protocol/core-concepts/behavior
+
 ## Compatibility
 This client is compatible with Hydra 0.8.1
 
