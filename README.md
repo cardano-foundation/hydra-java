@@ -5,7 +5,7 @@
 ![Maven Central](https://img.shields.io/maven-central/v/org.cardanofoundation/hydra-java-client)
 [![License](https://img.shields.io:/github/license/cardano-foundation/hydra-java-client?label=license)](https://github.com/cardano-foundation/hydra-java-client/blob/master/LICENSE)
 ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/cardano-foundation/hydra-java-client)
-[![javadoc](https://javadoc.io/badge2/org.cardanofoundation/cip30-data-signature-parser/javadoc.svg)](https://javadoc.io/doc/org.cardanofoundation/hydra-java-client)
+[![javadoc](https://javadoc.io/badge2/org.cardanofoundation/hydra-java-client/javadoc.svg)](https://javadoc.io/doc/org.cardanofoundation/hydra-java-client)
 \
 [![Discord](https://dcbadge.vercel.app/api/server/Pgrndv3A)](https://discord.gg/Pgrndv3A)
 
