@@ -23,4 +23,12 @@ public class NewTxRequest extends Request {
         return template.render();
     }
 
+    @Override
+    public String toString() {
+        return "NewTx{" +
+                "transaction='" + transaction + '\'' +
+                ", tag=" + tag +
+                '}';
+    }
+
 }

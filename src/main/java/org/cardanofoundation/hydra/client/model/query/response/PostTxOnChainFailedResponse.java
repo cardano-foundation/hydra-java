@@ -11,7 +11,7 @@ public class PostTxOnChainFailedResponse extends Response {
 
     @Override
     public String toString() {
-        return "PostTxOnChainFailedResponse{" +
+        return "PostTxOnChainFailed{" +
                 "tag=" + tag +
                 '}';
     }

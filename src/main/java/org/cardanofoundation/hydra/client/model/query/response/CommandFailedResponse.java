@@ -10,7 +10,7 @@ import java.util.Map;
 // Emitted by the server when a well-formed client input was not processable. For example, if trying to close a non opened head or, when trying to commit after having already committed.
 public class CommandFailedResponse extends Response {
 
-    private JsonNode clientInput;
+    private final JsonNode clientInput;
 
     public CommandFailedResponse(JsonNode clientInput) {
         super(Tag.CommandFailed);

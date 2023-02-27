@@ -19,4 +19,11 @@ public class GetUTxORequest extends Request {
         return template.render();
     }
 
+    @Override
+    public String toString() {
+        return "GetUTxO{" +
+                "tag=" + tag +
+                '}';
+    }
+
 }

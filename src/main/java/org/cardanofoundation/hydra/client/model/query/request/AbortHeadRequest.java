@@ -19,4 +19,11 @@ public class AbortHeadRequest extends Request {
         return template.render();
     }
 
+    @Override
+    public String toString() {
+        return "AbortHead{" +
+                "tag=" + tag +
+                '}';
+    }
+
 }

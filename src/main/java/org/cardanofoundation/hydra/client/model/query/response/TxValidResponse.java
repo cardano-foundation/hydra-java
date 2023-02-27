@@ -26,7 +26,7 @@ public class TxValidResponse extends Response {
 
     @Override
     public String toString() {
-        return "TxValidResponse{" +
+        return "TxValid{" +
                 "transaction=" + transaction +
                 ", tag=" + tag +
                 '}';

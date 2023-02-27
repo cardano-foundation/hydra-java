@@ -21,7 +21,7 @@ public class CloseHeadRequest extends Request {
 
     @Override
     public String toString() {
-        return "CloseHeadRequest{" +
+        return "CloseHead{" +
                 "tag=" + tag +
                 '}';
     }

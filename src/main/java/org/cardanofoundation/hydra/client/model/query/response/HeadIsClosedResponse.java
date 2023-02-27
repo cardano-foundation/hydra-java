@@ -12,9 +12,9 @@ import java.time.ZonedDateTime;
 // A `Close` transaction has been observed on-chain, the head is now closed and the contestation phase begins.
 public class HeadIsClosedResponse extends Response {
 
-    int snapshotNumber;
+    private final int snapshotNumber;
 
-    ZonedDateTime contestationDeadline;
+    private final ZonedDateTime contestationDeadline;
 
     public HeadIsClosedResponse(int snapshotNumber, ZonedDateTime contestationDeadline) {
         super(Tag.HeadIsClosed);

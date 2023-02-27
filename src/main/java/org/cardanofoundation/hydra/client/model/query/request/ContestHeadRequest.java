@@ -19,4 +19,11 @@ public class ContestHeadRequest extends Request {
         return template.render();
     }
 
+    @Override
+    public String toString() {
+        return "ContestHead{" +
+                "tag=" + tag +
+                '}';
+    }
+
 }

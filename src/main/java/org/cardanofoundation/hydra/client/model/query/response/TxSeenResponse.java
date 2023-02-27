@@ -24,6 +24,13 @@ public class TxSeenResponse extends Response {
         return new TxSeenResponse(transaction);
     }
 
+    @Override
+    public String toString() {
+        return "TxSeen{" +
+                "transaction=" + transaction +
+                ", tag=" + tag +
+                '}';
+    }
 }
 
 // {

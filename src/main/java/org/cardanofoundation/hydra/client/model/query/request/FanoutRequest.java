@@ -19,4 +19,11 @@ public class FanoutRequest extends Request {
         return template.render();
     }
 
+    @Override
+    public String toString() {
+        return "Fanout{" +
+                "tag=" + tag +
+                '}';
+    }
+
 }

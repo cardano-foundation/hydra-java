@@ -15,7 +15,7 @@ import java.util.List;
 // A `Init` transaction has been observed on-chain by the given party who's now ready to commit into the initialized head.
 public class ReadyToCommitResponse extends Response {
 
-    List<Party> parties;
+    private final List<Party> parties;
 
     public ReadyToCommitResponse(List<Party> parties) {
         super(Tag.ReadyToCommit);
@@ -35,7 +35,7 @@ public class ReadyToCommitResponse extends Response {
 
     @Override
     public String toString() {
-        return "ReadyToCommitResponse{" +
+        return "ReadyToCommit{" +
                 "parties=" + parties +
                 ", tag=" + tag +
                 '}';

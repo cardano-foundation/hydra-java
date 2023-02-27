@@ -13,7 +13,7 @@ import java.util.Map;
 @Getter
 public class HeadIsOpenResponse extends Response {
 
-    private Map<String, UTXO> utxo;
+    private final Map<String, UTXO> utxo;
 
     public HeadIsOpenResponse(Map<String, UTXO> utxo) {
         super(Tag.HeadIsOpen);

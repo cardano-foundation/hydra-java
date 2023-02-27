@@ -5,8 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.Party;
-import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.Tag;
+import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.util.Map;
@@ -16,8 +16,8 @@ import java.util.Map;
 // A `Commit` from a head participant has been observed on-chain.
 public class CommittedResponse extends Response {
 
-    Party party;
-    Map<String, UTXO> utxo;
+    private final Party party;
+    private final Map<String, UTXO> utxo;
 
     public CommittedResponse(Party party, Map<String, UTXO> utxo) {
         super(Tag.Committed);

@@ -28,7 +28,7 @@ public class HeadIsFinalizedResponse extends Response {
 
     @Override
     public String toString() {
-        return "HeadIsFinalizedResponse{" +
+        return "HeadIsFinalized{" +
                 "utxo=" + utxo +
                 ", tag=" + tag +
                 '}';

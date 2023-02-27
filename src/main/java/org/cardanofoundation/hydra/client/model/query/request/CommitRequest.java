@@ -2,8 +2,8 @@ package org.cardanofoundation.hydra.client.model.query.request;
 
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.Request;
-import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.Tag;
+import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 import org.stringtemplate.v4.ST;
 
@@ -29,6 +29,14 @@ public class CommitRequest extends Request {
         template.add("utxo", MoreJson.serialise(utxo));
 
         return template.render();
+    }
+
+    @Override
+    public String toString() {
+        return "Commit{" +
+                "utxo=" + utxo +
+                ", tag=" + tag +
+                '}';
     }
 
 }

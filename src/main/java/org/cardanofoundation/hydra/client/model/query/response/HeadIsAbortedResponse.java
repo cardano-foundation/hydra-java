@@ -28,7 +28,7 @@ public class HeadIsAbortedResponse extends Response {
 
     @Override
     public String toString() {
-        return "HeadIsAbortedResponse{" +
+        return "HeadIsAborted{" +
                 "utxo=" + utxo +
                 ", tag=" + tag +
                 '}';

@@ -24,4 +24,12 @@ public class InitRequest extends Request {
         return template.render();
     }
 
+    @Override
+    public String toString() {
+        return "Init{" +
+                "contestationPeriod=" + contestationPeriod +
+                ", tag=" + tag +
+                '}';
+    }
+
 }
