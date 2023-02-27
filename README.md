@@ -66,3 +66,9 @@ hydraWSClient.commit(); // commits empty UTxO
 
 System.out.println(hydraWSClient.getState()); // HydraState.Open
 ```
+
+## TODO
+- publish snapshot on maven
+- provide interface for Reactive Streams API
+- JavaDocs and improve documentation
+- testing
