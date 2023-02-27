@@ -75,7 +75,7 @@ public class HydraWSClient extends WebSocketClient {
 
         RESPONSE_TAG_STATE_MAPPER.stateForTag(tag).ifPresent(newHydraState -> {
             val prevState = hydraState;
-            hydraState = newHydraState;
+            this.hydraState = newHydraState;
             hydraStateEventListener.ifPresent(l -> l.onStateChanged(prevState, hydraState));
         });
     }
@@ -92,112 +92,59 @@ public class HydraWSClient extends WebSocketClient {
     }
 
     // Initializes a new Head. This command is a no-op when a Head is already open and the server will output an CommandFailed message should this happen.
-    public boolean init(int period) {
-        if (hydraState == HydraState.Idle) {
-            val request = new InitRequest(period);
-            send(request.getRequestBody());
-            return true;
-        }
-
-        return false;
+    public void init(int period) {
+        val request = new InitRequest(period);
+        send(request.getRequestBody());
     }
 
     // Aborts a head before it is opened. This can only be done before all participants have committed. Once opened, the head can't be aborted anymore but it can be closed using: Close.
-    public boolean abort() {
-        if (hydraState == HydraState.Initializing) {
-            val request = new AbortHeadRequest();
-            send(request.getRequestBody());
-
-            return true;
-        }
-
-        return false;
+    public void abort() {
+        val request = new AbortHeadRequest();
+        send(request.getRequestBody());
     }
 
     // Join an initialized head. This is how parties get to inject funds inside a head. Note however that the utxo is an object and can be empty should a participant wants to join a head without locking any funds.
-    public boolean commit(String utxoId, UTXO utxo) {
-        if (hydraState == HydraState.Initializing) {
-            val request = new CommitRequest();
-            request.addUTXO(utxoId, utxo);
-            send(request.getRequestBody());
-
-            return true;
-        }
-
-        return false;
+    public void commit(String utxoId, UTXO utxo) {
+        val request = new CommitRequest();
+        request.addUTXO(utxoId, utxo);
+        send(request.getRequestBody());
     }
 
     // Join an initialized head. This is how parties get to inject funds inside a head. Note however that the utxo is an object and can be empty should a participant wants to join a head without locking any funds.
-    public boolean commit() {
-        if (hydraState == HydraState.Initializing) {
-            val request = new CommitRequest();
-            send(request.getRequestBody());
-
-            return true;
-        }
-
-        return false;
+    public void commit() {
+        val request = new CommitRequest();
+        send(request.getRequestBody());
     }
 
     // Submit a transaction through the head. Note that the transaction is only broadcast if well-formed and valid.
-    public boolean newTx(String transaction) {
-        if (hydraState == HydraState.Open) {
-            val request = new NewTxRequest(transaction);
-            send(request.getRequestBody());
-
-            return true;
-        }
-
-        return false;
+    public void newTx(String transaction) {
+        val request = new NewTxRequest(transaction);
+        send(request.getRequestBody());
     }
 
     // Terminate a head with the latest known snapshot. This effectively moves the head from the Open state to the Close state where the contestation phase begin. As a result of closing a head, no more transactions can be submitted via NewTx.
-    public boolean closeHead() {
-        if (hydraState == HydraState.Open) {
-            val request = new CloseHeadRequest();
-            send(request.getRequestBody());
-
-            return true;
-        }
-
-        return false;
+    public void closeHead() {
+        val request = new CloseHeadRequest();
+        send(request.getRequestBody());
     }
 
     // Challenge the latest snapshot announced as a result of a head closure from another participant. Note that this necessarily contest with the latest snapshot known of your local Hydra node. Participants can only contest once.
-    public boolean contest() {
-        if (hydraState == HydraState.Closed) {
-            val request = new ContestHeadRequest();
-            send(request.getRequestBody());
-
-            return true;
-        }
-
-        return false;
+    public void contest() {
+        val request = new ContestHeadRequest();
+        send(request.getRequestBody());
     }
 
 
     // Finalize a head after the contestation period passed. This will distribute the final (as closed and maybe contested) head state back on the layer 1.
-    public boolean fanOut() {
-        if (hydraState == HydraState.FanoutPossible) {
-            val request = new FanoutRequest();
-            send(request.getRequestBody());
-
-            return true;
-        }
-
-        return false;
+    public void fanOut() {
+        val request = new FanoutRequest();
+        send(request.getRequestBody());
     }
 
     // Asynchronously access the current UTxO set of the Hydra node. This eventually triggers a UTxO event from the server.
-    public boolean getUTXO() {
-        if (hydraState == HydraState.Open) {
-            val request = new GetUTxORequest();
-            send(request.getRequestBody());
-
-            return true;
-        }
-
-        return false;
+    public void getUTXO() {
+        val request = new GetUTxORequest();
+        send(request.getRequestBody());
     }
 
 }

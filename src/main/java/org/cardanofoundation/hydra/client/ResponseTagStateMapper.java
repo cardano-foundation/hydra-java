@@ -10,7 +10,7 @@ import java.util.Optional;
 // https://hydra.family/head-protocol/core-concepts/behavior/
 public class ResponseTagStateMapper {
 
-    private Map<Tag, HydraState> tagToStateMap = new HashMap<>();
+    private final Map<Tag, HydraState> tagToStateMap = new HashMap<>();
 
     public ResponseTagStateMapper() {
         tagToStateMap.put(Tag.ReadyToCommit, HydraState.Initializing);
@@ -19,7 +19,6 @@ public class ResponseTagStateMapper {
         tagToStateMap.put(Tag.HeadIsAborted, HydraState.Final);
         tagToStateMap.put(Tag.HeadIsFinalized, HydraState.Final);
         tagToStateMap.put(Tag.HeadIsContested, HydraState.Final);
-        tagToStateMap.put(Tag.ReadyToFanout, HydraState.FanoutPossible);
         tagToStateMap.put(Tag.ReadyToFanout, HydraState.FanoutPossible);
     }
 
