@@ -6,7 +6,7 @@
 
     <groupId>org.cardanofoundation</groupId>
     <artifactId>hydra-java-client</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Hydra Java Client is a java library that simplifies communication with a Hydra node over websockets.</description>
     <url>https://github.com/cardano-foundation/hydra-java-client</url>
@@ -59,6 +59,11 @@
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>${jackson-databind.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

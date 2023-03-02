@@ -2,13 +2,13 @@ package org.cardanofoundation.hydra.client.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.cardanofoundation.hydra.client.HydraException;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -17,14 +17,11 @@ public class MoreJson {
     static ObjectMapper MAPPER;
 
     static {
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(ZonedDateTime.class, new ZonedDateTimeDeserializer());
-
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(module);
-
-        MAPPER = new ObjectMapper()
-                .enable(SerializationFeature.INDENT_OUTPUT);
+        MAPPER = new ObjectMapper();
+        MAPPER.findAndRegisterModules();
+        MAPPER.enable(SerializationFeature.INDENT_OUTPUT);
+        MAPPER.disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
+        MAPPER.registerModule(new JavaTimeModule());
     }
 
     public static String serialise(Object o) {

@@ -12,14 +12,12 @@
 
 This is an **incubator project**, which simplifies working with Hydra from java applications. Hydra is an isomorphic state machine L2 network, which works seemlessly with Cardano.
 
-
 ## Hydra
 You can access documentation regarding Hydra here: https://hydra.family/head-protocol/. We recommend especially to follow QuickStart on devnet network (https://hydra.family/head-protocol/docs/getting-started/quickstart) and (https://hydra.family/head-protocol/docs/getting-started/demo/with-docker) as well as reading (https://hydra.family/head-protocol/docs/tutorial/using_hydra/using-hydra-part-3)
 
 Hydra API specs: https://hydra.family/head-protocol/api-reference
 
 Hydra State Machine Diagram: https://hydra.family/head-protocol/core-concepts/behavior
-
 
 ## Requirements
 - JDK11
@@ -37,12 +35,12 @@ mvn clean install
 <dependency>
     <groupId>org.cardanofoundation</groupId>
     <artifactId>hydra-java-client</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
 </dependency>
 ```
 
 ## Compatibility
-This client is compatible with Hydra 0.8.1
+This client is compatible with Hydra 0.9.0
 
 ## Example usage
 
@@ -57,7 +55,7 @@ System.out.println(hydraWSClient.getState()); // HydraState.Idle
 hydraWSClient.init(); // fires init request for this client
 // at least one client needs to initialise the network
 
-System.out.println(hydraWSClient.getState()); // HydraState.ReadyForCommit
+System.out.println(hydraWSClient.getState()); // HydraState.HeadIsInitializing
 
 // when all head participants commit their UTxOs then Hydra head is open, you can also commit empty UTxO but at least one head operator needs to commit // something
 hydraWSClient.commit(); // commits empty UTxO

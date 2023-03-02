@@ -3,9 +3,9 @@ package org.cardanofoundation.hydra.client;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.HydraState;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.query.request.*;
-import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -92,8 +92,8 @@ public class HydraWSClient extends WebSocketClient {
     }
 
     // Initializes a new Head. This command is a no-op when a Head is already open and the server will output an CommandFailed message should this happen.
-    public void init(int period) {
-        val request = new InitRequest(period);
+    public void init() {
+        val request = new InitRequest();
         send(request.getRequestBody());
     }
 

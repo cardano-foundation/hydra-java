@@ -17,7 +17,7 @@ public class ResponseTagHandlers {
         handlers.put(Tag.Greetings, GreetingsResponse::create);
         handlers.put(Tag.PeerConnected, PeerConnectedResponse::create);
         handlers.put(Tag.PeerDisconnected, PeerDisconnectedResponse::create);
-        handlers.put(Tag.ReadyToCommit, ReadyToCommitResponse::create);
+        handlers.put(Tag.HeadIsInitilizing, HeadIsInitilizingResponse::create);
         handlers.put(Tag.Committed, CommittedResponse::create);
         handlers.put(Tag.HeadIsOpen, HeadIsOpenResponse::create);
         handlers.put(Tag.HeadIsClosed, HeadIsClosedResponse::create);
@@ -25,13 +25,11 @@ public class ResponseTagHandlers {
         handlers.put(Tag.ReadyToFanout, ReadyToFanoutResponse::create);
         handlers.put(Tag.HeadIsAborted, HeadIsAbortedResponse::create);
         handlers.put(Tag.HeadIsFinalized, HeadIsFinalizedResponse::create);
-        handlers.put(Tag.TxSeen, TxSeenResponse::create);
         handlers.put(Tag.TxValid, TxValidResponse::create);
         handlers.put(Tag.TxInvalid, TxInvalidResponse::create);
-        handlers.put(Tag.TxExpired, TxExpiredResponse::create);
         handlers.put(Tag.GetUTxOResponse, GetUTxOResponse::create);
         handlers.put(Tag.InvalidInput, InvalidInputResponse::create);
-        handlers.put(Tag.PostTxOnChainFailed, PostChainTxFailedResponse::create);
+        handlers.put(Tag.PostTxOnChainFailed, PostTxOnChainFailedResponse::create);
         handlers.put(Tag.RolledBack, RolledbackResponse::create);
         handlers.put(Tag.CommandFailed, CommandFailedResponse::create);
     }
