@@ -8,35 +8,61 @@ import org.cardanofoundation.hydra.client.model.Party;
 import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-@Getter
-@Setter
 // A `Init` transaction has been observed on-chain by the given party who's now ready to commit into the initialized head.
-public class ReadyToCommitResponse extends Response {
+public class HeadIsInitilizingResponse extends Response {
 
     private final List<Party> parties;
 
-    public ReadyToCommitResponse(List<Party> parties) {
-        super(Tag.ReadyToCommit);
+    private String headId;
+
+    private final int seq;
+
+    private final LocalDateTime timestamp;
+
+    public HeadIsInitilizingResponse(String headId, List<Party> parties, int seq, LocalDateTime timestamp) {
+        super(Tag.HeadIsInitilizing);
+        this.headId = headId;
         this.parties = parties;
+        this.seq = seq;
+        this.timestamp = timestamp;
     }
 
     public List<Party> getParties() {
         return parties;
     }
 
-    public static ReadyToCommitResponse create(JsonNode raw) {
+    public String getHeadId() {
+        return headId;
+    }
+
+    public int getSeq() {
+        return seq;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public static HeadIsInitilizingResponse create(JsonNode raw) {
         val utxoNode = raw.get("parties");
         val parties = MoreJson.<Party>convertList(utxoNode);
+        val headId = raw.get("headId").asText();
+        val seq = raw.get("seq").asInt();
+        val timestamp = MoreJson.convert(raw.get("timestamp"), LocalDateTime.class);
 
-        return new ReadyToCommitResponse(parties);
+        return new HeadIsInitilizingResponse(headId, parties, seq, timestamp);
     }
 
     @Override
     public String toString() {
-        return "ReadyToCommit{" +
+        return "HeadIsInitilizing{" +
                 "parties=" + parties +
+                ", headId='" + headId + '\'' +
+                ", seq=" + seq +
+                ", timestamp=" + timestamp +
                 ", tag=" + tag +
                 '}';
     }

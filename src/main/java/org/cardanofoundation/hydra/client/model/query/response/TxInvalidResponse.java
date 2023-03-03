@@ -1,29 +1,40 @@
 package org.cardanofoundation.hydra.client.model.query.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import lombok.Getter;
 import lombok.val;
+import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.model.Transaction;
 import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.ValidationError;
-import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
-@Getter
 // An observed transaction is invalid. Either it is not yet valid (because some other transactions need to be seen first), or it
 // is no longer valid (because of conflicting transactions observed in-between.
 public class TxInvalidResponse extends Response {
+
+    private final String headId;
+
+    private final int seq;
+
+    private final LocalDateTime timestamp;
 
     private final Map<String, UTXO> utxo;
     private final Transaction transaction;
     private final ValidationError validationError;
 
-    public TxInvalidResponse(Map<String, UTXO> utxo,
+    public TxInvalidResponse(String headId,
+                             int seq,
+                             LocalDateTime timestamp,
+                             Map<String, UTXO> utxo,
                              Transaction transaction,
                              ValidationError validationError) {
         super(Tag.TxInvalid);
+        this.headId = headId;
+        this.seq = seq;
+        this.timestamp = timestamp;
         this.utxo = utxo;
         this.transaction = transaction;
         this.validationError = validationError;
@@ -33,14 +44,44 @@ public class TxInvalidResponse extends Response {
         val utxo = MoreJson.<UTXO>convertStringMap(raw.get("utxo"));
         val transaction = MoreJson.convert(raw.get("transaction"), Transaction.class);
         val validationError = MoreJson.convert(raw.get("validationError"), ValidationError.class);
+        val headId = raw.get("headId").asText();
+        val seq = raw.get("seq").asInt();
+        val timestamp = MoreJson.convert(raw.get("timestamp"), LocalDateTime.class);
 
-        return new TxInvalidResponse(utxo, transaction, validationError);
+        return new TxInvalidResponse(headId, seq, timestamp, utxo, transaction, validationError);
+    }
+
+    public Map<String, UTXO> getUtxo() {
+        return utxo;
+    }
+
+    public Transaction getTransaction() {
+        return transaction;
+    }
+
+    public ValidationError getValidationError() {
+        return validationError;
+    }
+
+    public String getHeadId() {
+        return headId;
+    }
+
+    public int getSeq() {
+        return seq;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
     }
 
     @Override
     public String toString() {
         return "TxInvalid{" +
-                "utxo=" + utxo +
+                "headId='" + headId + '\'' +
+                ", seq=" + seq +
+                ", timestamp=" + timestamp +
+                ", utxo=" + utxo +
                 ", transaction=" + transaction +
                 ", validationError=" + validationError +
                 ", tag=" + tag +

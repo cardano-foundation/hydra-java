@@ -9,17 +9,13 @@ public class InitRequest extends Request {
 
     private static final Tag QUERY_TYPE = Tag.Init;
 
-    private int contestationPeriod = 100;
-
-    public InitRequest(int contestationPeriod) {
+    public InitRequest() {
         super(QUERY_TYPE);
-        this.contestationPeriod = contestationPeriod;
     }
 
     public String getRequestBody() {
-        val template = new ST("{ \"tag\": \"<tag>\", \"contestationPeriod\": <contestation_period>}");
+        val template = new ST("{ \"tag\": \"<tag>\" }");
         template.add("tag", tag);
-        template.add("contestation_period", contestationPeriod);
 
         return template.render();
     }
@@ -27,8 +23,7 @@ public class InitRequest extends Request {
     @Override
     public String toString() {
         return "Init{" +
-                "contestationPeriod=" + contestationPeriod +
-                ", tag=" + tag +
+                "tag=" + tag +
                 '}';
     }
 

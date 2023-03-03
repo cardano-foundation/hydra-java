@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Party {
 
-    String vkey;
+    private String vkey;
 
     @Override
     public String toString() {

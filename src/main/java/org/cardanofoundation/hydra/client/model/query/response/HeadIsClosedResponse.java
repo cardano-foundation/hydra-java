@@ -6,36 +6,76 @@ import lombok.val;
 import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 
-@Getter
 // A `Close` transaction has been observed on-chain, the head is now closed and the contestation phase begins.
 public class HeadIsClosedResponse extends Response {
 
     private final int snapshotNumber;
 
-    private final ZonedDateTime contestationDeadline;
+    private final LocalDateTime contestationDeadline;
 
-    public HeadIsClosedResponse(int snapshotNumber, ZonedDateTime contestationDeadline) {
+    private final String headId;
+
+    private final int seq;
+
+    private final LocalDateTime timestamp;
+
+    public HeadIsClosedResponse(String headId,
+                                int snapshotNumber,
+                                LocalDateTime contestationDeadline,
+                                int seq,
+                                LocalDateTime timestamp) {
         super(Tag.HeadIsClosed);
+        this.headId = headId;
         this.snapshotNumber = snapshotNumber;
         this.contestationDeadline = contestationDeadline;
+        this.seq = seq;
+        this.timestamp = timestamp;
     }
 
     public static HeadIsClosedResponse create(JsonNode raw) {
         val snapshotNumber = raw.get("snapshotNumber").asInt();
-        val contestationDeadline = MoreJson.convert(raw.get("contestationDeadline"), ZonedDateTime.class);
+        val contestationDeadline = MoreJson.convert(raw.get("contestationDeadline"), LocalDateTime.class);
+        val headId = raw.get("headId").asText();
+        val seq = raw.get("seq").asInt();
+        val timestamp = MoreJson.convert(raw.get("timestamp"), LocalDateTime.class);
 
-        return new HeadIsClosedResponse(snapshotNumber, contestationDeadline);
+        return new HeadIsClosedResponse(headId, snapshotNumber, contestationDeadline, seq, timestamp);
+    }
+
+    public int getSnapshotNumber() {
+        return snapshotNumber;
+    }
+
+    public LocalDateTime getContestationDeadline() {
+        return contestationDeadline;
+    }
+
+    public String getHeadId() {
+        return headId;
+    }
+
+    public int getSeq() {
+        return seq;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
     }
 
     @Override
     public String toString() {
         return "HeadIsClosed{" +
-                "contestationDeadline=" + contestationDeadline +
+                "snapshotNumber=" + snapshotNumber +
+                ", contestationDeadline=" + contestationDeadline +
+                ", headId='" + headId + '\'' +
+                ", seq=" + seq +
+                ", timestamp=" + timestamp +
                 ", tag=" + tag +
                 '}';
     }
+
 }
 
 //{
