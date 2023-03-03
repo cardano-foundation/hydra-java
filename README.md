@@ -1,14 +1,6 @@
 # hydra-java-client
 
-[![Build](https://github.com/cardano-foundation/hydra-java-client/actions/workflows/maven-build.yml/badge.svg)](https://github.com/cardano-foundation/hydra-java-client/actions/workflows/maven-build.yml)
-[![CodeQL](https://github.com/cardano-foundation/hydra-java-client/actions/workflows/codeql.yml/badge.svg)](https://github.com/cardano-foundation/hydra-java-client/actions/workflows/codeql.yml)
-![Maven Central](https://img.shields.io/maven-central/v/org.cardanofoundation/hydra-java-client)
-[![License](https://img.shields.io:/github/license/cardano-foundation/hydra-java-client?label=license)](https://github.com/cardano-foundation/hydra-java-client/blob/master/LICENSE)
-![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/cardano-foundation/hydra-java-client)
-[![javadoc](https://javadoc.io/badge2/org.cardanofoundation/hydra-java-client/javadoc.svg)](https://javadoc.io/doc/org.cardanofoundation/hydra-java-client)
-\
-[![Discord](https://dcbadge.vercel.app/api/server/Pgrndv3A)](https://discord.gg/Pgrndv3A)
-
+[![License](https://img.shields.io:/github/license/cardano-foundation/hydra-java-client?label=license)](https://github.com/cardano-foundation/hydra-java-
 
 This is an **incubator project**, which simplifies working with Hydra from java applications. Hydra is an isomorphic state machine L2 network, which works seemlessly with Cardano.
 
