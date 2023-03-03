@@ -184,10 +184,11 @@
     </build>
 
     <licenses>
-        <license>
-            <name>MIT</name>
-            <url>https://en.wikipedia.org/wiki/MIT_License</url>
-        </license>
+      <license>
+        <name>MPL 2.0</name>
+        <url>https://www.mozilla.org/en-US/MPL/2.0/</url>
+       <distribution>repo</distribution>
+     </license>
     </licenses>
 
     <scm>
