@@ -1,6 +1,8 @@
 package org.cardanofoundation.hydra.client.model.query.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
+import lombok.ToString;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
@@ -8,6 +10,8 @@ import org.cardanofoundation.hydra.client.util.MoreJson;
 import java.time.LocalDateTime;
 
 // Emitted by the server when it has failed to parse some client input. It returns the malformed input as well as some hint about what went wrong.
+@Getter
+@ToString(callSuper = true)
 public class InvalidInputResponse extends Response {
 
     private final int seq;
@@ -33,33 +37,6 @@ public class InvalidInputResponse extends Response {
         val timestamp = MoreJson.convert(raw.get("timestamp"), LocalDateTime.class);
 
         return new InvalidInputResponse(seq, timestamp, reason, input);
-    }
-
-    public String getReason() {
-        return reason;
-    }
-
-    public String getInput() {
-        return input;
-    }
-
-    public int getSeq() {
-        return seq;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    @Override
-    public String toString() {
-        return "InvalidInput{" +
-                "seq=" + seq +
-                ", timestamp=" + timestamp +
-                ", reason='" + reason + '\'' +
-                ", input='" + input + '\'' +
-                ", tag=" + tag +
-                '}';
     }
 
 }

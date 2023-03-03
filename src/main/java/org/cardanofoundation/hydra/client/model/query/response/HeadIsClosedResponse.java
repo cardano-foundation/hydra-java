@@ -2,6 +2,7 @@ package org.cardanofoundation.hydra.client.model.query.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
@@ -9,6 +10,8 @@ import org.cardanofoundation.hydra.client.util.MoreJson;
 import java.time.LocalDateTime;
 
 // A `Close` transaction has been observed on-chain, the head is now closed and the contestation phase begins.
+@Getter
+@ToString(callSuper = true)
 public class HeadIsClosedResponse extends Response {
 
     private final int snapshotNumber;
@@ -44,42 +47,4 @@ public class HeadIsClosedResponse extends Response {
         return new HeadIsClosedResponse(headId, snapshotNumber, contestationDeadline, seq, timestamp);
     }
 
-    public int getSnapshotNumber() {
-        return snapshotNumber;
-    }
-
-    public LocalDateTime getContestationDeadline() {
-        return contestationDeadline;
-    }
-
-    public String getHeadId() {
-        return headId;
-    }
-
-    public int getSeq() {
-        return seq;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    @Override
-    public String toString() {
-        return "HeadIsClosed{" +
-                "snapshotNumber=" + snapshotNumber +
-                ", contestationDeadline=" + contestationDeadline +
-                ", headId='" + headId + '\'' +
-                ", seq=" + seq +
-                ", timestamp=" + timestamp +
-                ", tag=" + tag +
-                '}';
-    }
-
 }
-
-//{
-//        "contestationDeadline": "2022-11-07T13:08:22Z",
-//        "snapshotNumber": 1,
-//        "tag": "HeadIsClosed"
-//}

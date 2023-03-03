@@ -2,15 +2,18 @@ package org.cardanofoundation.hydra.client.model.query.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.val;
-import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.Tag;
+import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
 // The head was already closed and the contestation period is now over.
+@Getter
+@ToString(callSuper = true)
 public class HeadIsFinalizedResponse extends Response {
 
     private final String headId;
@@ -38,31 +41,5 @@ public class HeadIsFinalizedResponse extends Response {
         return new HeadIsFinalizedResponse(headId, seq, timestamp, utxo);
     }
 
-    public String getHeadId() {
-        return headId;
-    }
-
-    public int getSeq() {
-        return seq;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public Map<String, UTXO> getUtxo() {
-        return utxo;
-    }
-
-    @Override
-    public String toString() {
-        return "HeadIsFinalized{" +
-                "headId='" + headId + '\'' +
-                ", seq=" + seq +
-                ", timestamp=" + timestamp +
-                ", utxo=" + utxo +
-                ", tag=" + tag +
-                '}';
-    }
 }
 

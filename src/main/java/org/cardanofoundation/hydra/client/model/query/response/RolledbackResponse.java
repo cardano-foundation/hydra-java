@@ -1,6 +1,8 @@
 package org.cardanofoundation.hydra.client.model.query.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
+import lombok.ToString;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
@@ -8,6 +10,8 @@ import org.cardanofoundation.hydra.client.util.MoreJson;
 import java.time.LocalDateTime;
 
 // The node has adopted a different chain fork and we had to rollback the application state.
+@Getter
+@ToString(callSuper = true)
 public class RolledbackResponse extends Response {
 
     private final int seq;
@@ -25,23 +29,6 @@ public class RolledbackResponse extends Response {
         val timestamp = MoreJson.convert(raw.get("timestamp"), LocalDateTime.class);
 
         return new RolledbackResponse(seq, timestamp);
-    }
-
-    public int getSeq() {
-        return seq;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    @Override
-    public String toString() {
-        return "Rolledback{" +
-                "seq=" + seq +
-                ", timestamp=" + timestamp +
-                ", tag=" + tag +
-                '}';
     }
 
 }

@@ -13,7 +13,7 @@ public class ResponseTagStateMapper {
     private final Map<Tag, HydraState> tagToStateMap = new HashMap<>();
 
     public ResponseTagStateMapper() {
-        tagToStateMap.put(Tag.HeadIsInitilizing, HydraState.Initializing);
+        tagToStateMap.put(Tag.HeadIsInitializing, HydraState.Initializing);
         tagToStateMap.put(Tag.HeadIsOpen, HydraState.Open);
         tagToStateMap.put(Tag.HeadIsClosed, HydraState.Closed);
         tagToStateMap.put(Tag.HeadIsAborted, HydraState.Final);

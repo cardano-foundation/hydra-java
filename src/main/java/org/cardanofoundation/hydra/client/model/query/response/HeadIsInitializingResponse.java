@@ -4,17 +4,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.val;
+import org.cardanofoundation.hydra.client.model.Party;
 import org.cardanofoundation.hydra.client.model.Tag;
-import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.List;
 
-// One of the participant did `Abort` the head before all commits were done or collected.
+// A `Init` transaction has been observed on-chain by the given party who's now ready to commit into the initialized head.
 @Getter
 @ToString(callSuper = true)
-public class HeadIsAbortedResponse extends Response {
+public class HeadIsInitializingResponse extends Response {
+
+    private final List<Party> parties;
 
     private final String headId;
 
@@ -22,23 +24,22 @@ public class HeadIsAbortedResponse extends Response {
 
     private final LocalDateTime timestamp;
 
-    private final Map<String, UTXO> utxo;
-
-    public HeadIsAbortedResponse(String headId, int seq, LocalDateTime timestamp, Map<String, UTXO> utxo) {
-        super(Tag.HeadIsAborted);
+    public HeadIsInitializingResponse(String headId, List<Party> parties, int seq, LocalDateTime timestamp) {
+        super(Tag.HeadIsInitializing);
         this.headId = headId;
+        this.parties = parties;
         this.seq = seq;
         this.timestamp = timestamp;
-        this.utxo = utxo;
     }
 
-    public static HeadIsAbortedResponse create(JsonNode raw) {
-        val utxo = MoreJson.<UTXO>convertStringMap(raw.get("utxo"));
+    public static HeadIsInitializingResponse create(JsonNode raw) {
+        val utxoNode = raw.get("parties");
+        val parties = MoreJson.<Party>convertList(utxoNode);
         val headId = raw.get("headId").asText();
         val seq = raw.get("seq").asInt();
         val timestamp = MoreJson.convert(raw.get("timestamp"), LocalDateTime.class);
 
-        return new HeadIsAbortedResponse(headId, seq, timestamp, utxo);
+        return new HeadIsInitializingResponse(headId, parties, seq, timestamp);
     }
 
 }
