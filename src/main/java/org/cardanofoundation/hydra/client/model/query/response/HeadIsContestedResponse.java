@@ -2,6 +2,7 @@ package org.cardanofoundation.hydra.client.model.query.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.util.MoreJson;
@@ -11,6 +12,8 @@ import java.time.LocalDateTime;
 //        A `Contest` transaction has been observed on-chain, that means the head
 //        state has been successfully contested and given snapshot number is now
 //        the latest accepted snapshot.
+@Getter
+@ToString(callSuper = true)
 public class HeadIsContestedResponse extends Response {
 
     private final String headId;
@@ -38,36 +41,5 @@ public class HeadIsContestedResponse extends Response {
         return new HeadIsContestedResponse(headId, seq, timestamp, snapshotNumber);
     }
 
-    public String getHeadId() {
-        return headId;
-    }
-
-    public int getSeq() {
-        return seq;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public int getSnapshotNumber() {
-        return snapshotNumber;
-    }
-
-    @Override
-    public String toString() {
-        return "HeadIsContested{" +
-                "headId='" + headId + '\'' +
-                ", seq=" + seq +
-                ", timestamp=" + timestamp +
-                ", snapshotNumber=" + snapshotNumber +
-                ", tag=" + tag +
-                '}';
-    }
 
 }
-
-//{
-//        "snapshotNumber": 1,
-//        "tag": "HeadIsContested"
-//}

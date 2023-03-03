@@ -17,7 +17,7 @@ public class ResponseTagHandlers {
         handlers.put(Tag.Greetings, GreetingsResponse::create);
         handlers.put(Tag.PeerConnected, PeerConnectedResponse::create);
         handlers.put(Tag.PeerDisconnected, PeerDisconnectedResponse::create);
-        handlers.put(Tag.HeadIsInitilizing, HeadIsInitilizingResponse::create);
+        handlers.put(Tag.HeadIsInitializing, HeadIsInitializingResponse::create);
         handlers.put(Tag.Committed, CommittedResponse::create);
         handlers.put(Tag.HeadIsOpen, HeadIsOpenResponse::create);
         handlers.put(Tag.HeadIsClosed, HeadIsClosedResponse::create);

@@ -1,6 +1,8 @@
 package org.cardanofoundation.hydra.client.model.query.response;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
+import lombok.ToString;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.model.Transaction;
@@ -13,6 +15,8 @@ import java.util.Map;
 
 // An observed transaction is invalid. Either it is not yet valid (because some other transactions need to be seen first), or it
 // is no longer valid (because of conflicting transactions observed in-between.
+@Getter
+@ToString(callSuper = true)
 public class TxInvalidResponse extends Response {
 
     private final String headId;
@@ -51,40 +55,4 @@ public class TxInvalidResponse extends Response {
         return new TxInvalidResponse(headId, seq, timestamp, utxo, transaction, validationError);
     }
 
-    public Map<String, UTXO> getUtxo() {
-        return utxo;
-    }
-
-    public Transaction getTransaction() {
-        return transaction;
-    }
-
-    public ValidationError getValidationError() {
-        return validationError;
-    }
-
-    public String getHeadId() {
-        return headId;
-    }
-
-    public int getSeq() {
-        return seq;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    @Override
-    public String toString() {
-        return "TxInvalid{" +
-                "headId='" + headId + '\'' +
-                ", seq=" + seq +
-                ", timestamp=" + timestamp +
-                ", utxo=" + utxo +
-                ", transaction=" + transaction +
-                ", validationError=" + validationError +
-                ", tag=" + tag +
-                '}';
-    }
 }

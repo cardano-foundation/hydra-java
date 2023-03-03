@@ -8,7 +8,7 @@ public enum Tag {
     Init,
     Commit,
     Committed,
-    HeadIsInitilizing,
+    HeadIsInitializing,
     HeadIsOpen,
     HeadIsClosed,
     HeadIsAborted,
