@@ -89,6 +89,20 @@
         </dependency>
     </dependencies>
 
+
+    <developers>
+        <developer>
+            <id>sranjan</id>
+            <name>Satya Ranjan</name>
+            <email>satya.ranjan@cardanofoundation.org</email>
+        </developer>
+        <developer>
+            <id>mczeladka</id>
+            <name>Mateusz Czeladka</name>
+            <email>mateusz.czeladka@cardanofoundation.org</email>
+        </developer>
+    </developers>
+
     <build>
         <plugins>
             <plugin>
