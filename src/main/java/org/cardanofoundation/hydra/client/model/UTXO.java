@@ -1,22 +1,22 @@
 package org.cardanofoundation.hydra.client.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigInteger;
+import java.util.Map;
+
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class UTXO {
-
     String address;
-    Value value;
-
+    Map<String, BigInteger> value;
+    String datum;
+    String datumhash;
+    JsonNode inlineDatum;
+    String inlineDatumhash;
+    String referenceScript;
 }
-
-//             "address": "addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k",
-//             "datum": null,
-//             "datumhash": null,
-//             "inlineDatum": null,
-//             "referenceScript": null,
-//             "value": {
-//                 "lovelace": 500000000
-//             }
