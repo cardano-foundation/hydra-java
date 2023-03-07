@@ -16,14 +16,11 @@ public class PeerConnectedResponse extends Response {
 
     private final String peer;
 
-    private final int seq;
-
     private final LocalDateTime timestamp;
 
     public PeerConnectedResponse(String peer, int seq, LocalDateTime timestamp) {
-        super(Tag.PeerConnected);
+        super(Tag.PeerConnected, seq);
         this.peer = peer;
-        this.seq = seq;
         this.timestamp = timestamp;
     }
 

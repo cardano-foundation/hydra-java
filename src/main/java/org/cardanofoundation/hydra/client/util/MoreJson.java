@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.cardanofoundation.hydra.client.HydraException;
+import org.cardanofoundation.hydra.client.model.UTXO;
 
 import java.util.List;
 import java.util.Map;
@@ -47,9 +48,8 @@ public class MoreJson {
             throw new HydraException("Unable to deserialise json", e);
         }
     }
-
-    public static <T> Map<String, T> convertStringMap(JsonNode o) throws HydraException {
-        return MAPPER.convertValue(o, new TypeReference<Map<String, T>>(){});
+    public static Map<String, UTXO> convertUTxOMap(JsonNode o) throws HydraException {
+        return MAPPER.convertValue(o, new TypeReference<Map<String, UTXO>>(){});
     }
 
     public static <T> List<T> convertList(JsonNode o) throws HydraException {

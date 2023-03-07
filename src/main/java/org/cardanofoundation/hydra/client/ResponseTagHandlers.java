@@ -32,6 +32,7 @@ public class ResponseTagHandlers {
         handlers.put(Tag.PostTxOnChainFailed, PostTxOnChainFailedResponse::create);
         handlers.put(Tag.RolledBack, RolledbackResponse::create);
         handlers.put(Tag.CommandFailed, CommandFailedResponse::create);
+        handlers.put(Tag.SnapshotConfirmed, SnapshotConfirmed::create);
     }
 
     public Optional<Function<JsonNode, Response>> responseHandlerFor(Tag tag) {

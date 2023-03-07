@@ -21,8 +21,6 @@ public class TxInvalidResponse extends Response {
 
     private final String headId;
 
-    private final int seq;
-
     private final LocalDateTime timestamp;
 
     private final Map<String, UTXO> utxo;
@@ -35,9 +33,8 @@ public class TxInvalidResponse extends Response {
                              Map<String, UTXO> utxo,
                              Transaction transaction,
                              ValidationError validationError) {
-        super(Tag.TxInvalid);
+        super(Tag.TxInvalid, seq);
         this.headId = headId;
-        this.seq = seq;
         this.timestamp = timestamp;
         this.utxo = utxo;
         this.transaction = transaction;
@@ -45,7 +42,7 @@ public class TxInvalidResponse extends Response {
     }
 
     public static TxInvalidResponse create(JsonNode raw) {
-        val utxo = MoreJson.<UTXO>convertStringMap(raw.get("utxo"));
+        val utxo = MoreJson.convertUTxOMap(raw.get("utxo"));
         val transaction = MoreJson.convert(raw.get("transaction"), Transaction.class);
         val validationError = MoreJson.convert(raw.get("validationError"), ValidationError.class);
         val headId = raw.get("headId").asText();

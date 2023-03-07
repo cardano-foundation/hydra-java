@@ -23,7 +23,7 @@ public class CommandFailedResponse extends Response {
     public CommandFailedResponse(int seq,
                                  LocalDateTime timestamp,
                                  JsonNode clientInput) {
-        super(Tag.CommandFailed);
+        super(Tag.CommandFailed, seq);
         this.seq = seq;
         this.timestamp = timestamp;
         this.clientInput = clientInput;

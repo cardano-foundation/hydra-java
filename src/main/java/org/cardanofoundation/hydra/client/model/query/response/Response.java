@@ -7,14 +7,16 @@ import org.cardanofoundation.hydra.client.model.Tag;
 public class Response {
 
     protected final Tag tag;
+    protected final int seq;
 
-    protected Response(Tag tag) {
+    protected Response(Tag tag, int seq) {
         this.tag = tag;
+        this.seq = seq;
     }
 
     @Override
     public String toString() {
-        return tag.name();
+        return String.format("{tag:%s, seq:%s}", tag.name(), seq);
     }
 
 }
