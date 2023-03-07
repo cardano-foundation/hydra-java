@@ -16,7 +16,7 @@ public class NewTxRequest extends Request {
 
     @Override
     public String getRequestBody() {
-        val template = new ST("{ \"tag\": \"<tag>\", \"transaction\": <transaction>}");
+        val template = new ST("{ \"tag\": \"<tag>\", \"transaction\": \"<transaction>\"}");
         template.add("tag", tag);
         template.add("transaction", transaction);
 

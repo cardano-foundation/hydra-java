@@ -1,13 +1,14 @@
 package org.cardanofoundation.hydra.client.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
-import org.cardanofoundation.hydra.client.model.UTXO;
 
 import java.util.List;
 
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Transaction {
 
     String id;
