@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.cardanofoundation.hydra.client.HydraException;
+import org.cardanofoundation.hydra.client.model.Party;
 import org.cardanofoundation.hydra.client.model.UTXO;
 
 import java.util.List;
@@ -33,14 +34,6 @@ public class MoreJson {
         }
     }
 
-    public static <T> T toObject(String json, Class<T> clazz) throws HydraException {
-        try {
-            return MAPPER.readValue(json, clazz);
-        } catch (JsonProcessingException e) {
-            throw new HydraException("Unable to deserialise json", e);
-        }
-    }
-
     public static JsonNode read(String json) throws HydraException {
         try {
             return MAPPER.readTree(json);
@@ -52,8 +45,8 @@ public class MoreJson {
         return MAPPER.convertValue(o, new TypeReference<Map<String, UTXO>>(){});
     }
 
-    public static <T> List<T> convertList(JsonNode o) throws HydraException {
-        return MAPPER.convertValue(o, new TypeReference<List<T>>(){});
+    public static List<Party> convertPartiesList(JsonNode o) throws HydraException {
+        return MAPPER.convertValue(o, new TypeReference<List<Party>>(){});
     }
 
     public static <T> T convert(JsonNode o, Class<T> clazz) throws HydraException {
