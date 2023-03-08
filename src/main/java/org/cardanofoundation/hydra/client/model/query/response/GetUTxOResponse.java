@@ -18,22 +18,19 @@ public class GetUTxOResponse extends Response {
 
     private final String headId;
 
-    private final int seq;
-
     private final LocalDateTime timestamp;
 
     private final Map<String, UTXO> utxo;
 
     public GetUTxOResponse(String headId, int seq, LocalDateTime timestamp, Map<String, UTXO> utxo) {
-        super(Tag.GetUTxOResponse);
+        super(Tag.GetUTxOResponse, seq);
         this.headId = headId;
-        this.seq = seq;
         this.timestamp = timestamp;
         this.utxo = utxo;
     }
 
     public static GetUTxOResponse create(JsonNode raw) {
-        val utxo = MoreJson.<UTXO>convertStringMap(raw.get("utxo"));
+        val utxo = MoreJson.convertUTxOMap(raw.get("utxo"));
 
         val headId = raw.get("headId").asText();
         val seq = raw.get("seq").asInt();

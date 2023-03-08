@@ -17,16 +17,13 @@ public class SnapshotConfirmed extends Response {
 
     private final String headId;
 
-    private final int seq;
-
     private final LocalDateTime timestamp;
 
     private final Snapshot snapshot;
 
     public SnapshotConfirmed(String headId, int seq, LocalDateTime timestamp, Snapshot snapshot) {
-        super(Tag.SnapshotConfirmed);
+        super(Tag.SnapshotConfirmed, seq);
         this.headId = headId;
-        this.seq = seq;
         this.timestamp = timestamp;
         this.snapshot = snapshot;
     }

@@ -18,16 +18,13 @@ public class HeadIsContestedResponse extends Response {
 
     private final String headId;
 
-    private final int seq;
-
     private final LocalDateTime timestamp;
 
     private final int snapshotNumber;
 
     public HeadIsContestedResponse(String headId, int seq, LocalDateTime timestamp, int snapshotNumber) {
-        super(Tag.HeadIsClosed);
+        super(Tag.HeadIsClosed, seq);
         this.headId = headId;
-        this.seq = seq;
         this.timestamp = timestamp;
         this.snapshotNumber = snapshotNumber;
     }

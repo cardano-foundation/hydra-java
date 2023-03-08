@@ -19,15 +19,12 @@ public class TxValidResponse extends Response {
 
     private final String headId;
 
-    private final int seq;
-
     private final LocalDateTime timestamp;
 
     public TxValidResponse(Transaction transaction, String headId, int seq, LocalDateTime timestamp) {
-        super(Tag.TxValid);
+        super(Tag.TxValid, seq);
         this.transaction = transaction;
         this.headId = headId;
-        this.seq = seq;
         this.timestamp = timestamp;
     }
 

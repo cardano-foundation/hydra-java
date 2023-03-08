@@ -14,13 +14,10 @@ import java.time.LocalDateTime;
 @ToString(callSuper = true)
 public class RolledbackResponse extends Response {
 
-    private final int seq;
-
     private final LocalDateTime timestamp;
 
     public RolledbackResponse(int seq, LocalDateTime timestamp) {
-        super(Tag.RolledBack);
-        this.seq = seq;
+        super(Tag.RolledBack, seq);
         this.timestamp = timestamp;
     }
 

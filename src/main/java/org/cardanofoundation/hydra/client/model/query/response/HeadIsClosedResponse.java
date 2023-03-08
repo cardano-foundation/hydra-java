@@ -20,8 +20,6 @@ public class HeadIsClosedResponse extends Response {
 
     private final String headId;
 
-    private final int seq;
-
     private final LocalDateTime timestamp;
 
     public HeadIsClosedResponse(String headId,
@@ -29,11 +27,10 @@ public class HeadIsClosedResponse extends Response {
                                 LocalDateTime contestationDeadline,
                                 int seq,
                                 LocalDateTime timestamp) {
-        super(Tag.HeadIsClosed);
+        super(Tag.HeadIsClosed, seq);
         this.headId = headId;
         this.snapshotNumber = snapshotNumber;
         this.contestationDeadline = contestationDeadline;
-        this.seq = seq;
         this.timestamp = timestamp;
     }
 

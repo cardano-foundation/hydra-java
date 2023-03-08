@@ -18,22 +18,19 @@ public class HeadIsFinalizedResponse extends Response {
 
     private final String headId;
 
-    private final int seq;
-
     private final LocalDateTime timestamp;
 
     private final Map<String, UTXO> utxo;
 
     public HeadIsFinalizedResponse(String headId, int seq, LocalDateTime timestamp, Map<String, UTXO> utxo) {
-        super(Tag.HeadIsFinalized);
+        super(Tag.HeadIsFinalized, seq);
         this.headId = headId;
-        this.seq = seq;
         this.timestamp = timestamp;
         this.utxo = utxo;
     }
 
     public static HeadIsFinalizedResponse create(JsonNode raw) {
-        val utxo = MoreJson.<UTXO>convertStringMap(raw.get("utxo"));
+        val utxo = MoreJson.convertUTxOMap(raw.get("utxo"));
         val headId = raw.get("headId").asText();
         val seq = raw.get("seq").asInt();
         val timestamp = MoreJson.convert(raw.get("timestamp"), LocalDateTime.class);

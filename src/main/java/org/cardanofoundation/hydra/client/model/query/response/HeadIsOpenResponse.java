@@ -20,21 +20,18 @@ public class HeadIsOpenResponse extends Response {
 
     private final Map<String, UTXO> utxo;
 
-    private final int seq;
-
     private final LocalDateTime timestamp;
 
     public HeadIsOpenResponse(String headId, Map<String, UTXO> utxo, int seq, LocalDateTime timestamp) {
-        super(Tag.HeadIsOpen);
+        super(Tag.HeadIsOpen, seq);
         this.headId = headId;
         this.utxo = utxo;
-        this.seq = seq;
         this.timestamp = timestamp;
     }
 
     public static HeadIsOpenResponse create(JsonNode raw) {
         val utxoNode = raw.get("utxo");
-        val utxoMap = MoreJson.<UTXO>convertStringMap(utxoNode);
+        val utxoMap = MoreJson.convertUTxOMap(utxoNode);
         val headId = raw.get("headId").asText();
         val seq = raw.get("seq").asInt();
         val timestamp = MoreJson.convert(raw.get("timestamp"), LocalDateTime.class);

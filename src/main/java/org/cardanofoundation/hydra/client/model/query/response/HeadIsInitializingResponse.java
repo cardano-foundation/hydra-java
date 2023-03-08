@@ -20,15 +20,12 @@ public class HeadIsInitializingResponse extends Response {
 
     private final String headId;
 
-    private final int seq;
-
     private final LocalDateTime timestamp;
 
     public HeadIsInitializingResponse(String headId, List<Party> parties, int seq, LocalDateTime timestamp) {
-        super(Tag.HeadIsInitializing);
+        super(Tag.HeadIsInitializing, seq);
         this.headId = headId;
         this.parties = parties;
-        this.seq = seq;
         this.timestamp = timestamp;
     }
 

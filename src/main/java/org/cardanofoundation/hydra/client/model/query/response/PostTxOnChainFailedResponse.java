@@ -15,13 +15,10 @@ import java.time.LocalDateTime;
 @ToString(callSuper = true)
 public class PostTxOnChainFailedResponse extends Response {
 
-    private final int seq;
-
     private final LocalDateTime timestamp;
 
     public PostTxOnChainFailedResponse(int seq, LocalDateTime timestamp) {
-        super(Tag.PostTxOnChainFailed);
-        this.seq = seq;
+        super(Tag.PostTxOnChainFailed, seq);
         this.timestamp = timestamp;
     }
 

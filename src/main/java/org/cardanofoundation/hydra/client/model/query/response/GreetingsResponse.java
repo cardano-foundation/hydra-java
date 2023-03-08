@@ -16,13 +16,11 @@ import java.time.LocalDateTime;
 public class GreetingsResponse extends Response {
 
     private final Party me;
-    private final int seq;
     private final LocalDateTime timestamp;
 
     public GreetingsResponse(Party party, int seq, LocalDateTime timestamp) {
-        super(Tag.Greetings);
+        super(Tag.Greetings, seq);
         this.me = party;
-        this.seq = seq;
         this.timestamp = timestamp;
     }
 

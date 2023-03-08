@@ -21,19 +21,22 @@ public class HydraWSClient extends WebSocketClient {
 
     private final static ResponseTagHandlers RESPONSE_TAG_HANDLERS = new ResponseTagHandlers();
 
+    private final int fromSeq;
+
     private Optional<HydraStateEventListener> hydraStateEventListener = Optional.empty();
 
     private Optional<HydraQueryEventListener> hydraQueryEventListener = Optional.empty();
 
     private HydraState hydraState = HydraState.Unknown;
 
-    public HydraWSClient(URI serverURI) {
+    public HydraWSClient(URI serverURI, int fromSeq) {
         super(serverURI);
-        initStateMachine();
+        this.fromSeq = fromSeq;
+        this.hydraState = HydraState.Unknown;
     }
 
-    private void initStateMachine() {
-        this.hydraState = HydraState.Unknown;
+    public HydraWSClient(URI serverURI) {
+        this(serverURI, 0);
     }
 
     public HydraState getHydraState() {
@@ -61,6 +64,8 @@ public class HydraWSClient extends WebSocketClient {
 
         val raw = MoreJson.read(message);
         val tagString = raw.get("tag").asText();
+        val seq = raw.get("seq").asInt();
+
         val maybeTag = Tag.find(tagString);
 
         if (maybeTag.isEmpty()) {
@@ -69,15 +74,28 @@ public class HydraWSClient extends WebSocketClient {
         }
 
         val tag = maybeTag.orElseThrow();
-        val queryResponse = RESPONSE_TAG_HANDLERS.responseHandlerFor(tag).orElseThrow().apply(raw);
+        val maybeResponseHandler = RESPONSE_TAG_HANDLERS.responseHandlerFor(tag);
+        if (maybeResponseHandler.isEmpty()) {
+            log.error("We don't have response handler for the following tag:{}", tag);
+        }
+        val responseHandler = maybeResponseHandler.orElseThrow();
+        val queryResponse = responseHandler.apply(raw);
 
-        hydraQueryEventListener.ifPresent(hydraQueryEventListener -> hydraQueryEventListener.onResponse(queryResponse));
+        if (isSeqAccepted(seq)) {
+            hydraQueryEventListener.ifPresent(hydraQueryEventListener -> hydraQueryEventListener.onResponse(queryResponse));
+        }
 
         RESPONSE_TAG_STATE_MAPPER.stateForTag(tag).ifPresent(newHydraState -> {
             val prevState = hydraState;
             this.hydraState = newHydraState;
-            hydraStateEventListener.ifPresent(l -> l.onStateChanged(prevState, hydraState));
+            if (isSeqAccepted(seq)) {
+                hydraStateEventListener.ifPresent(l -> l.onStateChanged(prevState, hydraState));
+            }
         });
+    }
+
+    private boolean isSeqAccepted(int seq) {
+        return seq >= fromSeq;
     }
 
     @Override

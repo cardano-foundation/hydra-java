@@ -17,14 +17,11 @@ public class ReadyToFanoutResponse extends Response {
 
     private final String headId;
 
-    private final int seq;
-
     private final LocalDateTime timestamp;
 
     public ReadyToFanoutResponse(String headId, int seq, LocalDateTime timestamp) {
-        super(Tag.ReadyToFanout);
+        super(Tag.ReadyToFanout, seq);
         this.headId = headId;
-        this.seq = seq;
         this.timestamp = timestamp;
     }
 

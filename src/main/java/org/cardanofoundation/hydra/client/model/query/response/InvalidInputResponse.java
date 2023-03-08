@@ -14,16 +14,13 @@ import java.time.LocalDateTime;
 @ToString(callSuper = true)
 public class InvalidInputResponse extends Response {
 
-    private final int seq;
-
     private final LocalDateTime timestamp;
 
     private final String reason;
     private final String input;
 
     public InvalidInputResponse(int seq, LocalDateTime timestamp, String reason, String input) {
-        super(Tag.InvalidInput);
-        this.seq = seq;
+        super(Tag.InvalidInput, seq);
         this.timestamp = timestamp;
         this.reason = reason;
         this.input = input;
