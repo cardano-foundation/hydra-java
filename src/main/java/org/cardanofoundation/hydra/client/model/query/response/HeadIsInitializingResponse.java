@@ -31,7 +31,7 @@ public class HeadIsInitializingResponse extends Response {
 
     public static HeadIsInitializingResponse create(JsonNode raw) {
         val utxoNode = raw.get("parties");
-        val parties = MoreJson.<Party>convertList(utxoNode);
+        val parties = MoreJson.convertPartiesList(utxoNode);
         val headId = raw.get("headId").asText();
         val seq = raw.get("seq").asInt();
         val timestamp = MoreJson.convert(raw.get("timestamp"), LocalDateTime.class);

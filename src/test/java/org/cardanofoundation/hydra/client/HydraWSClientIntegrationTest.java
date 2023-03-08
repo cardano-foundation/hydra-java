@@ -20,7 +20,7 @@ class HydraWSClientIntegrationTest {
 
     @BeforeAll
     void initClient() throws InterruptedException, URISyntaxException {
-        hydraWSClient = new HydraWSClient(new URI("ws://dev.cf-hydra-voting-poc.metadata.dev.cf-deployments.org:4001"), 383);
+        hydraWSClient = new HydraWSClient(new URI("ws://dev.cf-hydra-voting-poc.metadata.dev.cf-deployments.org:4001"));
         hydraWSClient.setHydraQueryEventListener(response -> log.info("response:{}", response));
         hydraWSClient.setHydraStateEventListener((prev, now) -> log.info("prev:{}, now:{}", prev, now));
         hydraWSClient.connectBlocking(60, TimeUnit.SECONDS);
