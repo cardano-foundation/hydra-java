@@ -26,12 +26,12 @@ class HydraWSClientIntegrationTest {
         hydraWSClient.connectBlocking(60, TimeUnit.SECONDS);
     }
 
-    @Test
-    void init() throws InterruptedException {
-        val l = new CountDownLatch(10);
-
-        l.await(10, TimeUnit.SECONDS);
-    }
+//    @Test
+//    void init() throws InterruptedException {
+//        val l = new CountDownLatch(10);
+//
+//        l.await(10, TimeUnit.SECONDS);
+//    }
 
     @AfterAll
     void terminate() throws InterruptedException {
