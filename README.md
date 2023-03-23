@@ -1,5 +1,6 @@
 # hydra-java-client
 
+[![Build](https://github.com/cardano-foundation/hydra-java-client/actions/workflows/maven-build.yml/badge.svg)](https://github.com/cardano-foundation/hydra-java-client/actions/workflows/maven-build.yml)
 [![License](https://img.shields.io:/github/license/cardano-foundation/hydra-java-client?label=license)](https://github.com/cardano-foundation/hydra-java-client/blob/master/LICENSE)
 
 [![Discord](https://dcbadge.vercel.app/api/server/KQJWrYkC)](https://discord.gg/KQJWrYkC)
