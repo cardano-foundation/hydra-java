@@ -28,10 +28,14 @@ public class CommitRequest extends Request {
     public String getRequestBody() {
         val template = new ST("{ \"tag\": \"<tag>\", \"utxo\": <utxo>}");
         template.add("tag", tag);
-        template.add("utxo", MoreJson.serialise(utxo));
+
+        if (utxo.isEmpty()) {
+            template.add("utxo", "{}");
+        } else {
+            template.add("utxo", MoreJson.serialise(utxo));
+        }
 
         return template.render();
     }
-
 
 }
