@@ -68,6 +68,12 @@ public class HydraWSClient extends WebSocketClient {
 
         val maybeTag = Tag.find(tagString);
 
+        if (raw.has("utxo")) {
+            val utxo = MoreJson.convertUTxOMap(raw.get("utxo"));
+
+            log.info("utxo's map size:{}", utxo.size());
+        }
+
         if (maybeTag.isEmpty()) {
             log.warn("We don't support tag:{} yet, json:{}", tagString, message);
             return;
