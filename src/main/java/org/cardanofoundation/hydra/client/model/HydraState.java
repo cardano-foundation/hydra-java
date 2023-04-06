@@ -4,7 +4,6 @@ public enum HydraState {
 
     Unknown,
     Idle,
-    ReadyToCommit,
     Initializing,
     Open,
     Final,
