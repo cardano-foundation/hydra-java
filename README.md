@@ -28,19 +28,21 @@ mvn clean install
 <dependency>
     <groupId>org.cardanofoundation</groupId>
     <artifactId>hydra-java-client</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
 </dependency>
 ```
 
 ## Compatibility
-This client is compatible with Hydra 0.9.0
+This client is compatible with Hydra's master (unreleased version yet).
 
 ## Example usage
 
 ```
-var hydraWSClient = new HydraWSClient(new URI("ws://dev.cf-hydra-voting-poc.metadata.dev.cf-deployments.org:4001"));
-hydraWSClient.setHydraQueryEventListener(response -> log.info("response:{}", response));
-hydraWSClient.setHydraStateEventListener((prev, now) -> log.info("prev:{}, now:{}", prev, now));
+var wsUrl = "ws://dev.cf-hydra-voting-poc.metadata.dev.cf-deployments.org:4001";
+var hydraClientOptions = HydraClientOptions.createDefault(wsUrl);
+var hydraWSClient = new HydraWSClient(hydraClientOptions);
+hydraWSClient.addHydraQueryEventListener(response -> log.info("response:{}", response));
+hydraWSClient.addHydraStateEventListener((prev, now) -> log.info("prev:{}, now:{}", prev, now));
 hydraWSClient.connectBlocking(60, TimeUnit.SECONDS);
 
 System.out.println(hydraWSClient.getState()); // HydraState.Idle
@@ -61,5 +63,8 @@ System.out.println(hydraWSClient.getState()); // HydraState.Open
 ## TODO
 - publish snapshot on maven
 - provide interface for Reactive Streams API
+- split into multi module project
+- Snapshot history module
 - JavaDocs and improve documentation
-- testing
+- unit test
+- integration test with test containers
