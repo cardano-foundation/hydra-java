@@ -6,7 +6,7 @@
 
     <groupId>org.cardanofoundation</groupId>
     <artifactId>hydra-java-client</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Hydra Java Client is a java library that simplifies communication with a Hydra node over websockets.</description>
     <url>https://github.com/cardano-foundation/hydra-java-client</url>
@@ -17,9 +17,9 @@
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
         <slf4j.version>2.0.6</slf4j.version>
         <Java-WebSocket.version>1.5.3</Java-WebSocket.version>
-        <lombok.version>1.18.24</lombok.version>
-        <jackson-databind.version>2.14.1</jackson-databind.version>
-        <cbor.version>0.9</cbor.version>
+        <lombok.version>1.18.26</lombok.version>
+        <jackson-databind.version>2.14.2</jackson-databind.version>
+        <jetbrains.annotations.version>24.0.1</jetbrains.annotations.version>
         <junit-jupiter-engine.version>5.9.2</junit-jupiter-engine.version>
         <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
@@ -71,11 +71,6 @@
             <version>${jackson-databind.version}</version>
         </dependency>
         <dependency>
-            <groupId>co.nstant.in</groupId>
-            <artifactId>cbor</artifactId>
-            <version>${cbor.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>${junit-jupiter-engine.version}</version>
@@ -86,6 +81,12 @@
             <artifactId>slf4j-simple</artifactId>
             <version>${slf4j.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>${jetbrains.annotations.version}</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
@@ -167,19 +168,19 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>${maven-javadoc-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-javadoc-plugin</artifactId>-->
+<!--                <version>${maven-javadoc-plugin.version}</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>attach-javadocs</id>-->
+<!--                        <goals>-->
+<!--                            <goal>jar</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
 <!--            <plugin>-->
 <!--                <groupId>org.apache.maven.plugins</groupId>-->
 <!--                <artifactId>maven-gpg-plugin</artifactId>-->
