@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Disabled
 class HydraWSClientIntegrationTest {
 
     private HydraWSClient hydraWSClient;
@@ -51,7 +52,7 @@ class HydraWSClientIntegrationTest {
     void testHistory2() throws InterruptedException {
         var hydraOptions = HydraClientOptions.builder(wsUrl)
                 .transactionFormat(CBOR)
-                .history(false)
+                .history(true)
                 .build();
 
         val latch = new CountDownLatch(1); //

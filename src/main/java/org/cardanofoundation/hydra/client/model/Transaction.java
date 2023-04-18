@@ -5,20 +5,22 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.List;
-
 @Getter
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
 @ToString
 public class Transaction {
 
+    /** Transaction ID */
     String id;
-    boolean isValid;
-    long fees;
-    List<String> inputs;
-    List<UTXO> outputs;
 
-    // TODO witnesses
+    /** whether this transaction is valid or not */
+    Boolean isValid;
+
+    TxBody txBody;
+
+    // TODO
+    // String witnesses
+    // String auxiliaryData
 
 }

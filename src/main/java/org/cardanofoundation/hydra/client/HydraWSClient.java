@@ -70,7 +70,7 @@ public class HydraWSClient {
 
     public HydraWSClient addHydraStateEventListener(HydraStateEventListener eventListener) {
         if (eventListener == null) {
-            throw new IllegalArgumentException("HydraStateEventListener instande cannot be null!");
+            throw new IllegalArgumentException("HydraStateEventListener instance cannot be null!");
         }
 
         hydraStateEventListeners.add(eventListener);
@@ -90,7 +90,7 @@ public class HydraWSClient {
 
     public HydraWSClient removeHydraStateEventListener(HydraStateEventListener eventListener) {
         if (eventListener == null) {
-            throw new IllegalArgumentException("HydraStateEventListener instande cannot be null!");
+            throw new IllegalArgumentException("HydraStateEventListener instance cannot be null!");
         }
 
         hydraStateEventListeners.remove(eventListener);
@@ -149,7 +149,7 @@ public class HydraWSClient {
 
         var delim = "&";
         var joiner = new StringJoiner(delim)
-                .add(String.format("history=%d", (hydraClientOptions.isHistory() ? 1 : 0)))
+                .add(String.format("history=%s", (hydraClientOptions.isHistory() ? "yes" : "no")))
                 .merge(transactionFormat == null ? new StringJoiner(delim) : new StringJoiner(delim).add(String.format("tx-output=%s", transactionFormat.name().toLowerCase())));
 
         return URI.create(String.format("%s?%s", serverURI, joiner));
