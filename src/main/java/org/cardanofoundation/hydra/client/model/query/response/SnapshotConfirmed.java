@@ -21,7 +21,10 @@ public class SnapshotConfirmed extends Response {
 
     private final Snapshot snapshot;
 
-    public SnapshotConfirmed(String headId, int seq, LocalDateTime timestamp, Snapshot snapshot) {
+    public SnapshotConfirmed(String headId,
+                             int seq,
+                             LocalDateTime timestamp,
+                             Snapshot snapshot) {
         super(Tag.SnapshotConfirmed, seq);
         this.headId = headId;
         this.timestamp = timestamp;

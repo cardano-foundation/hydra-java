@@ -2,8 +2,9 @@ package org.cardanofoundation.hydra.client;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.cardanofoundation.hydra.client.model.HydraState;
 import org.cardanofoundation.hydra.client.model.query.response.GreetingsResponse;
-import org.cardanofoundation.hydra.client.model.query.response.TxValidResponse;
+import org.cardanofoundation.hydra.client.model.query.response.SnapshotConfirmed;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -13,12 +14,12 @@ import java.util.concurrent.CountDownLatch;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.cardanofoundation.hydra.client.HydraClientOptions.TransactionFormat.CBOR;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Disabled
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HydraWSClientIntegrationTest {
 
     private HydraWSClient hydraWSClient;
@@ -26,8 +27,10 @@ class HydraWSClientIntegrationTest {
     private final String wsUrl = "ws://dev.cf-hydra-voting-poc.metadata.dev.cf-deployments.org:4001";
 
     @Test
-    void testHistoryTrue() throws InterruptedException {
-        var hydraOptions = HydraClientOptions.createDefault(wsUrl);
+    void testWithHistory() throws InterruptedException {
+        var hydraOptions = HydraClientOptions.builder(wsUrl)
+                .history(true)
+                .build();
 
         val latch = new CountDownLatch(1);
 
@@ -49,20 +52,19 @@ class HydraWSClientIntegrationTest {
     }
 
     @Test
-    void testHistory2() throws InterruptedException {
+    void testWithoutHistory() throws InterruptedException {
         var hydraOptions = HydraClientOptions.builder(wsUrl)
-                .transactionFormat(CBOR)
-                .history(true)
+                .history(false)
                 .build();
 
         val latch = new CountDownLatch(1); //
 
         hydraWSClient = new HydraWSClient(hydraOptions);
         hydraWSClient.addHydraQueryEventListener(response -> {
-            //log.info("{}", response);
+            log.info("{}", response);
 
-            if (response instanceof TxValidResponse) {
-                log.info("{}", response);
+            if (response instanceof SnapshotConfirmed) {
+                log.info("{}", ((SnapshotConfirmed) response).getSnapshot().getConfirmedTransactions());
             }
 
             if (response instanceof GreetingsResponse) {
@@ -77,6 +79,7 @@ class HydraWSClientIntegrationTest {
         hydraWSClient.connectBlocking(60, SECONDS);
 
         assertTrue(latch.await(10, MINUTES));
+        assertEquals(HydraState.Idle, hydraWSClient.getHydraState());
     }
 
     @AfterAll

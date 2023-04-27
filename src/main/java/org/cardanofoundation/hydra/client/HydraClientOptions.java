@@ -14,7 +14,7 @@ public class HydraClientOptions {
     private int fromSeq = 0;
 
     @Builder.Default
-    private boolean history = true;
+    private boolean history = false;
 
     @Nullable
     private TransactionFormat transactionFormat;
