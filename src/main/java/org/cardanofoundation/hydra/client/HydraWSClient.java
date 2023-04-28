@@ -6,6 +6,7 @@ import org.cardanofoundation.hydra.client.model.HydraState;
 import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.query.request.*;
+import org.cardanofoundation.hydra.client.model.query.response.GreetingsResponse;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -221,7 +222,7 @@ public class HydraWSClient {
         public void onOpen(ServerHandshake serverHandshake) {
             log.info("Connection Established!");
             log.debug("onOpen -> ServerHandshake: {}", serverHandshake);
-            HydraWSClient.this.hydraState = HydraState.Idle;
+            HydraWSClient.this.hydraState = HydraState.Unknown;
         }
 
         @Override
@@ -240,6 +241,7 @@ public class HydraWSClient {
             }
 
             val tag = maybeTag.orElseThrow();
+
             val maybeResponseHandler = RESPONSE_TAG_HANDLERS.responseHandlerFor(tag);
             if (maybeResponseHandler.isEmpty()) {
                 log.error("We don't have response handler for the following tag:{}", tag);
@@ -247,17 +249,19 @@ public class HydraWSClient {
             val responseHandler = maybeResponseHandler.orElseThrow();
             val queryResponse = responseHandler.apply(raw);
 
+            // if we don't have history this means we need to use Greetings message to get hydra state data
+            if (!hydraClientOptions.isHistory() && tag == Tag.Greetings) {
+                val greetingsResponse = (GreetingsResponse) queryResponse;
+                fireHydraStateChanged(seq, HydraWSClient.this.hydraState, greetingsResponse.getHeadStatus());
+            } else {
+                RESPONSE_TAG_STATE_MAPPER.stateForTag(tag).ifPresent(newHydraState -> {
+                    fireHydraStateChanged(seq, HydraWSClient.this.hydraState, newHydraState);
+                });
+            }
+
             if (isSeqAccepted(seq)) {
                 hydraQueryEventListeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onResponse(queryResponse));
             }
-
-            RESPONSE_TAG_STATE_MAPPER.stateForTag(tag).ifPresent(newHydraState -> {
-                val prevState = hydraState;
-                HydraWSClient.this.hydraState = newHydraState;
-                if (isSeqAccepted(seq)) {
-                    hydraStateEventListeners.forEach(l -> l.onStateChanged(prevState, hydraState));
-                }
-            });
         }
 
         @Override
@@ -272,6 +276,21 @@ public class HydraWSClient {
         public void onError(Exception e) {
             log.error("Hydra websocket error: {}", e.getMessage());
         }
+    }
+
+    private boolean fireHydraStateChanged(int seq, HydraState currentState, HydraState newState) {
+        if (currentState == newState) {
+            return false;
+        }
+        if (isSeqAccepted(seq)) {
+
+            HydraWSClient.this.hydraState = newState;
+
+            hydraStateEventListeners.forEach(l -> l.onStateChanged(currentState, newState));
+            return true;
+        }
+
+        return false;
     }
 
 }
