@@ -1,90 +1,81 @@
 package org.cardanofoundation.hydra.client;
 
+import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
-import org.cardanofoundation.hydra.client.model.HydraState;
-import org.cardanofoundation.hydra.client.model.query.response.GreetingsResponse;
-import org.cardanofoundation.hydra.client.model.query.response.SnapshotConfirmed;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Disabled;
+import org.cardanofoundation.hydra.client.model.UTXO;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
-import java.util.concurrent.CountDownLatch;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.util.Map;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.cardanofoundation.hydra.client.HydraDevNetwork.*;
+import static org.cardanofoundation.hydra.client.model.HydraState.Initializing;
+import static org.cardanofoundation.hydra.client.model.HydraState.Open;
 
 @Slf4j
-@Disabled
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class HydraWSClientIntegrationTest {
-
-    private HydraWSClient hydraWSClient;
-
-    private final String wsUrl = "ws://dev.cf-hydra-voting-poc.metadata.dev.cf-deployments.org:4001";
+public class HydraWSClientIntegrationTest {
 
     @Test
-    void testWithHistory() throws InterruptedException {
-        var hydraOptions = HydraClientOptions.builder(wsUrl)
-                .history(true)
-                .build();
+    void testHydraNetworkReachesOpenState() throws InterruptedException {
+        var stopWatch = Stopwatch.createStarted();
+        try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
+            hydraDevNetwork.start();
 
-        val latch = new CountDownLatch(1);
+            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(getHydraApiUrl(hydraDevNetwork.aliceHydraContainer, HYDRA_ALICE_REMOTE_PORT))
+                    .build());
+            aliceHydraWSClient.connectBlocking(1, MINUTES);
+            aliceHydraWSClient.addHydraQueryEventListener(response -> log.info("[alice]:" + response.toString()));
 
-        hydraWSClient = new HydraWSClient(hydraOptions);
-        hydraWSClient.addHydraQueryEventListener(response -> {
-            log.info("{}", response.getTag());
-            if (response instanceof GreetingsResponse) {
-                latch.countDown();
-            }
-        });
+            aliceHydraWSClient.init();
 
-        hydraWSClient.addHydraStateEventListener((prev, now) -> {
-            log.info("prev:{}, now:{}", prev, now);
-        });
+            var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(getHydraApiUrl(hydraDevNetwork.bobHydraContainer, HYDRA_BOB_REMOTE_PORT))
+                    .build());
+            bobHydraWSClient.addHydraQueryEventListener(response -> log.info("[bob]:" + response.toString()));
+            bobHydraWSClient.connectBlocking(1, MINUTES);
 
-        hydraWSClient.connectBlocking(60, SECONDS);
+            log.info("Awaiting for HydraState[Initializing] from alice hydra node..");
+            await().atMost(Duration.ofMinutes(1)).until(() -> aliceHydraWSClient.getHydraState() == Initializing);
 
-        assertTrue(latch.await(10, MINUTES));
-    }
+            log.info("Awaiting for HydraState[Initializing] from alice hydra node..");
+            await().atMost(Duration.ofMinutes(1)).until(() -> bobHydraWSClient.getHydraState() == Initializing);
 
-    @Test
-    void testWithoutHistory() throws InterruptedException {
-        var hydraOptions = HydraClientOptions.builder(wsUrl)
-                .history(false)
-                .build();
+            log.info("Alice hydra state:{}", aliceHydraWSClient.getHydraState());
+            log.info("Bob hydra state:{}", bobHydraWSClient.getHydraState());
 
-        val latch = new CountDownLatch(1); //
+            assertThat(aliceHydraWSClient.getHydraState())
+                    .isEqualTo(Initializing);
 
-        hydraWSClient = new HydraWSClient(hydraOptions);
-        hydraWSClient.addHydraQueryEventListener(response -> {
-            log.info("{}", response);
+            assertThat(bobHydraWSClient.getHydraState())
+                    .isEqualTo(Initializing);
 
-            if (response instanceof SnapshotConfirmed) {
-                log.info("{}", ((SnapshotConfirmed) response).getSnapshot().getConfirmedTransactions());
-            }
+            var aliceUtxo = new UTXO();
+            aliceUtxo.setAddress("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3");
+            aliceUtxo.setValue(Map.of("lovelace", BigInteger.valueOf(1000 * 1_000_000)));
 
-            if (response instanceof GreetingsResponse) {
-                latch.countDown();
-            }
-        });
+            aliceHydraWSClient.commit("ddf1db5cc1d110528828e22984d237b275af510dc82d0e7a8fc941469277e31e#0", aliceUtxo);
+            bobHydraWSClient.commit();
 
-        hydraWSClient.addHydraStateEventListener((prev, now) -> {
-            log.info("prev:{}, now:{}", prev, now);
-        });
+            await().atMost(Duration.ofMinutes(1)).until(() -> aliceHydraWSClient.getHydraState() == Open);
+            await().atMost(Duration.ofMinutes(1)).until(() -> bobHydraWSClient.getHydraState() == Open);
 
-        hydraWSClient.connectBlocking(60, SECONDS);
+            log.info("Alice hydra state:{}", aliceHydraWSClient.getHydraState());
+            log.info("Bob hydra state:{}", bobHydraWSClient.getHydraState());
 
-        assertTrue(latch.await(10, MINUTES));
-        assertEquals(HydraState.Idle, hydraWSClient.getHydraState());
-    }
+            assertThat(aliceHydraWSClient.getHydraState())
+                    .isEqualTo(Open);
 
-    @AfterAll
-    void terminate() throws InterruptedException {
-        hydraWSClient.closeBlocking();
+            assertThat(bobHydraWSClient.getHydraState())
+                    .isEqualTo(Open);
+        }
+
+        stopWatch.stop();
+
+        log.info("Total exec time: {} seconds", stopWatch.elapsed(SECONDS));
     }
 
 }
