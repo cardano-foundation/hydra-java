@@ -23,6 +23,11 @@ cd hydra-java-client
 mvn clean install
 ```
 
+## Running integration tests
+```shell
+mvn clean verify -P with-integration-tests
+```
+
 ## Dependency
 ```xml
 <dependency>
@@ -63,8 +68,8 @@ System.out.println(hydraWSClient.getState()); // HydraState.Open
 ## TODO
 - publish snapshot on maven
 - provide interface for Reactive Streams API
-- split into multi module project
+- split into multi-module project (core, reactive, etc)
 - Snapshot history module
 - JavaDocs and improve documentation
 - unit test
-- integration test with test containers
+- add integration tests for various scenarios

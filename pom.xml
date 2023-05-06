@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
+
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -15,28 +16,37 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>11</java.version>
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
-        <slf4j.version>2.0.6</slf4j.version>
+        <slf4j.version>2.0.7</slf4j.version>
         <Java-WebSocket.version>1.5.3</Java-WebSocket.version>
+        <st4.version>4.3.4</st4.version>
         <lombok.version>1.18.26</lombok.version>
-        <jackson-databind.version>2.14.2</jackson-databind.version>
+        <jackson-databind.version>2.15.0</jackson-databind.version>
         <jetbrains.annotations.version>24.0.1</jetbrains.annotations.version>
-        <junit-jupiter-engine.version>5.9.2</junit-jupiter-engine.version>
+
+        <test.containers.version>1.18.0</test.containers.version>
+        <assertj.core.version>3.24.2</assertj.core.version>
+        <awaitability.version>4.2.0</awaitability.version>
+        <guava.version>31.1-jre</guava.version>
+
+        <junit-jupiter-engine.version>5.9.3</junit-jupiter-engine.version>
         <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-        <string.template.version>4.3.4</string.template.version>
         <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
         <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.4.1</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
+
         <git.repository>cardano-foundation/hydra-java-client</git.repository>
     </properties>
 
     <dependencies>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.java-websocket</groupId>
             <artifactId>Java-WebSocket</artifactId>
@@ -48,61 +58,121 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>ST4</artifactId>
-            <version>4.3.4</version>
-            <scope>compile</scope>
+            <version>${st4.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>${jackson-databind.version}</version>
         </dependency>
+
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson-databind.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit-jupiter-engine.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
             <version>${jetbrains.annotations.version}</version>
             <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.core.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit-jupiter-engine.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+         <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>${awaitability.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>${test.containers.version}</version>
+        </dependency>
     </dependencies>
 
 
     <developers>
         <developer>
-            <id>sranjan</id>
-            <name>Satya Ranjan</name>
-            <email>satya.ranjan@cardanofoundation.org</email>
-        </developer>
-        <developer>
             <id>mczeladka</id>
             <name>Mateusz Czeladka</name>
             <email>mateusz.czeladka@cardanofoundation.org</email>
         </developer>
+        <developer>
+            <id>sranjan</id>
+            <name>Satya Ranjan</name>
+            <email>satya.ranjan@cardanofoundation.org</email>
+        </developer>
     </developers>
+
+    <profiles>
+        <profile>
+            <id>with-integration-tests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <includes>
+                                <include>**/*IntegrationTest.java</include>
+                            </includes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>
@@ -118,11 +188,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven-surefire-plugin.version}</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>**/*IntegrationTest</exclude>
+                    </excludes>
+                </configuration>
                 <version>${maven-surefire-plugin.version}</version>
             </plugin>
             <plugin>
