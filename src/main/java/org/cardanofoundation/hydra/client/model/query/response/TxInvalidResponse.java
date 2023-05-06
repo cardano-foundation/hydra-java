@@ -17,7 +17,7 @@ import java.util.Map;
 // is no longer valid (because of conflicting transactions observed in-between.
 @Getter
 @ToString(callSuper = true)
-public class TxInvalidResponse extends Response {
+public class TxInvalidResponse extends Response implements FailureResponse {
 
     private final String headId;
 
@@ -33,7 +33,7 @@ public class TxInvalidResponse extends Response {
                              Map<String, UTXO> utxo,
                              Transaction transaction,
                              ValidationError validationError) {
-        super(Tag.TxInvalid, seq);
+        super(Tag.TxInvalid, seq, true);
         this.headId = headId;
         this.timestamp = timestamp;
         this.utxo = utxo;

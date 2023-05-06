@@ -8,10 +8,18 @@ public class Response {
 
     protected final Tag tag;
     protected final int seq;
+    protected final boolean isFailure;
+
+    protected Response(Tag tag, int seq, boolean isFailure) {
+        this.tag = tag;
+        this.seq = seq;
+        this.isFailure = isFailure;
+    }
 
     protected Response(Tag tag, int seq) {
         this.tag = tag;
         this.seq = seq;
+        this.isFailure = false;
     }
 
     @Override

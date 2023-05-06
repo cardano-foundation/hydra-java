@@ -33,7 +33,8 @@ public enum Tag {
     Close,
     Contest,
     Fanout,
-    SnapshotConfirmed;
+    SnapshotConfirmed,
+    CollectComTx;
 
     public static Optional<Tag> find(String tag) {
         return Arrays.stream(values()).filter(qt -> qt.name().equals(tag)).findAny();

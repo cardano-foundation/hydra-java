@@ -6,6 +6,7 @@ import org.cardanofoundation.hydra.client.model.HydraState;
 import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.query.request.*;
+import org.cardanofoundation.hydra.client.model.query.response.FailureResponse;
 import org.cardanofoundation.hydra.client.model.query.response.GreetingsResponse;
 import org.cardanofoundation.hydra.client.util.MoreJson;
 import org.java_websocket.client.WebSocketClient;
@@ -25,7 +26,7 @@ public class HydraWSClient {
 
     private final static ResponseTagHandlers RESPONSE_TAG_HANDLERS = new ResponseTagHandlers();
 
-    private final HydraWebSocketHandler hydraWebSocketHandler;
+    protected final HydraWebSocketHandler hydraWebSocketHandler;
 
     private List<HydraStateEventListener> hydraStateEventListeners = new CopyOnWriteArrayList<>();
 
@@ -97,10 +98,6 @@ public class HydraWSClient {
         hydraStateEventListeners.remove(eventListener);
 
         return this;
-    }
-
-    protected HydraWebSocketHandler getHydraWebSocketHandler() {
-        return hydraWebSocketHandler;
     }
 
     public void connect() {
@@ -199,7 +196,6 @@ public class HydraWSClient {
         hydraWebSocketHandler.send(request.getRequestBody());
     }
 
-
     // Finalize a head after the contestation period passed. This will distribute the final (as closed and maybe contested) head state back on the layer 1.
     public void fanOut() {
         val request = new FanoutRequest();
@@ -260,7 +256,19 @@ public class HydraWSClient {
             }
 
             if (isSeqAccepted(seq)) {
+                if (queryResponse instanceof FailureResponse) {
+                    var failureResponse = (FailureResponse) queryResponse;
+                    if (hydraClientOptions.isDoNotPropagateLowLevelFailures() && failureResponse.isLowLevelFailure()) {
+                        log.info("Low level consensus failure, ignoring...");
+                        return;
+                    }
+                }
                 hydraQueryEventListeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onResponse(queryResponse));
+                if (queryResponse.isFailure()) {
+                    hydraQueryEventListeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onFailure(queryResponse));
+                } else {
+                    hydraQueryEventListeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onSuccess(queryResponse));
+                }
             }
         }
 
