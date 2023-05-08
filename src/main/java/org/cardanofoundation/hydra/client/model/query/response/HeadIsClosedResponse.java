@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.val;
 import org.cardanofoundation.hydra.client.model.Tag;
-import org.cardanofoundation.hydra.client.util.MoreJson;
+import org.cardanofoundation.hydra.client.internal.utils.MoreJson;
 
 import java.time.LocalDateTime;
 

@@ -5,7 +5,7 @@ import lombok.val;
 import org.cardanofoundation.hydra.client.model.Request;
 import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.model.UTXO;
-import org.cardanofoundation.hydra.client.util.MoreJson;
+import org.cardanofoundation.hydra.client.internal.utils.MoreJson;
 import org.stringtemplate.v4.ST;
 
 import java.util.HashMap;

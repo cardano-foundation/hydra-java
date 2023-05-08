@@ -1,4 +1,4 @@
-package org.cardanofoundation.hydra.client.helpers;
+package org.cardanofoundation.hydra.client.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

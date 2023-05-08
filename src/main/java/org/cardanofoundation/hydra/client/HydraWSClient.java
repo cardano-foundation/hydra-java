@@ -8,7 +8,7 @@ import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.query.request.*;
 import org.cardanofoundation.hydra.client.model.query.response.FailureResponse;
 import org.cardanofoundation.hydra.client.model.query.response.GreetingsResponse;
-import org.cardanofoundation.hydra.client.util.MoreJson;
+import org.cardanofoundation.hydra.client.internal.utils.MoreJson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
