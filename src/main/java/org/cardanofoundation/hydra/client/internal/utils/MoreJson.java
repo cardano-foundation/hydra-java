@@ -1,4 +1,4 @@
-package org.cardanofoundation.hydra.client.util;
+package org.cardanofoundation.hydra.client.internal.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;

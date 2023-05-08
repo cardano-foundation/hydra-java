@@ -8,7 +8,7 @@ import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.model.Transaction;
 import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.ValidationError;
-import org.cardanofoundation.hydra.client.util.MoreJson;
+import org.cardanofoundation.hydra.client.internal.utils.MoreJson;
 
 import java.time.LocalDateTime;
 import java.util.Map;
