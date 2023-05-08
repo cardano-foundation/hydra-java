@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 // Emitted by the server when a well-formed client input was not processable. For example, if trying to close a non opened head or, when trying to commit after having already committed.
 @Getter
 @ToString(callSuper = true)
-public class CommandFailedResponse extends Response {
+public class CommandFailedResponse extends Response implements FailureResponse {
 
     private final int seq;
 
@@ -23,7 +23,7 @@ public class CommandFailedResponse extends Response {
     public CommandFailedResponse(int seq,
                                  LocalDateTime timestamp,
                                  JsonNode clientInput) {
-        super(Tag.CommandFailed, seq);
+        super(Tag.CommandFailed, seq, true);
         this.seq = seq;
         this.timestamp = timestamp;
         this.clientInput = clientInput;

@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.stringtemplate.v4.ST;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.startupcheck.OneShotStartupCheckStrategy;
@@ -16,7 +15,6 @@ import org.testcontainers.containers.wait.strategy.DockerHealthcheckWaitStrategy
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.lifecycle.Startable;
 import org.testcontainers.lifecycle.Startables;
-import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -78,13 +76,8 @@ public class HydraDevNetwork implements Startable {
 
         log.info("ReferenceScriptsTxId:{}", referenceScriptsTxId);
 
-        var hydraNet = Network.builder().createNetworkCmdModifier(createNetworkCmd -> {
-            createNetworkCmd.withName("hydra_net");
-            createNetworkCmd.withAttachable(true);
-        }).build();
-
-        this.aliceHydraContainer = createAliceHydraNode(cardanoContainer, referenceScriptsTxId, hydraNet);
-        this.bobHydraContainer = createBobHydraNode(cardanoContainer, referenceScriptsTxId, hydraNet);
+        this.aliceHydraContainer = createAliceHydraNode(cardanoContainer, referenceScriptsTxId);
+        this.bobHydraContainer = createBobHydraNode(cardanoContainer, referenceScriptsTxId);
 
         this.aliceHydraContainer.dependsOn(cardanoContainer);
         this.bobHydraContainer.dependsOn(cardanoContainer);
@@ -210,7 +203,7 @@ public class HydraDevNetwork implements Startable {
                 );
     }
 
-    protected GenericContainer<?> createAliceHydraNode(GenericContainer<?> cardanoContainer, String scriptsTxId, Network hydraNet) {
+    protected GenericContainer<?> createAliceHydraNode(GenericContainer<?> cardanoContainer, String scriptsTxId) {
         String containerName = "alice-hydra-node";
 
         return new GenericContainer<>(INPUT_OUTPUT_HYDRA_NODE)
@@ -225,8 +218,6 @@ public class HydraDevNetwork implements Startable {
                 .withLogConsumer(new Slf4jLogConsumer(log).withPrefix(containerName))
                 .waitingFor(Wait.forHttp("/").forStatusCode(400)) // TODO clever websocket check, e.g. peer connected
                 .withEnv(Map.of("HYDRA_SCRIPTS_TX_ID", scriptsTxId))
-                .withNetwork(hydraNet)
-                .withNetworkAliases(containerName)
 
                 .withCreateContainerCmdModifier(cmd -> cmd.withName(containerName).withHostName(containerName).withAliases(containerName))
                 .withCommand(
@@ -250,7 +241,7 @@ public class HydraDevNetwork implements Startable {
                         , "--node-socket", "/devnet/node.socket");
     }
 
-    protected GenericContainer<?> createBobHydraNode(GenericContainer<?> cardanoContainer, String scriptsTxId, Network hydraNet) {
+    protected GenericContainer<?> createBobHydraNode(GenericContainer<?> cardanoContainer, String scriptsTxId) {
         String containerName = "bob-hydra-node";
 
         return new GenericContainer<>(INPUT_OUTPUT_HYDRA_NODE)
@@ -265,8 +256,6 @@ public class HydraDevNetwork implements Startable {
                 .waitingFor(new DockerHealthcheckWaitStrategy())
                 .waitingFor(Wait.forHttp("/").forStatusCode(400)) // TODO make clever websocket check
                 .withEnv(Map.of("HYDRA_SCRIPTS_TX_ID", scriptsTxId))
-                .withNetwork(hydraNet)
-                .withNetworkAliases(containerName)
                 .withCreateContainerCmdModifier(cmd -> cmd.withName(containerName).withHostName(containerName).withAliases(containerName))
                 .withCommand(
                         "-q",

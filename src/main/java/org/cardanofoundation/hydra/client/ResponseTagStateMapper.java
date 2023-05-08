@@ -18,7 +18,7 @@ public class ResponseTagStateMapper {
         tagToStateMap.put(Tag.HeadIsClosed, HydraState.Closed);
         tagToStateMap.put(Tag.HeadIsAborted, HydraState.Final);
         tagToStateMap.put(Tag.HeadIsFinalized, HydraState.Final);
-        tagToStateMap.put(Tag.HeadIsContested, HydraState.Final);
+        tagToStateMap.put(Tag.HeadIsContested, HydraState.Closed);
         tagToStateMap.put(Tag.ReadyToFanout, HydraState.FanoutPossible);
     }
 

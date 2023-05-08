@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 // Emitted by the server when it has failed to parse some client input. It returns the malformed input as well as some hint about what went wrong.
 @Getter
 @ToString(callSuper = true)
-public class InvalidInputResponse extends Response {
+public class InvalidInputResponse extends Response implements FailureResponse {
 
     private final LocalDateTime timestamp;
 
@@ -20,7 +20,7 @@ public class InvalidInputResponse extends Response {
     private final String input;
 
     public InvalidInputResponse(int seq, LocalDateTime timestamp, String reason, String input) {
-        super(Tag.InvalidInput, seq);
+        super(Tag.InvalidInput, seq, true);
         this.timestamp = timestamp;
         this.reason = reason;
         this.input = input;
