@@ -43,7 +43,7 @@ This client is compatible with Hydra's master (unreleased version yet).
 ## Example usage
 
 ```
-var wsUrl = "ws://dev.cf-hydra-voting-poc.metadata.dev.cf-deployments.org:4001";
+var wsUrl = "ws://localhost:4001"; // locally running hydra instance
 var hydraClientOptions = HydraClientOptions.createDefault(wsUrl);
 var hydraWSClient = new HydraWSClient(hydraClientOptions);
 hydraWSClient.addHydraQueryEventListener(response -> log.info("response:{}", response));
