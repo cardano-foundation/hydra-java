@@ -22,8 +22,9 @@
         <Java-WebSocket.version>1.5.3</Java-WebSocket.version>
         <st4.version>4.3.4</st4.version>
         <lombok.version>1.18.26</lombok.version>
-        <jackson-databind.version>2.15.0</jackson-databind.version>
+        <jackson.databind.version>2.15.0</jackson.databind.version>
         <jetbrains.annotations.version>24.0.1</jetbrains.annotations.version>
+        <cardano.client.lib.version>0.4.3</cardano.client.lib.version>
 
         <test.containers.version>1.18.0</test.containers.version>
         <assertj.core.version>3.24.2</assertj.core.version>
@@ -78,13 +79,19 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>${jackson-databind.version}</version>
+                <version>${jackson.databind.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.bloxbean.cardano</groupId>
+                <artifactId>cardano-client-lib</artifactId>
+                <version>${cardano.client.lib.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${jackson-databind.version}</version>
+                <version>${jackson.databind.version}</version>
             </dependency>
 
             <dependency>

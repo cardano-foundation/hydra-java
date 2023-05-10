@@ -1,34 +1,54 @@
 package org.cardanofoundation.hydra.client.client;
 
+import com.bloxbean.cardano.client.api.ProtocolParamsSupplier;
+import com.bloxbean.cardano.client.exception.CborSerializationException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.cardanofoundation.hydra.client.HydraClientOptions;
 import org.cardanofoundation.hydra.client.HydraQueryEventListener;
 import org.cardanofoundation.hydra.client.HydraWSClient;
+import org.cardanofoundation.hydra.client.client.utils.JacksonClasspathProtocolParametersSupplier;
+import org.cardanofoundation.hydra.client.client.utils.JacksonClasspathSecretKeyAccountSupplier;
+import org.cardanofoundation.hydra.client.client.utils.SerialisedTransactionsSupplier;
+import org.cardanofoundation.hydra.client.client.utils.SnapshotUTxOSupplier;
 import org.cardanofoundation.hydra.client.model.UTXO;
-import org.cardanofoundation.hydra.client.model.query.response.GreetingsResponse;
-import org.cardanofoundation.hydra.client.model.query.response.HeadIsOpenResponse;
-import org.cardanofoundation.hydra.client.model.query.response.Response;
-import org.cardanofoundation.hydra.client.model.query.response.SnapshotConfirmed;
+import org.cardanofoundation.hydra.client.model.query.response.*;
 import org.cardanofoundation.hydra.client.utils.SLF4JHydraLogger;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.cardanofoundation.hydra.client.model.HydraState.*;
+import static org.cardanofoundation.hydra.client.utils.HexUtils.encodeHexString;
 
 @Slf4j
-@TestInstance(TestInstance.Lifecycle.PER_METHOD)
 public class HydraWSClientIntegrationTest {
+
+    private static ProtocolParamsSupplier PROTOCOL_PARAMS_SUPPLIER;
+    private static JacksonClasspathSecretKeyAccountSupplier ALICE_ACCOUNT_SUPPLIER;
+    private static JacksonClasspathSecretKeyAccountSupplier BOB_ACCOUNT_SUPPLIER;
+
+    @BeforeAll
+    public static void setUpOnce() throws CborSerializationException {
+        var objectMapper = new ObjectMapper();
+        // TODO when hydra supports protocol params via REST we can make it better
+        PROTOCOL_PARAMS_SUPPLIER = new JacksonClasspathProtocolParametersSupplier(objectMapper);
+        ALICE_ACCOUNT_SUPPLIER = new JacksonClasspathSecretKeyAccountSupplier(objectMapper, "devnet/credentials/alice.sk");
+        BOB_ACCOUNT_SUPPLIER = new JacksonClasspathSecretKeyAccountSupplier(objectMapper, "devnet/credentials/bob.sk");
+        log.info("Classpath Alice address:{}", ALICE_ACCOUNT_SUPPLIER.getOperatorAddress());
+        log.info("Classpath Bob address:{}", BOB_ACCOUNT_SUPPLIER.getOperatorAddress());
+    }
 
     /**
      * Integration tests which tests library and the whole journey from:
@@ -251,9 +271,9 @@ public class HydraWSClientIntegrationTest {
         log.info("Total exec time: {} seconds", stopWatch.elapsed(SECONDS));
     }
 
-    // tests head opening, getting utxo map (initial utxo snapshot)
+    // tests head opening, getting utxo map (initial utxo snapshot) and send one simple transaction from alice to bob
     @Test
-    public void testHydraOpeningWithInitialSnapshot() throws InterruptedException {
+    public void testHydraOpeningWithInitialSnapshotAndSendingTransaction() throws InterruptedException {
         var stopWatch = Stopwatch.createStarted();
 
         try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
@@ -271,6 +291,9 @@ public class HydraWSClientIntegrationTest {
             var aliceHeadIsOpen = new CompletableFuture<HeadIsOpenResponse>();
             var bobHeadIsOpen = new CompletableFuture<HeadIsOpenResponse>();
 
+            var aliceTxValidResponse = new CompletableFuture<TxValidResponse>();
+            var aliceTxInvalidResponse = new CompletableFuture<TxInvalidResponse>();
+
             aliceHydraWSClient.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
 
                 @Override
@@ -280,6 +303,12 @@ public class HydraWSClientIntegrationTest {
                     }
                     if (response instanceof HeadIsOpenResponse) {
                         aliceHeadIsOpen.complete((HeadIsOpenResponse) response);
+                    }
+                    if (response instanceof TxValidResponse) {
+                        aliceTxValidResponse.complete((TxValidResponse) response);
+                    }
+                    if (response instanceof TxInvalidResponse) {
+                        aliceTxInvalidResponse.complete((TxInvalidResponse) response);
                     }
                 }
 
@@ -302,6 +331,7 @@ public class HydraWSClientIntegrationTest {
                     if (response instanceof HeadIsOpenResponse) {
                         bobHeadIsOpen.complete((HeadIsOpenResponse) response);
                     }
+
                 }
 
                 @Override
@@ -342,15 +372,18 @@ public class HydraWSClientIntegrationTest {
                     .failFast(errorFuture::isDone)
                     .untilAsserted(() -> assertThat(bobHydraWSClient.getHydraState()).isEqualTo(Open));
 
+            var latestSnapshot = new AtomicReference<Map<String, UTXO>>(Map.of());
+
             log.info("Check if alice receives head is open...");
             await().atMost(Duration.ofMinutes(1))
+                    .failFast(errorFuture::isDone)
                     .until(() -> aliceHeadIsOpen, future -> {
-
                         try {
                             if (!future.isDone()) {
                                 return false;
                             }
                             var headIsOpenResponse = future.get();
+                            latestSnapshot.set(headIsOpenResponse.getUtxo());
 
                             var utxo = headIsOpenResponse.getUtxo().get("ddf1db5cc1d110528828e22984d237b275af510dc82d0e7a8fc941469277e31e#0");
 
@@ -363,12 +396,14 @@ public class HydraWSClientIntegrationTest {
 
             log.info("Check if bob receives head is open...");
             await().atMost(Duration.ofMinutes(1))
+                    .failFast(errorFuture::isDone)
                     .until(() -> bobHeadIsOpen, future -> {
                         try {
                             if (!future.isDone()) {
                                 return false;
                             }
                             var headIsOpenResponse = future.get();
+                            latestSnapshot.set(headIsOpenResponse.getUtxo());
 
                             var utxo = headIsOpenResponse.getUtxo().get("ddf1db5cc1d110528828e22984d237b275af510dc82d0e7a8fc941469277e31e#0");
 
@@ -378,6 +413,23 @@ public class HydraWSClientIntegrationTest {
                             throw new RuntimeException(e);
                         }
                     });
+
+            assertThat(latestSnapshot.get()).isNotEmpty();
+
+            var transactionSender = new SerialisedTransactionsSupplier(
+                    new SnapshotUTxOSupplier(latestSnapshot.get()),
+                    PROTOCOL_PARAMS_SUPPLIER,
+                    ALICE_ACCOUNT_SUPPLIER,
+                    BOB_ACCOUNT_SUPPLIER
+            );
+            var trxBytes = transactionSender.sendAdaTransaction(1);
+
+            aliceHydraWSClient.newTx(encodeHexString(trxBytes));
+
+            log.info("Let's check if alice transaction to send 1 ADA to bob is successful...");
+            await().atMost(Duration.ofMinutes(1))
+                    .failFast(() -> errorFuture.isDone() || aliceTxInvalidResponse.isDone())
+                    .until(() -> aliceTxValidResponse.isDone() && !aliceTxValidResponse.get().isFailure());
         }
 
         stopWatch.stop();
