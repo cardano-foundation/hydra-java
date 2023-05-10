@@ -24,4 +24,4 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: mvn -Drevision=0.0.5-SNAPSHOT -B package --file pom.xml

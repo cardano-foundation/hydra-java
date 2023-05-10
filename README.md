@@ -1,9 +1,9 @@
-# hydra-java-client
+# hydra-java
 
-[![Build](https://github.com/cardano-foundation/hydra-java-client/actions/workflows/maven-build.yml/badge.svg)](https://github.com/cardano-foundation/hydra-java-client/actions/workflows/maven-build.yml)
-[![License](https://img.shields.io:/github/license/cardano-foundation/hydra-java-client?label=license)](https://github.com/cardano-foundation/hydra-java-client/blob/master/LICENSE)
+[![Build](https://github.com/cardano-foundation/hydra-java/actions/workflows/maven-build.yml/badge.svg)](https://github.com/cardano-foundation/hydra-java/actions/workflows/maven-build.yml)
+[![License](https://img.shields.io:/github/license/cardano-foundation/hydra-java?label=license)](https://github.com/cardano-foundation/hydra-java/blob/master/LICENSE)
 
-This is an **incubator project**, which simplifies working with Hydra from java applications. Hydra is an isomorphic state machine L2 network, which works seemlessly with Cardano.
+This is an **incubator project**, which simplifies working with Hydra from java applications. Hydra is an isomorphic state machine L2 network, which works seamlessly with Cardano.
 
 ## Hydra
 You can access documentation regarding Hydra here: https://hydra.family/head-protocol/. We recommend especially to follow QuickStart on devnet network (https://hydra.family/head-protocol/docs/getting-started/quickstart) and (https://hydra.family/head-protocol/docs/getting-started/demo/with-docker) as well as reading (https://hydra.family/head-protocol/docs/tutorial/using_hydra/using-hydra-part-3)
@@ -18,9 +18,9 @@ Hydra State Machine Diagram: https://hydra.family/head-protocol/core-concepts/be
 
 ## Building
 ```
-git clone https://github.com/cardano-foundation/hydra-java-client
-cd hydra-java-client
-mvn clean install
+git clone https://github.com/cardano-foundation/hydra-java
+cd hydra-java
+mvn -Drevision=0.0.5-SNAPSHOT clean install
 ```
 
 ## Running integration tests
@@ -30,11 +30,18 @@ mvn clean verify -P with-integration-tests
 
 ## Dependency
 ```xml
-<dependency>
-    <groupId>org.cardanofoundation</groupId>
-    <artifactId>hydra-java-client</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
-</dependency>
+<dependencies>
+    <dependency>
+        <groupId>org.cardanofoundation</groupId>
+        <artifactId>hydra-java-client</artifactId>
+        <version>0.0.5-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+        <groupId>org.cardanofoundation</groupId>
+        <artifactId>hydra-java-high-level-client</artifactId>
+        <version>0.0.5-SNAPSHOT</version>
+    </dependency>
+</dependencies>
 ```
 
 ## Compatibility
@@ -66,10 +73,7 @@ System.out.println(hydraWSClient.getState()); // HydraState.Open
 ```
 
 ## TODO
-- publish snapshot on maven
-- provide interface for Reactive Streams API
-- split into multi-module project (core, reactive, etc)
-- Snapshot history module
+- Publish snapshot on maven
 - JavaDocs and improve documentation
-- unit test
+- Unit tests
 - add integration tests for various scenarios
