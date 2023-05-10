@@ -11,9 +11,6 @@ public class HydraClientOptions {
     private final String serverURI;
 
     @Builder.Default
-    private int fromSeq = 0;
-
-    @Builder.Default
     private boolean history = false;
 
     /**

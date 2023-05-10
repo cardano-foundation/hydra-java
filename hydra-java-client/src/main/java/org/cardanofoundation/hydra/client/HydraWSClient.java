@@ -125,15 +125,6 @@ public class HydraWSClient {
         hydraWebSocketHandler.closeBlocking();
     }
 
-    private boolean isSeqAccepted(int seq) {
-        var fromSeq = hydraClientOptions.getFromSeq();
-        if (fromSeq < 0) {
-            return true;
-        }
-
-        return seq >= hydraClientOptions.getFromSeq();
-    }
-
     private static URI createHydraServerUri(HydraClientOptions hydraClientOptions) {
         String serverURI = hydraClientOptions.getServerURI();
         if (!serverURI.startsWith("ws://") && !serverURI.startsWith("wss://")) {
@@ -234,7 +225,6 @@ public class HydraWSClient {
 
             val raw = MoreJson.read(message);
             val tagString = raw.get("tag").asText();
-            val seq = raw.get("seq").asInt();
 
             val maybeTag = Tag.find(tagString);
 
@@ -255,27 +245,25 @@ public class HydraWSClient {
             // if we don't have history this means we need to use Greetings message to get hydra state data
             if (!hydraClientOptions.isHistory() && tag == Tag.Greetings) {
                 val greetingsResponse = (GreetingsResponse) queryResponse;
-                fireHydraStateChanged(seq, HydraWSClient.this.hydraState, greetingsResponse.getHeadStatus());
+                fireHydraStateChanged(HydraWSClient.this.hydraState, greetingsResponse.getHeadStatus());
             } else {
                 RESPONSE_TAG_STATE_MAPPER.stateForTag(tag).ifPresent(newHydraState -> {
-                    fireHydraStateChanged(seq, HydraWSClient.this.hydraState, newHydraState);
+                    fireHydraStateChanged(HydraWSClient.this.hydraState, newHydraState);
                 });
             }
 
-            if (isSeqAccepted(seq)) {
-                if (queryResponse instanceof FailureResponse) {
-                    var failureResponse = (FailureResponse) queryResponse;
-                    if (hydraClientOptions.isDoNotPropagateLowLevelFailures() && failureResponse.isLowLevelFailure()) {
-                        log.info("Low level consensus failure, ignoring...");
-                        return;
-                    }
+            if (queryResponse instanceof FailureResponse) {
+                var failureResponse = (FailureResponse) queryResponse;
+                if (hydraClientOptions.isDoNotPropagateLowLevelFailures() && failureResponse.isLowLevelFailure()) {
+                    log.info("Low level consensus failure, ignoring...");
+                    return;
                 }
-                hydraQueryEventListeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onResponse(queryResponse));
-                if (queryResponse.isFailure()) {
-                    hydraQueryEventListeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onFailure(queryResponse));
-                } else {
-                    hydraQueryEventListeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onSuccess(queryResponse));
-                }
+            }
+            hydraQueryEventListeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onResponse(queryResponse));
+            if (queryResponse.isFailure()) {
+                hydraQueryEventListeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onFailure(queryResponse));
+            } else {
+                hydraQueryEventListeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onSuccess(queryResponse));
             }
         }
 
@@ -293,19 +281,15 @@ public class HydraWSClient {
         }
     }
 
-    private boolean fireHydraStateChanged(int seq, HydraState currentState, HydraState newState) {
+    private boolean fireHydraStateChanged(HydraState currentState, HydraState newState) {
         if (currentState == newState) {
             return false;
         }
-        if (isSeqAccepted(seq)) {
+        HydraWSClient.this.hydraState = newState;
 
-            HydraWSClient.this.hydraState = newState;
+        hydraStateEventListeners.forEach(l -> l.onStateChanged(currentState, newState));
 
-            hydraStateEventListeners.forEach(l -> l.onStateChanged(currentState, newState));
-            return true;
-        }
-
-        return false;
+        return true;
     }
 
 }
