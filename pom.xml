@@ -304,8 +304,10 @@
     </distributionManagement>
 
     <modules>
+        <module>hydra-java-core</module>
         <module>hydra-java-client</module>
         <module>hydra-java-high-level-client</module>
+        <module>hydra-java-cardano-client-lib-adapter</module>
     </modules>
 
 </project>

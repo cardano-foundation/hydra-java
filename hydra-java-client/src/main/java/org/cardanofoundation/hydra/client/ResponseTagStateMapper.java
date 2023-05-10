@@ -1,7 +1,7 @@
 package org.cardanofoundation.hydra.client;
 
-import org.cardanofoundation.hydra.client.model.HydraState;
-import org.cardanofoundation.hydra.client.model.Tag;
+import org.cardanofoundation.hydra.core.model.HydraState;
+import org.cardanofoundation.hydra.core.model.Tag;
 
 import java.util.HashMap;
 import java.util.Map;

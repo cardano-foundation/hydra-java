@@ -14,7 +14,7 @@ public class HydraClientOptions {
     private boolean history = false;
 
     /**
-     * Hydra interal consensus level errors are not propagated to the developer
+     * Hydra internal consensus level errors are not propagated to the developer
      */
     @Builder.Default
     private boolean doNotPropagateLowLevelFailures = true;

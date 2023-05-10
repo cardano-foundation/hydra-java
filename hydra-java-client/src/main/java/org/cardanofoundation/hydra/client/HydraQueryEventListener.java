@@ -1,6 +1,6 @@
 package org.cardanofoundation.hydra.client;
 
-import org.cardanofoundation.hydra.client.model.query.response.Response;
+import org.cardanofoundation.hydra.core.model.query.response.Response;
 
 import java.util.EventListener;
 

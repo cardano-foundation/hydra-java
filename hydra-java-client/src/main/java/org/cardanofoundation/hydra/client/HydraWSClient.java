@@ -2,13 +2,13 @@ package org.cardanofoundation.hydra.client;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.cardanofoundation.hydra.client.model.HydraState;
-import org.cardanofoundation.hydra.client.model.Tag;
-import org.cardanofoundation.hydra.client.model.UTXO;
-import org.cardanofoundation.hydra.client.model.query.request.*;
-import org.cardanofoundation.hydra.client.model.query.response.FailureResponse;
-import org.cardanofoundation.hydra.client.model.query.response.GreetingsResponse;
-import org.cardanofoundation.hydra.client.utils.MoreJson;
+import org.cardanofoundation.hydra.core.model.HydraState;
+import org.cardanofoundation.hydra.core.model.Tag;
+import org.cardanofoundation.hydra.core.model.UTXO;
+import org.cardanofoundation.hydra.core.model.query.request.*;
+import org.cardanofoundation.hydra.core.model.query.response.FailureResponse;
+import org.cardanofoundation.hydra.core.model.query.response.GreetingsResponse;
+import org.cardanofoundation.hydra.core.utils.MoreJson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
@@ -177,7 +177,7 @@ public class HydraWSClient {
     }
 
     // Submit a transaction through the head. Note that the transaction is only broadcast if well-formed and valid.
-    public void newTx(String transaction) {
+    public void submitTx(String transaction) {
         val request = new NewTxRequest(transaction);
         hydraWebSocketHandler.send(request.getRequestBody());
     }
