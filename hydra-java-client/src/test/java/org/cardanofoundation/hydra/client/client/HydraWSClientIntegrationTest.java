@@ -33,7 +33,7 @@ public class HydraWSClientIntegrationTest {
     /**
      * Integration tests which tests library and the whole journey from:
      * connection, HydraState.Init -> HydraState.Open -> HydraState.Closed -> HydraState.FanoutPossible -> HydraState.Final
-     * and finally closing the connection. In addition this test will test if Greetings message contains hydra state and initial utxos (empty).
+     * and finally closing the connection. In top of that, this test will test if Greetings message contains hydra state and initial utxos (empty).
      */
     @Test
     public void testHydraNetworkReachesOpenState() throws InterruptedException {
@@ -251,8 +251,9 @@ public class HydraWSClientIntegrationTest {
         log.info("Total exec time: {} seconds", stopWatch.elapsed(SECONDS));
     }
 
+    // tests head opening, getting utxo map (initial utxo snapshot)
     @Test
-    public void testHydraTransactions() throws InterruptedException {
+    public void testHydraOpeningWithInitialSnapshot() throws InterruptedException {
         var stopWatch = Stopwatch.createStarted();
 
         try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
@@ -383,38 +384,6 @@ public class HydraWSClientIntegrationTest {
 
         log.info("Total exec time: {} seconds", stopWatch.elapsed(SECONDS));
     }
-
-//    private void sendAda(String fromActor, String toActor, long lovelaces) {
-//        var senderAccount = getAccount(from);
-//        var senderAddress = senderAccount.baseAddress();
-//
-//        var receiverAddress = getReceiverAddress(to);
-//
-//        var backendService = providerCommands.getActiveProvider().orElseThrow().backendService();
-//        var transactionService = backendService.getTransactionService();
-//
-//        var output = Output.builder()
-//                .address(receiverAddress)
-//                .assetName(LOVELACE)
-//                .qty(adaToLovelace(adaAmount))
-//                .build();
-//
-//        var txBuilder = output.outputBuilder()
-//                .buildInputs(createFromSender(senderAddress, senderAddress))
-//                .andThen(balanceTx(senderAddress, 1));
-//
-//        var utxoSupplier = new DefaultUtxoSupplier(backendService.getUtxoService());
-//        var protocolParamsSupplier = new DefaultProtocolParamsSupplier(backendService.getEpochService());
-//
-//        var signedTransaction = TxBuilderContext.init(utxoSupplier, protocolParamsSupplier)
-//                .buildAndSign(txBuilder, signerFrom(senderAccount));
-//
-//        var result = backendService.getTransactionService().submitTransaction(signedTransaction.serialize());
-//
-//        waitForTransaction(transactionService, result);
-//
-//        System.out.println(success("Transaction success, result: %s", result.getValue()));
-//    }
 
     // More scenarios to cover:
     // - open a head, create a few transactions in the network after which close the head and fanout

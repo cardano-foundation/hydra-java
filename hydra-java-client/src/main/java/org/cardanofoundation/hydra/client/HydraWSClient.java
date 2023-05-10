@@ -29,9 +29,9 @@ public class HydraWSClient {
 
     protected final HydraWebSocketHandler hydraWebSocketHandler;
 
-    private List<HydraStateEventListener> hydraStateEventListeners = new CopyOnWriteArrayList<>();
+    private final List<HydraStateEventListener> hydraStateEventListeners = new CopyOnWriteArrayList<>();
 
-    private List<HydraQueryEventListener> hydraQueryEventListeners = new CopyOnWriteArrayList<>();
+    private final List<HydraQueryEventListener> hydraQueryEventListeners = new CopyOnWriteArrayList<>();
 
     private final HydraClientOptions hydraClientOptions;
 
