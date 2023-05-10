@@ -2,18 +2,19 @@ package org.cardanofoundation.hydra.client;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.cardanofoundation.hydra.client.internal.utils.MoreJson;
 import org.cardanofoundation.hydra.client.model.HydraState;
 import org.cardanofoundation.hydra.client.model.Tag;
 import org.cardanofoundation.hydra.client.model.UTXO;
 import org.cardanofoundation.hydra.client.model.query.request.*;
 import org.cardanofoundation.hydra.client.model.query.response.FailureResponse;
 import org.cardanofoundation.hydra.client.model.query.response.GreetingsResponse;
-import org.cardanofoundation.hydra.client.internal.utils.MoreJson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -169,6 +170,12 @@ public class HydraWSClient {
     public void commit(String utxoId, UTXO utxo) {
         val request = new CommitRequest();
         request.addUTXO(utxoId, utxo);
+        hydraWebSocketHandler.send(request.getRequestBody());
+    }
+
+    public void commit(Map<String, UTXO> utxoMap) {
+        val request = new CommitRequest();
+        utxoMap.forEach(request::addUTXO);
         hydraWebSocketHandler.send(request.getRequestBody());
     }
 

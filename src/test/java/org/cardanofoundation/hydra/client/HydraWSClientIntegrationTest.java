@@ -377,11 +377,45 @@ public class HydraWSClientIntegrationTest {
                     });
 
             // alice send some ADA to BOB
+
+            aliceHydraWSClient.newTx();
         }
 
         stopWatch.stop();
 
         log.info("Total exec time: {} seconds", stopWatch.elapsed(SECONDS));
+    }
+
+    private void sendAda(String fromActor, String toActor, long lovelaces) {
+        var senderAccount = getAccount(from);
+        var senderAddress = senderAccount.baseAddress();
+
+        var receiverAddress = getReceiverAddress(to);
+
+        var backendService = providerCommands.getActiveProvider().orElseThrow().backendService();
+        var transactionService = backendService.getTransactionService();
+
+        var output = Output.builder()
+                .address(receiverAddress)
+                .assetName(LOVELACE)
+                .qty(adaToLovelace(adaAmount))
+                .build();
+
+        var txBuilder = output.outputBuilder()
+                .buildInputs(createFromSender(senderAddress, senderAddress))
+                .andThen(balanceTx(senderAddress, 1));
+
+        var utxoSupplier = new DefaultUtxoSupplier(backendService.getUtxoService());
+        var protocolParamsSupplier = new DefaultProtocolParamsSupplier(backendService.getEpochService());
+
+        var signedTransaction = TxBuilderContext.init(utxoSupplier, protocolParamsSupplier)
+                .buildAndSign(txBuilder, signerFrom(senderAccount));
+
+        var result = backendService.getTransactionService().submitTransaction(signedTransaction.serialize());
+
+        waitForTransaction(transactionService, result);
+
+        System.out.println(success("Transaction success, result: %s", result.getValue()));
     }
 
     // More scenarios to cover:
