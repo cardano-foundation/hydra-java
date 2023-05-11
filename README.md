@@ -20,7 +20,7 @@ Hydra State Machine Diagram: https://hydra.family/head-protocol/core-concepts/be
 ```
 git clone https://github.com/cardano-foundation/hydra-java
 cd hydra-java
-mvn -Drevision=0.0.5-SNAPSHOT clean install
+mvn clean install
 ```
 
 ## Running integration tests
