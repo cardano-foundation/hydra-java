@@ -8,6 +8,7 @@ import org.cardanofoundation.hydra.core.model.HydraState;
 import org.cardanofoundation.hydra.core.model.Party;
 import org.cardanofoundation.hydra.core.model.Tag;
 import org.cardanofoundation.hydra.core.model.UTXO;
+import org.cardanofoundation.hydra.core.store.UTxOStore;
 import org.cardanofoundation.hydra.core.utils.MoreJson;
 
 import java.time.LocalDateTime;
@@ -38,13 +39,15 @@ public class GreetingsResponse extends Response {
         this.snapshotUtxo = snapshotUtxo;
     }
 
-    public static GreetingsResponse create(JsonNode raw) {
+    public static GreetingsResponse create(UTxOStore uTxOStore, JsonNode raw) {
         val party = MoreJson.convert(raw.get("me"), Party.class);
         val seq = raw.get("seq").asInt();
         val timestamp = MoreJson.convert(raw.get("timestamp"), LocalDateTime.class);
         val headStatus = MoreJson.convert(raw.get("headStatus"), HydraState.class);
         if (raw.has("snapshotUtxo")) {
             val utxo = MoreJson.convertUTxOMap(raw.get("snapshotUtxo"));
+
+            uTxOStore.storeLatestUtxO(utxo);
 
             return new GreetingsResponse(party, seq, timestamp, headStatus, utxo);
         }

@@ -2,6 +2,8 @@ package org.cardanofoundation.hydra.client;
 
 import lombok.Builder;
 import lombok.Getter;
+import org.cardanofoundation.hydra.core.store.EmptyUTxOStore;
+import org.cardanofoundation.hydra.core.store.UTxOStore;
 import org.jetbrains.annotations.Nullable;
 
 @Getter
@@ -12,6 +14,9 @@ public class HydraClientOptions {
 
     @Builder.Default
     private boolean history = false;
+
+    @Builder.Default
+    private UTxOStore withUTxOStore = new EmptyUTxOStore();
 
     /**
      * Hydra internal consensus level errors are not propagated to the developer

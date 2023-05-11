@@ -6,6 +6,7 @@ import lombok.ToString;
 import lombok.val;
 import org.cardanofoundation.hydra.core.model.Snapshot;
 import org.cardanofoundation.hydra.core.model.Tag;
+import org.cardanofoundation.hydra.core.store.UTxOStore;
 import org.cardanofoundation.hydra.core.utils.MoreJson;
 
 import java.time.LocalDateTime;
@@ -31,11 +32,13 @@ public class SnapshotConfirmed extends Response {
         this.snapshot = snapshot;
     }
 
-    public static SnapshotConfirmed create(JsonNode raw) {
+    public static SnapshotConfirmed create(UTxOStore store, JsonNode raw) {
         val headId = raw.get("headId").asText();
         val seq = raw.get("seq").asInt();
         val timestamp = MoreJson.convert(raw.get("timestamp"), LocalDateTime.class);
         val snapshot = MoreJson.convert(raw.get("snapshot"), Snapshot.class);
+
+        store.storeLatestUtxO(snapshot.getUtxo());
 
         return new SnapshotConfirmed(headId, seq, timestamp, snapshot);
     }

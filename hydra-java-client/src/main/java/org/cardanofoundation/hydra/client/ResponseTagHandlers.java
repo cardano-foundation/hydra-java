@@ -3,6 +3,7 @@ package org.cardanofoundation.hydra.client;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.cardanofoundation.hydra.core.model.Tag;
 import org.cardanofoundation.hydra.core.model.query.response.*;
+import org.cardanofoundation.hydra.core.store.UTxOStore;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,15 +12,15 @@ import java.util.function.Function;
 
 public class ResponseTagHandlers {
 
-    private Map<Tag, Function<JsonNode, Response>> handlers = new HashMap<>();
+    private final Map<Tag, Function<JsonNode, Response>> handlers = new HashMap<>();
 
-    public ResponseTagHandlers() {
-        handlers.put(Tag.Greetings, GreetingsResponse::create);
+    public ResponseTagHandlers(UTxOStore uTxOStore) {
+        handlers.put(Tag.Greetings, raw -> GreetingsResponse.create(uTxOStore, raw));
         handlers.put(Tag.PeerConnected, PeerConnectedResponse::create);
         handlers.put(Tag.PeerDisconnected, PeerDisconnectedResponse::create);
         handlers.put(Tag.HeadIsInitializing, HeadIsInitializingResponse::create);
         handlers.put(Tag.Committed, CommittedResponse::create);
-        handlers.put(Tag.HeadIsOpen, HeadIsOpenResponse::create);
+        handlers.put(Tag.HeadIsOpen, raw -> HeadIsOpenResponse.create(uTxOStore, raw));
         handlers.put(Tag.HeadIsClosed, HeadIsClosedResponse::create);
         handlers.put(Tag.HeadIsContested, HeadIsContestedResponse::create);
         handlers.put(Tag.ReadyToFanout, ReadyToFanoutResponse::create);
@@ -32,7 +33,7 @@ public class ResponseTagHandlers {
         handlers.put(Tag.PostTxOnChainFailed, PostTxOnChainFailedResponse::create);
         handlers.put(Tag.RolledBack, RolledbackResponse::create);
         handlers.put(Tag.CommandFailed, CommandFailedResponse::create);
-        handlers.put(Tag.SnapshotConfirmed, SnapshotConfirmed::create);
+        handlers.put(Tag.SnapshotConfirmed, raw -> SnapshotConfirmed.create(uTxOStore, raw));
     }
 
     public Optional<Function<JsonNode, Response>> responseHandlerFor(Tag tag) {
