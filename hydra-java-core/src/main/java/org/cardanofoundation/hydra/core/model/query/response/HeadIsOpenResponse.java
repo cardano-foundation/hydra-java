@@ -6,6 +6,7 @@ import lombok.ToString;
 import lombok.val;
 import org.cardanofoundation.hydra.core.model.Tag;
 import org.cardanofoundation.hydra.core.model.UTXO;
+import org.cardanofoundation.hydra.core.store.UTxOStore;
 import org.cardanofoundation.hydra.core.utils.MoreJson;
 
 import java.time.LocalDateTime;
@@ -31,11 +32,13 @@ public class HeadIsOpenResponse extends Response {
         this.timestamp = timestamp;
     }
 
-    public static HeadIsOpenResponse create(JsonNode raw) {
+    public static HeadIsOpenResponse create(UTxOStore uTxOStore, JsonNode raw) {
         val utxoMap = MoreJson.convertUTxOMap(raw.get("utxo"));
         val headId = raw.get("headId").asText();
         val seq = raw.get("seq").asInt();
         val timestamp = MoreJson.convert(raw.get("timestamp"), LocalDateTime.class);
+
+        uTxOStore.storeLatestUtxO(utxoMap);
 
         return new HeadIsOpenResponse(headId, utxoMap, seq, timestamp);
     }

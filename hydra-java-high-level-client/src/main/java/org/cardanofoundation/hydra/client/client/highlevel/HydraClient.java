@@ -5,12 +5,11 @@ import org.cardanofoundation.hydra.client.HydraClientOptions;
 import org.cardanofoundation.hydra.client.HydraQueryEventListener;
 import org.cardanofoundation.hydra.client.HydraWSClient;
 import org.cardanofoundation.hydra.client.client.highlevel.model.*;
-import org.cardanofoundation.hydra.client.client.highlevel.store.UTxOStore;
 import org.cardanofoundation.hydra.core.model.HydraState;
 import org.cardanofoundation.hydra.core.model.Transaction;
 import org.cardanofoundation.hydra.core.model.UTXO;
-import org.cardanofoundation.hydra.core.model.query.response.*;
 import org.cardanofoundation.hydra.core.model.query.response.Response;
+import org.cardanofoundation.hydra.core.model.query.response.*;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Map;
@@ -32,12 +31,8 @@ public class HydraClient extends HydraQueryEventListener.Stub {
     // error handling
     private final Map<String, CompletableFuture<Object>> futuresMap = new ConcurrentHashMap<>();
 
-    private final UTxOStore uTxOStore;
-
-    public HydraClient(HydraClientOptions hydraClientOptions,
-                       UTxOStore uTxOStore) {
+    public HydraClient(HydraClientOptions hydraClientOptions) {
         this.hydraClientOptions = hydraClientOptions;
-        this.uTxOStore = uTxOStore;
     }
 
     public HydraState getHydraState() {
@@ -138,8 +133,6 @@ public class HydraClient extends HydraQueryEventListener.Stub {
         if (response instanceof GreetingsResponse) {
             var gr = (GreetingsResponse) response;
 
-            uTxOStore.storeLatestUtxO(gr.getSnapshotUtxo());
-
             resolveFutureSuccessForKey(Connect.INSTANCE.key(), Connected.builder().greetings(gr).build());
         }
 
@@ -152,16 +145,12 @@ public class HydraClient extends HydraQueryEventListener.Stub {
             var ho = (HeadIsOpenResponse) response;
             var utxo = ho.getUtxo();
 
-            uTxOStore.storeLatestUtxO(utxo);
-
             resolveFutureSuccessForKey(Commit.INSTANCE.key(), ho);
         }
 
         if (response instanceof SnapshotConfirmed) {
             var sc = (SnapshotConfirmed) response;
             var utxo = sc.getSnapshot().getUtxo();
-
-            uTxOStore.storeLatestUtxO(utxo);
 
             for (Transaction trx : sc.getSnapshot().getConfirmedTransactions()) {
                 TxResult txResult = new TxResult(trx.getId(), trx.getIsValid());

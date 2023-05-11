@@ -10,48 +10,60 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import org.cardanofoundation.hydra.core.model.UTXO;
+import org.cardanofoundation.hydra.core.store.UTxOStore;
+import org.cardanofoundation.hydra.core.utils.StringUtils;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.bloxbean.cardano.client.transaction.spec.serializers.PlutusDataJsonConverter.toPlutusData;
 
 public class SnapshotUTxOSupplier implements UtxoSupplier {
 
-    private final Map<String, UTXO> snapshot;
+    private final UTxOStore utxoStore;
 
-    public SnapshotUTxOSupplier(final Map<String, UTXO> snapshot) {
-        this.snapshot = snapshot;
+    public SnapshotUTxOSupplier(UTxOStore utxoStore) {
+        this.utxoStore = utxoStore;
     }
 
     @Override
     public List<Utxo> getPage(String address, Integer nrOfItems, Integer page, OrderEnum order) {
+        var snapshot = utxoStore.getLatestUTxO();
         if (snapshot.isEmpty()) {
             return Collections.emptyList();
         }
-        // no paging support in hydra
+        // no paging support in this supplier
         if (page >= 1) {
-            throw new IllegalArgumentException("No pagination support!");
+            return List.of();
         }
 
         return snapshot.entrySet()
                 .stream()
                 .filter(utxoEntry -> utxoEntry.getValue().getAddress().equals(address))
-                .map(utxoEntry -> new Tuple<>(utxoEntry.getKey().split("#"), utxoEntry.getValue()))
-                .map(tuple -> Utxo.builder()
-                        .txHash(tuple._1[0])
-                        .outputIndex(Integer.parseInt(tuple._1[1]))
-                        .address(address)
-                        .amount(tuple._2.getValue().entrySet()
-                                .stream()
-                                .map(entry -> new Amount(entry.getKey(), entry.getValue()))
-                                .collect(Collectors.toList()))
-                        .dataHash(tuple._2.getDatumhash())
-                        .inlineDatum(convertInlineDatum(tuple._2.getInlineDatum()))
-                        .referenceScriptHash(tuple._2.getReferenceScript())
-                        .build())
+                .map(utxoEntry -> new Tuple<>(StringUtils.split(utxoEntry.getKey(), "#"), utxoEntry.getValue()))
+                .peek(t -> System.out.println(Arrays.asList(t._1)))
+                .peek(t -> System.out.println(t._2))
+                .map(tuple -> {
+                    String utxoId = tuple._1[0];
+                    int outputIndex = Integer.parseInt(tuple._1[1]);
+                    UTXO utxo = tuple._2;
+
+                    return Utxo.builder()
+                            .txHash(utxoId)
+                            .outputIndex(outputIndex)
+                            .address(address)
+                            .amount(utxo.getValue().entrySet()
+                                    .stream()
+                                    .map(entry -> new Amount(entry.getKey(), entry.getValue()))
+                                    .collect(Collectors.toList()))
+                            .dataHash(utxo.getDatumhash())
+                            .inlineDatum(convertInlineDatum(utxo.getInlineDatum()))
+                            .referenceScriptHash(utxo.getReferenceScript())
+                            .build();
+
+                })
                 .limit(nrOfItems)
                 .collect(Collectors.toList());
     }

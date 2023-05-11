@@ -17,6 +17,7 @@ import org.cardanofoundation.hydra.client.client.helpers.HydraDevNetwork;
 import org.cardanofoundation.hydra.client.client.helpers.HydraTransactionGenerator;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.query.response.*;
+import org.cardanofoundation.hydra.core.store.InMemoryUTxOStore;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -24,13 +25,12 @@ import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.cardanofoundation.hydra.client.client.helpers.HydraDevNetwork.HYDRA_ALICE_REMOTE_PORT;
 import static org.cardanofoundation.hydra.core.model.HydraState.*;
 import static org.cardanofoundation.hydra.core.utils.HexUtils.encodeHexString;
 
@@ -49,6 +49,8 @@ public class HydraWSClientIntegrationTest {
         PROTOCOL_PARAMS_SUPPLIER = new JacksonClasspathProtocolParametersSupplier(objectMapper);
         ALICE_OPERATOR = new JacksonClasspathSecretKeySupplierHydra(objectMapper, "devnet/credentials/alice.sk").getOperator();
         BOB_OPERATOR = new JacksonClasspathSecretKeySupplierHydra(objectMapper, "devnet/credentials/bob.sk").getOperator();
+        log.info("Alice:{}", ALICE_OPERATOR);
+        log.info("Bob:{}", BOB_OPERATOR);
     }
 
     /**
@@ -66,14 +68,15 @@ public class HydraWSClientIntegrationTest {
             var aliceHydraContainer = hydraDevNetwork.getAliceHydraContainer();
             var bobHydraContainer = hydraDevNetwork.getBobHydraContainer();
 
-            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(aliceHydraContainer, HydraDevNetwork.HYDRA_ALICE_REMOTE_PORT))
+            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(aliceHydraContainer, HYDRA_ALICE_REMOTE_PORT))
+                    .withUTxOStore(new InMemoryUTxOStore())
                     .build());
             aliceHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "alice"));
 
-            var errorFuture = new CompletableFuture<Response>();
+            var errorFuture = new CompletableFuture<Response>().orTimeout(1, MINUTES);;
 
-            var aliceGreetingsFuture = new CompletableFuture<GreetingsResponse>();
-            var bobGreetingsFuture = new CompletableFuture<GreetingsResponse>();
+            var aliceGreetingsFuture = new CompletableFuture<GreetingsResponse>().orTimeout(1, MINUTES);;
+            var bobGreetingsFuture = new CompletableFuture<GreetingsResponse>().orTimeout(1, MINUTES);;
 
             aliceHydraWSClient.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
 
@@ -91,6 +94,7 @@ public class HydraWSClientIntegrationTest {
             });
 
             var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(bobHydraContainer, HydraDevNetwork.HYDRA_BOB_REMOTE_PORT))
+                    .withUTxOStore(new InMemoryUTxOStore())
                     .build());
             bobHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "bob"));
             bobHydraWSClient.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
@@ -113,27 +117,18 @@ public class HydraWSClientIntegrationTest {
 
             log.info("Check if greetings message was set to alice and contains hydra state and contains empty utxo snapshot...");
             await().atMost(Duration.ofMinutes(1))
-                    .until(() -> aliceGreetingsFuture, greetingsResponseCompletableFuture -> {
-
-                        try {
-                            return greetingsResponseCompletableFuture.isDone()
-                                    && greetingsResponseCompletableFuture.get().getHeadStatus() == Idle
-                                    && greetingsResponseCompletableFuture.get().getSnapshotUtxo().isEmpty();
-                        } catch (InterruptedException | ExecutionException e) {
-                            throw new RuntimeException(e);
-                        }
+                    .until(() -> {
+                        return aliceGreetingsFuture.isDone()
+                                && aliceGreetingsFuture.get().getHeadStatus() == Idle
+                                && aliceGreetingsFuture.get().getSnapshotUtxo().isEmpty();
                     });
 
             log.info("Check if greetings message was set to bob and contains hydra state and contains empty utxo snapshot...");
             await().atMost(Duration.ofMinutes(1))
-                    .until(() -> bobGreetingsFuture, greetingsResponseCompletableFuture -> {
-                        try {
-                            return greetingsResponseCompletableFuture.isDone()
-                                    && greetingsResponseCompletableFuture.get().getHeadStatus() == Idle
-                                    && greetingsResponseCompletableFuture.get().getSnapshotUtxo().isEmpty();
-                        } catch (InterruptedException | ExecutionException e) {
-                            throw new RuntimeException(e);
-                        }
+                    .until(() -> {
+                        return bobGreetingsFuture.isDone()
+                                && bobGreetingsFuture.get().getHeadStatus() == Idle
+                                && bobGreetingsFuture.get().getSnapshotUtxo().isEmpty();
                     });
 
             log.info("Alice is sending init to the head... (only one actor needs to do it)");
@@ -178,7 +173,6 @@ public class HydraWSClientIntegrationTest {
                     .untilAsserted(() -> assertThat(bobHydraWSClient.getHydraState()).isEqualTo(Closed));
 
             log.info("Now we need to wait a few minutes for contestation deadline...");
-
             await().atMost(Duration.ofMinutes(10))
                     .failFast(errorFuture::isDone)
                     .untilAsserted(() -> assertThat(aliceHydraWSClient.getHydraState()).isEqualTo(FanoutPossible));
@@ -214,9 +208,10 @@ public class HydraWSClientIntegrationTest {
         try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
             hydraDevNetwork.start();
 
-            var errorFuture = new CompletableFuture<Response>();
+            var errorFuture = new CompletableFuture<Response>().orTimeout(1, MINUTES);;
 
-            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer(), HydraDevNetwork.HYDRA_ALICE_REMOTE_PORT))
+            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer(), HYDRA_ALICE_REMOTE_PORT))
+                    .withUTxOStore(new InMemoryUTxOStore())
                     .build());
             aliceHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "alice"));
             aliceHydraWSClient.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
@@ -227,6 +222,7 @@ public class HydraWSClientIntegrationTest {
             });
 
             var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getBobHydraContainer(), HydraDevNetwork.HYDRA_BOB_REMOTE_PORT))
+                    .withUTxOStore(new InMemoryUTxOStore())
                     .build());
             bobHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "bob"));
             bobHydraWSClient.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
@@ -276,34 +272,45 @@ public class HydraWSClientIntegrationTest {
     }
 
     // tests head opening, getting utxo map (initial utxo snapshot) and send one simple transaction from alice to bob
+
+    /**
+     * Scenario tests:
+     * - asserts head opening
+     * - asserts initial utxo snapshot
+     *
+     */
     @Test
     public void testHydraOpeningWithInitialSnapshotAndSendingTransaction() throws InterruptedException, CborSerializationException {
         var stopWatch = Stopwatch.createStarted();
+        var aliceInMemoryStore = new InMemoryUTxOStore();
+        var bobInMemoryStore = new InMemoryUTxOStore();
 
         try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
             hydraDevNetwork.start();
 
-            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer(), HydraDevNetwork.HYDRA_ALICE_REMOTE_PORT))
+            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer(), HYDRA_ALICE_REMOTE_PORT))
+                    .withUTxOStore(aliceInMemoryStore)
                     .build());
             aliceHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "alice"));
 
-            var errorFuture = new CompletableFuture<Response>();
+            var errorFuture = new CompletableFuture<Response>().orTimeout(1, MINUTES);;
 
-            var aliceSnapshotReceived = new CompletableFuture<SnapshotConfirmed>();
-            var bobSnapshotConfirmed = new CompletableFuture<SnapshotConfirmed>();
+            var aliceSnapshotReceived = new CompletableFuture<SnapshotConfirmed>().orTimeout(1, MINUTES);;
+            var bobSnapshotConfirmed = new CompletableFuture<SnapshotConfirmed>().orTimeout(1, MINUTES);;
 
-            var aliceHeadIsOpen = new CompletableFuture<HeadIsOpenResponse>();
-            var bobHeadIsOpen = new CompletableFuture<HeadIsOpenResponse>();
+            var aliceHeadIsOpen = new CompletableFuture<HeadIsOpenResponse>().orTimeout(1, MINUTES);;
+            var bobHeadIsOpen = new CompletableFuture<HeadIsOpenResponse>().orTimeout(1, MINUTES);;
 
-            var aliceTxValidResponse = new CompletableFuture<TxValidResponse>();
-            var aliceTxInvalidResponse = new CompletableFuture<TxInvalidResponse>();
+            var aliceTxValidResponse = new CompletableFuture<TxValidResponse>().orTimeout(1, MINUTES);;
+            var aliceTxInvalidResponse = new CompletableFuture<TxInvalidResponse>().orTimeout(1, MINUTES);;
 
             aliceHydraWSClient.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
 
                 @Override
                 public void onSuccess(Response response) {
                     if (response instanceof SnapshotConfirmed) {
-                        aliceSnapshotReceived.complete((SnapshotConfirmed) response);
+                        var sc = (SnapshotConfirmed) response;
+                        aliceSnapshotReceived.complete(sc);
                     }
                     if (response instanceof HeadIsOpenResponse) {
                         aliceHeadIsOpen.complete((HeadIsOpenResponse) response);
@@ -323,6 +330,7 @@ public class HydraWSClientIntegrationTest {
             });
 
             var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getBobHydraContainer(), HydraDevNetwork.HYDRA_BOB_REMOTE_PORT))
+                    .withUTxOStore(bobInMemoryStore)
                     .build());
             bobHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "bob"));
             bobHydraWSClient.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
@@ -330,7 +338,8 @@ public class HydraWSClientIntegrationTest {
                 @Override
                 public void onSuccess(Response response) {
                     if (response instanceof SnapshotConfirmed) {
-                        bobSnapshotConfirmed.complete((SnapshotConfirmed) response);
+                        var sc = (SnapshotConfirmed) response;
+                        bobSnapshotConfirmed.complete(sc);
                     }
                     if (response instanceof HeadIsOpenResponse) {
                         bobHeadIsOpen.complete((HeadIsOpenResponse) response);
@@ -376,59 +385,109 @@ public class HydraWSClientIntegrationTest {
                     .failFast(errorFuture::isDone)
                     .untilAsserted(() -> assertThat(bobHydraWSClient.getHydraState()).isEqualTo(Open));
 
-            var latestSnapshot = new AtomicReference<Map<String, UTXO>>(Map.of());
-
             log.info("Check if alice receives head is open...");
             await().atMost(Duration.ofMinutes(1))
                     .failFast(errorFuture::isDone)
-                    .until(() -> aliceHeadIsOpen, future -> {
-                        try {
-                            if (!future.isDone()) {
-                                return false;
-                            }
-                            var headIsOpenResponse = future.get();
-                            latestSnapshot.set(headIsOpenResponse.getUtxo());
-
-                            var utxo = headIsOpenResponse.getUtxo().get("ddf1db5cc1d110528828e22984d237b275af510dc82d0e7a8fc941469277e31e#0");
-
-                            return utxo.getAddress().equals("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3")
-                                    && utxo.getValue().get("lovelace").longValue() == 1000000000L;
-                        } catch (InterruptedException | ExecutionException e) {
-                            throw new RuntimeException(e);
+                    .until(() -> {
+                        if (!aliceHeadIsOpen.isDone()) {
+                            return false;
                         }
+                        var headIsOpenResponse = aliceHeadIsOpen.get();
+
+                        var utxo = headIsOpenResponse.getUtxo().get("ddf1db5cc1d110528828e22984d237b275af510dc82d0e7a8fc941469277e31e#0");
+
+                        return utxo.getAddress().equals("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3")
+                                && utxo.getValue().get("lovelace").longValue() == 1000000000L;
                     });
 
             log.info("Check if bob receives head is open...");
             await().atMost(Duration.ofMinutes(1))
                     .failFast(errorFuture::isDone)
-                    .until(() -> bobHeadIsOpen, future -> {
-                        try {
-                            if (!future.isDone()) {
-                                return false;
-                            }
-                            var headIsOpenResponse = future.get();
-                            latestSnapshot.set(headIsOpenResponse.getUtxo());
-
-                            var utxo = headIsOpenResponse.getUtxo().get("ddf1db5cc1d110528828e22984d237b275af510dc82d0e7a8fc941469277e31e#0");
-
-                            return utxo.getAddress().equals("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3")
-                                    && utxo.getValue().get("lovelace").longValue() == 1000000000L;
-                        } catch (InterruptedException | ExecutionException e) {
-                            throw new RuntimeException(e);
+                    .until(() -> {
+                        if (!bobHeadIsOpen.isDone()) {
+                            return false;
                         }
+                        var headIsOpenResponse = bobHeadIsOpen.get();
+
+                        var utxo = headIsOpenResponse.getUtxo().get("ddf1db5cc1d110528828e22984d237b275af510dc82d0e7a8fc941469277e31e#0");
+
+                        return utxo.getAddress().equals("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3")
+                                && utxo.getValue().get("lovelace").longValue() == 1000000000L;
                     });
 
-            assertThat(latestSnapshot.get()).isNotEmpty();
+            var transactionSender = new HydraTransactionGenerator(new SnapshotUTxOSupplier(aliceHydraWSClient.getUtxoStore()), PROTOCOL_PARAMS_SUPPLIER);
 
-            var transactionSender = new HydraTransactionGenerator(new SnapshotUTxOSupplier(latestSnapshot.get()), PROTOCOL_PARAMS_SUPPLIER);
-            var trxBytes = transactionSender.simpleTransfer(ALICE_OPERATOR, BOB_OPERATOR, 1);
+            log.info("Let's check if alice sends bob 10 ADA...");
+            var trxBytes = transactionSender.simpleTransfer(ALICE_OPERATOR, BOB_OPERATOR, 10);
 
             aliceHydraWSClient.submitTx(encodeHexString(trxBytes));
 
-            log.info("Let's check if alice transaction to send 1 ADA to bob is successful...");
+            log.info("Let's check if alice transaction to send 10 to bob is successful...");
+
             await().atMost(Duration.ofMinutes(1))
                     .failFast(() -> errorFuture.isDone() || aliceTxInvalidResponse.isDone())
-                    .until(() -> aliceTxValidResponse.isDone() && !aliceTxValidResponse.get().isFailure());
+                    .until(() -> {
+                        if (!aliceTxValidResponse.isDone()) {
+                            return false;
+                        }
+
+                        var txValidResponse = aliceTxValidResponse.get();
+
+                        return !txValidResponse.isFailure() && txValidResponse.getTransaction().getIsValid();
+                    });
+
+            log.info("Let's check if alice received SnapshotConfirmed message... (full consensus validation)");
+            await().atMost(Duration.ofMinutes(1))
+                    .failFast(errorFuture::isDone)
+                    .until(() -> {
+                        if (!aliceSnapshotReceived.isDone()) {
+                            return false;
+                        }
+
+                        var snapshotConfirmed = aliceSnapshotReceived.get();
+                        System.out.println(snapshotConfirmed);
+
+                        return !snapshotConfirmed.getSnapshot().getUtxo().isEmpty();
+                    });
+
+            aliceHydraWSClient.closeBlocking();
+            bobHydraWSClient.closeBlocking();
+
+            log.info("Let's connect now with full history...");
+
+            aliceInMemoryStore = new InMemoryUTxOStore();
+            var aliceHydraWSClient2 = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer(), HYDRA_ALICE_REMOTE_PORT))
+                    .withUTxOStore(aliceInMemoryStore)
+                    .history(true) // now lets see if connecting with history is fine
+                    .build());
+
+            var aliceGreetings = new CompletableFuture<GreetingsResponse>().orTimeout(1, MINUTES);
+            aliceHydraWSClient2.addHydraQueryEventListener(new SLF4JHydraLogger(log, "alice"));
+            aliceHydraWSClient2.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
+                @Override
+                public void onSuccess(Response response) {
+                    if (response instanceof GreetingsResponse) {
+                        aliceGreetings.complete((GreetingsResponse) response);
+                    }
+                }
+            });
+
+            aliceHydraWSClient2.connectBlocking(1, MINUTES);
+
+            await().atMost(Duration.ofMinutes(1))
+                    .until(() -> {
+                        if (!aliceGreetings.isDone()) {
+                            return false;
+                        }
+
+                        var greetingsResponse = aliceGreetings.get();
+                        var isOpen = greetingsResponse.getHeadStatus() == Open;
+                        var hasUTxOs = !greetingsResponse.getSnapshotUtxo().isEmpty();
+
+                        System.out.println(greetingsResponse.getSnapshotUtxo());
+
+                        return isOpen && hasUTxOs;
+                    });
         }
 
         stopWatch.stop();

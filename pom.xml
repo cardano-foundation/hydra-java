@@ -26,7 +26,7 @@
         <jetbrains.annotations.version>24.0.1</jetbrains.annotations.version>
         <cardano.client.lib.version>0.4.3</cardano.client.lib.version>
 
-        <test.containers.version>1.18.0</test.containers.version>
+        <test.containers.version>1.18.1</test.containers.version>
         <assertj.core.version>3.24.2</assertj.core.version>
         <awaitability.version>4.2.0</awaitability.version>
         <guava.version>31.1-jre</guava.version>
@@ -38,10 +38,12 @@
         <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.4.1</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
-        
+
         <revision>0.0.5-SNAPSHOT</revision>
         <git.repository>cardano-foundation/hydra-java</git.repository>
+
     </properties>
+
 
     <dependencyManagement>
         <dependencies>

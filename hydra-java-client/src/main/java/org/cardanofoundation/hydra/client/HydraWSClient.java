@@ -8,6 +8,7 @@ import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.query.request.*;
 import org.cardanofoundation.hydra.core.model.query.response.FailureResponse;
 import org.cardanofoundation.hydra.core.model.query.response.GreetingsResponse;
+import org.cardanofoundation.hydra.core.store.UTxOStore;
 import org.cardanofoundation.hydra.core.utils.MoreJson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -25,7 +26,7 @@ public class HydraWSClient {
 
     private final static ResponseTagStateMapper RESPONSE_TAG_STATE_MAPPER = new ResponseTagStateMapper();
 
-    private final static ResponseTagHandlers RESPONSE_TAG_HANDLERS = new ResponseTagHandlers();
+    private final ResponseTagHandlers responseTagHandlers;
 
     protected final HydraWebSocketHandler hydraWebSocketHandler;
 
@@ -35,6 +36,8 @@ public class HydraWSClient {
 
     private final HydraClientOptions hydraClientOptions;
 
+    private final UTxOStore utxoStore;
+
     private HydraState hydraState;
 
     public HydraWSClient(HydraClientOptions hydraClientOptions) {
@@ -43,6 +46,12 @@ public class HydraWSClient {
         this.hydraWebSocketHandler = new HydraWebSocketHandler(hydraServerUri);
         this.hydraClientOptions = hydraClientOptions;
         this.hydraState = HydraState.Unknown;
+        this.utxoStore = hydraClientOptions.getWithUTxOStore();
+        this.responseTagHandlers = new ResponseTagHandlers(utxoStore);
+    }
+
+    public UTxOStore getUtxoStore() {
+        return utxoStore;
     }
 
     public HydraState getHydraState() {
@@ -89,6 +98,14 @@ public class HydraWSClient {
         hydraQueryEventListeners.remove(eventListener);
 
         return this;
+    }
+
+    public void clearAllHydraQueryEventListeners() {
+        hydraQueryEventListeners.clear();
+    }
+
+    public void clearAllHydraStateEventListeners() {
+        hydraStateEventListeners.clear();
     }
 
     public HydraWSClient removeHydraStateEventListener(HydraStateEventListener eventListener) {
@@ -235,7 +252,7 @@ public class HydraWSClient {
 
             val tag = maybeTag.orElseThrow();
 
-            val maybeResponseHandler = RESPONSE_TAG_HANDLERS.responseHandlerFor(tag);
+            val maybeResponseHandler = responseTagHandlers.responseHandlerFor(tag);
             if (maybeResponseHandler.isEmpty()) {
                 log.error("We don't have response handler for the following tag:{}", tag);
             }
@@ -259,11 +276,13 @@ public class HydraWSClient {
                     return;
                 }
             }
-            hydraQueryEventListeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onResponse(queryResponse));
+
+            var listeners = List.copyOf(hydraQueryEventListeners);
+            listeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onResponse(queryResponse));
             if (queryResponse.isFailure()) {
-                hydraQueryEventListeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onFailure(queryResponse));
+                listeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onFailure(queryResponse));
             } else {
-                hydraQueryEventListeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onSuccess(queryResponse));
+                listeners.forEach(hydraQueryEventListener -> hydraQueryEventListener.onSuccess(queryResponse));
             }
         }
 
@@ -287,7 +306,7 @@ public class HydraWSClient {
         }
         HydraWSClient.this.hydraState = newState;
 
-        hydraStateEventListeners.forEach(l -> l.onStateChanged(currentState, newState));
+        List.copyOf(hydraStateEventListeners).forEach(l -> l.onStateChanged(currentState, newState));
 
         return true;
     }

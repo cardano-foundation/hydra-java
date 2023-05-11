@@ -7,7 +7,6 @@
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java</artifactId>
         <version>0.0.5-SNAPSHOT</version>
-        <relativePath>../hydra-java</relativePath>
     </parent>
 
     <artifactId>hydra-java-client</artifactId>

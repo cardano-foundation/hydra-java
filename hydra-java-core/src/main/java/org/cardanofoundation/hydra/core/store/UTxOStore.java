@@ -1,4 +1,4 @@
-package org.cardanofoundation.hydra.client.client.highlevel.store;
+package org.cardanofoundation.hydra.core.store;
 
 import org.cardanofoundation.hydra.core.model.UTXO;
 
