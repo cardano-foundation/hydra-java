@@ -38,7 +38,8 @@
         <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
         <maven-javadoc-plugin.version>3.4.1</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
-
+        
+        <revision>0.0.5-SNAPSHOT</revision>
         <git.repository>cardano-foundation/hydra-java</git.repository>
     </properties>
 
