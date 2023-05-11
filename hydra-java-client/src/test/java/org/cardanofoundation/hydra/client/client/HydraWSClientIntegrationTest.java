@@ -5,16 +5,18 @@ import com.bloxbean.cardano.client.exception.CborSerializationException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
+import org.cardanofoundation.hydra.cardano.client.lib.HydraOperator;
+import org.cardanofoundation.hydra.cardano.client.lib.JacksonClasspathProtocolParametersSupplier;
+import org.cardanofoundation.hydra.cardano.client.lib.JacksonClasspathSecretKeySupplierHydra;
+import org.cardanofoundation.hydra.cardano.client.lib.SnapshotUTxOSupplier;
 import org.cardanofoundation.hydra.client.HydraClientOptions;
 import org.cardanofoundation.hydra.client.HydraQueryEventListener;
 import org.cardanofoundation.hydra.client.HydraWSClient;
-import org.cardanofoundation.hydra.client.client.utils.JacksonClasspathProtocolParametersSupplier;
-import org.cardanofoundation.hydra.client.client.utils.JacksonClasspathSecretKeyAccountSupplier;
-import org.cardanofoundation.hydra.client.client.utils.SerialisedTransactionsSupplier;
-import org.cardanofoundation.hydra.client.client.utils.SnapshotUTxOSupplier;
-import org.cardanofoundation.hydra.client.model.UTXO;
-import org.cardanofoundation.hydra.client.model.query.response.*;
-import org.cardanofoundation.hydra.client.utils.SLF4JHydraLogger;
+import org.cardanofoundation.hydra.client.SLF4JHydraLogger;
+import org.cardanofoundation.hydra.client.client.helpers.HydraDevNetwork;
+import org.cardanofoundation.hydra.client.client.helpers.HydraTransactionGenerator;
+import org.cardanofoundation.hydra.core.model.UTXO;
+import org.cardanofoundation.hydra.core.model.query.response.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -29,25 +31,24 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.cardanofoundation.hydra.client.model.HydraState.*;
-import static org.cardanofoundation.hydra.client.utils.HexUtils.encodeHexString;
+import static org.cardanofoundation.hydra.core.model.HydraState.*;
+import static org.cardanofoundation.hydra.core.utils.HexUtils.encodeHexString;
 
 @Slf4j
 public class HydraWSClientIntegrationTest {
 
     private static ProtocolParamsSupplier PROTOCOL_PARAMS_SUPPLIER;
-    private static JacksonClasspathSecretKeyAccountSupplier ALICE_ACCOUNT_SUPPLIER;
-    private static JacksonClasspathSecretKeyAccountSupplier BOB_ACCOUNT_SUPPLIER;
+
+    private static HydraOperator ALICE_OPERATOR;
+    private static HydraOperator BOB_OPERATOR;
 
     @BeforeAll
     public static void setUpOnce() throws CborSerializationException {
         var objectMapper = new ObjectMapper();
         // TODO when hydra supports protocol params via REST we can make it better
         PROTOCOL_PARAMS_SUPPLIER = new JacksonClasspathProtocolParametersSupplier(objectMapper);
-        ALICE_ACCOUNT_SUPPLIER = new JacksonClasspathSecretKeyAccountSupplier(objectMapper, "devnet/credentials/alice.sk");
-        BOB_ACCOUNT_SUPPLIER = new JacksonClasspathSecretKeyAccountSupplier(objectMapper, "devnet/credentials/bob.sk");
-        log.info("Classpath Alice address:{}", ALICE_ACCOUNT_SUPPLIER.getOperatorAddress());
-        log.info("Classpath Bob address:{}", BOB_ACCOUNT_SUPPLIER.getOperatorAddress());
+        ALICE_OPERATOR = new JacksonClasspathSecretKeySupplierHydra(objectMapper, "devnet/credentials/alice.sk").getOperator();
+        BOB_OPERATOR = new JacksonClasspathSecretKeySupplierHydra(objectMapper, "devnet/credentials/bob.sk").getOperator();
     }
 
     /**
@@ -62,7 +63,10 @@ public class HydraWSClientIntegrationTest {
         try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
             hydraDevNetwork.start();
 
-            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.aliceHydraContainer, HydraDevNetwork.HYDRA_ALICE_REMOTE_PORT))
+            var aliceHydraContainer = hydraDevNetwork.getAliceHydraContainer();
+            var bobHydraContainer = hydraDevNetwork.getBobHydraContainer();
+
+            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(aliceHydraContainer, HydraDevNetwork.HYDRA_ALICE_REMOTE_PORT))
                     .build());
             aliceHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "alice"));
 
@@ -86,7 +90,7 @@ public class HydraWSClientIntegrationTest {
                }
             });
 
-            var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.bobHydraContainer, HydraDevNetwork.HYDRA_BOB_REMOTE_PORT))
+            var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(bobHydraContainer, HydraDevNetwork.HYDRA_BOB_REMOTE_PORT))
                     .build());
             bobHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "bob"));
             bobHydraWSClient.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
@@ -212,7 +216,7 @@ public class HydraWSClientIntegrationTest {
 
             var errorFuture = new CompletableFuture<Response>();
 
-            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.aliceHydraContainer, HydraDevNetwork.HYDRA_ALICE_REMOTE_PORT))
+            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer(), HydraDevNetwork.HYDRA_ALICE_REMOTE_PORT))
                     .build());
             aliceHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "alice"));
             aliceHydraWSClient.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
@@ -222,7 +226,7 @@ public class HydraWSClientIntegrationTest {
                 }
             });
 
-            var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.bobHydraContainer, HydraDevNetwork.HYDRA_BOB_REMOTE_PORT))
+            var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getBobHydraContainer(), HydraDevNetwork.HYDRA_BOB_REMOTE_PORT))
                     .build());
             bobHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "bob"));
             bobHydraWSClient.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
@@ -273,13 +277,13 @@ public class HydraWSClientIntegrationTest {
 
     // tests head opening, getting utxo map (initial utxo snapshot) and send one simple transaction from alice to bob
     @Test
-    public void testHydraOpeningWithInitialSnapshotAndSendingTransaction() throws InterruptedException {
+    public void testHydraOpeningWithInitialSnapshotAndSendingTransaction() throws InterruptedException, CborSerializationException {
         var stopWatch = Stopwatch.createStarted();
 
         try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
             hydraDevNetwork.start();
 
-            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.aliceHydraContainer, HydraDevNetwork.HYDRA_ALICE_REMOTE_PORT))
+            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer(), HydraDevNetwork.HYDRA_ALICE_REMOTE_PORT))
                     .build());
             aliceHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "alice"));
 
@@ -318,7 +322,7 @@ public class HydraWSClientIntegrationTest {
                 }
             });
 
-            var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.bobHydraContainer, HydraDevNetwork.HYDRA_BOB_REMOTE_PORT))
+            var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getBobHydraContainer(), HydraDevNetwork.HYDRA_BOB_REMOTE_PORT))
                     .build());
             bobHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "bob"));
             bobHydraWSClient.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
@@ -416,15 +420,10 @@ public class HydraWSClientIntegrationTest {
 
             assertThat(latestSnapshot.get()).isNotEmpty();
 
-            var transactionSender = new SerialisedTransactionsSupplier(
-                    new SnapshotUTxOSupplier(latestSnapshot.get()),
-                    PROTOCOL_PARAMS_SUPPLIER,
-                    ALICE_ACCOUNT_SUPPLIER,
-                    BOB_ACCOUNT_SUPPLIER
-            );
-            var trxBytes = transactionSender.sendAdaTransaction(1);
+            var transactionSender = new HydraTransactionGenerator(new SnapshotUTxOSupplier(latestSnapshot.get()), PROTOCOL_PARAMS_SUPPLIER);
+            var trxBytes = transactionSender.simpleTransfer(ALICE_OPERATOR, BOB_OPERATOR, 1);
 
-            aliceHydraWSClient.newTx(encodeHexString(trxBytes));
+            aliceHydraWSClient.submitTx(encodeHexString(trxBytes));
 
             log.info("Let's check if alice transaction to send 1 ADA to bob is successful...");
             await().atMost(Duration.ofMinutes(1))

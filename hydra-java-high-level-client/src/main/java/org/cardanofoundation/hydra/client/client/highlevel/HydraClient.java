@@ -6,10 +6,11 @@ import org.cardanofoundation.hydra.client.HydraQueryEventListener;
 import org.cardanofoundation.hydra.client.HydraWSClient;
 import org.cardanofoundation.hydra.client.client.highlevel.model.*;
 import org.cardanofoundation.hydra.client.client.highlevel.store.UTxOStore;
-import org.cardanofoundation.hydra.client.model.HydraState;
-import org.cardanofoundation.hydra.client.model.Transaction;
-import org.cardanofoundation.hydra.client.model.UTXO;
-import org.cardanofoundation.hydra.client.model.query.response.*;
+import org.cardanofoundation.hydra.core.model.HydraState;
+import org.cardanofoundation.hydra.core.model.Transaction;
+import org.cardanofoundation.hydra.core.model.UTXO;
+import org.cardanofoundation.hydra.core.model.query.response.*;
+import org.cardanofoundation.hydra.core.model.query.response.Response;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Map;
@@ -17,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.cardanofoundation.hydra.client.utils.HexUtils.encodeHexString;
+import static org.cardanofoundation.hydra.core.utils.HexUtils.encodeHexString;
 
 @Slf4j
 @ApiStatus.Experimental
@@ -118,7 +119,7 @@ public class HydraClient extends HydraQueryEventListener.Stub {
 
         storeFuture(TxRequest.of(txHash, confirmationType).key(), txFuture);
 
-        hydraWSClient.newTx(encodeHexString(cborTx));
+        hydraWSClient.submitTx(encodeHexString(cborTx));
 
         return txFuture.thenApply(o -> (TxResult) o);
     }
@@ -131,7 +132,7 @@ public class HydraClient extends HydraQueryEventListener.Stub {
     }
 
     @Override
-    public void onResponse(org.cardanofoundation.hydra.client.model.query.response.Response response) {
+    public void onResponse(Response response) {
         log.info("Tag:{}, seq:{}", response.getTag(), response.getSeq());
 
         if (response instanceof GreetingsResponse) {

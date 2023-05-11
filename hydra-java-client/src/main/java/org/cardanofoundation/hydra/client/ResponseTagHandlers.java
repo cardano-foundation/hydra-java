@@ -1,8 +1,8 @@
 package org.cardanofoundation.hydra.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.cardanofoundation.hydra.client.model.Tag;
-import org.cardanofoundation.hydra.client.model.query.response.*;
+import org.cardanofoundation.hydra.core.model.Tag;
+import org.cardanofoundation.hydra.core.model.query.response.*;
 
 import java.util.HashMap;
 import java.util.Map;
