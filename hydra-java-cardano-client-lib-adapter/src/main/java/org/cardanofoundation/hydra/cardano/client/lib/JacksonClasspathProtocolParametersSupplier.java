@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
+import org.cardanofoundation.hydra.core.HydraException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,7 +41,7 @@ public class JacksonClasspathProtocolParametersSupplier implements ProtocolParam
 
             protoParamsJson = objectMapper.readTree(is);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new HydraException(e);
         }
     }
 

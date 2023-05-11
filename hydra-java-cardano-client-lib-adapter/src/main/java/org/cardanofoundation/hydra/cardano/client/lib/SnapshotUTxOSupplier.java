@@ -9,6 +9,7 @@ import com.bloxbean.cardano.client.util.Tuple;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import org.cardanofoundation.hydra.core.HydraException;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.store.UTxOStore;
 import org.cardanofoundation.hydra.core.utils.StringUtils;
@@ -76,7 +77,7 @@ public class SnapshotUTxOSupplier implements UtxoSupplier {
             PlutusData plutusData = toPlutusData(inlineDatum);
             return plutusData.serializeToHex();
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Unable to convert inlineDatum to PlutusData");
+            throw new HydraException("Unable to convert inlineDatum to PlutusData");
         }
     }
 

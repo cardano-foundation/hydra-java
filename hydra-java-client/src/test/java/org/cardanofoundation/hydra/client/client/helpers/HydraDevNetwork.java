@@ -38,7 +38,7 @@ public class HydraDevNetwork implements Startable {
 
     private static final String INPUT_OUTPUT_CARDANO_NODE = "inputoutput/cardano-node:1.35.7";
 
-    private static final String INPUT_OUTPUT_HYDRA_NODE = "ghcr.io/input-output-hk/hydra-node:unstable";
+    private static final String INPUT_OUTPUT_HYDRA_NODE = "ghcr.io/input-output-hk/hydra-node:0.10.0";
 
     protected final static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -78,13 +78,12 @@ public class HydraDevNetwork implements Startable {
         log.info("ReferenceScriptsTxId:{}", referenceScriptsTxId);
 
         var network = Network.builder().driver("bridge").createNetworkCmdModifier(createNetworkCmd -> {
-            var iamConfig = new com.github.dockerjava.api.model.Network.Ipam.Config();
-            iamConfig.withSubnet("172.16.238.0/24");
-            iamConfig.withGateway("172.16.238.1");
+            //var iamConfig = new com.github.dockerjava.api.model.Network.Ipam.Config();
+//            iamConfig.withSubnet("172.16.238.0/24");
+//            iamConfig.withGateway("172.16.238.1");
 
-            createNetworkCmd.withName("hydra_net");
             createNetworkCmd.withDriver("bridge");
-            createNetworkCmd.withIpam(new com.github.dockerjava.api.model.Network.Ipam().withConfig(iamConfig).withDriver("default"));
+            //createNetworkCmd.withIpam(new com.github.dockerjava.api.model.Network.Ipam().withConfig(iamConfig).withDriver("default"));
         }).build();
 
         log.info("Creating network:" + network);

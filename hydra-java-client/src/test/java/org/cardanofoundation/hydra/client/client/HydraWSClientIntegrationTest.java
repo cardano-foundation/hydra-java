@@ -277,7 +277,8 @@ public class HydraWSClientIntegrationTest {
      * Scenario tests:
      * - asserts head opening
      * - asserts initial utxo snapshot
-     *
+     * - send simple ada transaction
+     * - assert that re-connection with full history works
      */
     @Test
     public void testHydraOpeningWithInitialSnapshotAndSendingTransaction() throws InterruptedException, CborSerializationException {
