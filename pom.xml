@@ -178,7 +178,7 @@
                         </executions>
                         <configuration>
                             <includes>
-                                <include>**/*IntegrationTest.java</include>
+                                <include>**/*IntegrationTest*.java</include>
                             </includes>
                         </configuration>
                     </plugin>
