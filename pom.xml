@@ -291,7 +291,7 @@
 
     <scm>
         <connection>scm:git:git@github.com:${git.repository}.git</connection>
-        <developerConnection>scm:git:https://github.com/${git.repository}.git</developerConnection>
+        <developerConnection>scm:git:git@github.com:${git.repository}.git</developerConnection>
         <url>https://github.com/${git.repository}/tree/main</url>
     </scm>
 
