@@ -11,7 +11,10 @@ import org.slf4j.Logger;
 public class SLF4JHydraLogger extends HydraQueryEventListener.Stub implements HydraStateEventListener {
 
     private final Logger logger;
+
     private final String actor;
+
+    @Builder.Default
     private final boolean warnOnFailure = true;
 
     public static SLF4JHydraLoggerBuilder builder(Logger logger, String actor) {
