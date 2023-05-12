@@ -42,7 +42,7 @@ public class SLF4JHydraLogger extends HydraQueryEventListener.Stub implements Hy
 
     @Override
     public void onStateChanged(HydraState prevState, HydraState newState) {
-        logger.info("prev:{}, now:{}", prevState, newState);
+        logger.info("actor:{}, prev:{}, now:{}", actor, prevState, newState);
     }
 
 }
