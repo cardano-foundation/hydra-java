@@ -54,7 +54,9 @@ public class HydraWSClientIntegrationTest1 {
             var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(aliceHydraContainer))
                     .withUTxOStore(new InMemoryUTxOStore())
                     .build());
-            aliceHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "alice"));
+            SLF4JHydraLogger aliceHydraLogger = SLF4JHydraLogger.of(log, "alice");
+            aliceHydraWSClient.addHydraQueryEventListener(aliceHydraLogger);
+            aliceHydraWSClient.addHydraStateEventListener(aliceHydraLogger);
 
             var errorFuture = new CompletableFuture<Response>();
 
@@ -84,7 +86,9 @@ public class HydraWSClientIntegrationTest1 {
             var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(bobHydraContainer))
                     .withUTxOStore(new InMemoryUTxOStore())
                     .build());
-            bobHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "bob"));
+            SLF4JHydraLogger bobHydraLogger = SLF4JHydraLogger.of(log, "bob");
+            bobHydraWSClient.addHydraQueryEventListener(bobHydraLogger);
+            bobHydraWSClient.addHydraStateEventListener(bobHydraLogger);
 
             bobHydraWSClient.addHydraStateEventListener((prevState, newState) -> bobState.set(newState));
 

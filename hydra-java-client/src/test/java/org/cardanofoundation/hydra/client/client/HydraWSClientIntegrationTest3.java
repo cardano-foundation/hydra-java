@@ -81,7 +81,11 @@ public class HydraWSClientIntegrationTest3 {
             var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer()))
                     .withUTxOStore(aliceInMemoryStore)
                     .build());
-            aliceHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "alice"));
+
+            SLF4JHydraLogger aliceHydraLogger = SLF4JHydraLogger.of(log, "alice");
+            aliceHydraWSClient.addHydraQueryEventListener(aliceHydraLogger);
+            aliceHydraWSClient.addHydraStateEventListener(aliceHydraLogger);
+
             aliceHydraWSClient.addHydraStateEventListener((prevState, newState) -> aliceState.set(newState));
 
             var aliceSnapshotReceived = new CompletableFuture<SnapshotConfirmed>().orTimeout(1, MINUTES);
@@ -121,7 +125,10 @@ public class HydraWSClientIntegrationTest3 {
             var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getBobHydraContainer()))
                     .withUTxOStore(bobInMemoryStore)
                     .build());
-            bobHydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "bob"));
+            SLF4JHydraLogger bobHydraLogger = SLF4JHydraLogger.of(log, "bob");
+            bobHydraWSClient.addHydraQueryEventListener(bobHydraLogger);
+            bobHydraWSClient.addHydraStateEventListener(bobHydraLogger);
+
             bobHydraWSClient.addHydraStateEventListener((prevState, newState) -> bobState.set(newState));
 
             bobHydraWSClient.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
@@ -287,7 +294,6 @@ public class HydraWSClientIntegrationTest3 {
             bobHydraWSClient.closeBlocking();
 
             log.info("Let's connect now with full history...");
-
             aliceInMemoryStore = new InMemoryUTxOStore();
             var aliceHydraWSClient2 = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer()))
                     .withUTxOStore(aliceInMemoryStore)
