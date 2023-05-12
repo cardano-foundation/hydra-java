@@ -36,11 +36,6 @@ mvn clean verify -P with-integration-tests
         <artifactId>hydra-java-client</artifactId>
         <version>0.0.5-SNAPSHOT</version>
     </dependency>
-    <dependency>
-        <groupId>org.cardanofoundation</groupId>
-        <artifactId>hydra-java-high-level-client</artifactId>
-        <version>0.0.5-SNAPSHOT</version>
-    </dependency>
 </dependencies>
 ```
 
@@ -51,9 +46,12 @@ This client is compatible with Hydra's master (unreleased version yet).
 
 ```
 var wsUrl = "ws://localhost:4001"; // locally running hydra instance
-var hydraClientOptions = HydraClientOptions.createDefault(wsUrl);
+var hydraClientOptions = HydraClientOptions.builder(wsUrl)
+                    .withUTxOStore(new InMemoryUTxOStore())
+                    .build()
+
 var hydraWSClient = new HydraWSClient(hydraClientOptions);
-hydraWSClient.addHydraQueryEventListener(response -> log.info("response:{}", response));
+hydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "my_hydra_node1"));
 hydraWSClient.addHydraStateEventListener((prev, now) -> log.info("prev:{}, now:{}", prev, now));
 hydraWSClient.connectBlocking(60, TimeUnit.SECONDS);
 
@@ -65,15 +63,25 @@ hydraWSClient.init(); // fires init request for this client
 System.out.println(hydraWSClient.getState()); // HydraState.HeadIsInitializing
 
 // when all head participants commit their UTxOs then Hydra head is open, you can also commit empty UTxO but at least one head operator needs to commit // something
-hydraWSClient.commit(); // commits empty UTxO
+
+// commitment from L1 will mean that funds will be frozen on L1 by Hydra smart contract
+var utxo = new UTXO();
+utxo.setAddress("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3");
+utxo.setValue(Map.of("lovelace", BigInteger.valueOf(1000 * 1_000_000))); // 1000 ADA
+
+hydraWSClient.commit("ddf1db5cc1d110528828e22984d237b275af510dc82d0e7a8fc941469277e31e#0", utxo);
 
 // time passes and then you will be able to see that HydraState becomes open
 
 System.out.println(hydraWSClient.getState()); // HydraState.Open
+
+// now one can send transactions and wait for confirmation...
+
+// after finishing operator can close the head... after contenstation period remaining funds will be unlocked on L1
 ```
 
 ## TODO
-- Publish snapshot on maven
+- High-Level client implementation
+- Publish snapshot / release via maven to Sonatype
 - JavaDocs and improve documentation
 - Unit tests
-- add integration tests for various scenarios
