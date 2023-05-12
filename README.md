@@ -51,8 +51,9 @@ var hydraClientOptions = HydraClientOptions.builder(wsUrl)
                     .build()
 
 var hydraWSClient = new HydraWSClient(hydraClientOptions);
-hydraWSClient.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "my_hydra_node1"));
-hydraWSClient.addHydraStateEventListener((prev, now) -> log.info("prev:{}, now:{}", prev, now));
+var hydraLogger = SLF4JHydraLogger.of(log, "my_hydra_node");
+hydraWSClient.addHydraQueryEventListener(hydraLogger);
+hydraWSClient.addHydraStateEventListener(hydraLogger);
 hydraWSClient.connectBlocking(60, TimeUnit.SECONDS);
 
 System.out.println(hydraWSClient.getState()); // HydraState.Idle
