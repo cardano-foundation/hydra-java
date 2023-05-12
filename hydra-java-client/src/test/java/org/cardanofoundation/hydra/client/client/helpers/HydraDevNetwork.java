@@ -145,9 +145,9 @@ public class HydraDevNetwork implements Startable {
         java.nio.file.Files.deleteIfExists(Paths.get(devnetPath, "genesis-shelley.json"));
     }
 
-    public static String getHydraApiUrl(GenericContainer<?> container, int port) {
+    public static String getHydraApiUrl(GenericContainer<?> container) {
         var host = container.getHost();
-        var mappedPort = container.getMappedPort(port);
+        var mappedPort = container.getMappedPort(HYDRA_API_REMOTE_PORT);
 
         return String.format("ws://%s:%d", host, mappedPort);
     }
@@ -255,7 +255,7 @@ public class HydraDevNetwork implements Startable {
                             READ_ONLY
                     )
                     .withVolumesFrom(cardanoContainer, READ_WRITE)
-                    .waitingFor(Wait.forLogMessage(".+bob-hydra-node.+PeerConnected.+", 1))
+                    .waitingFor(Wait.forLogMessage(".+bob-hydra-node.+PeerConnected.+", 1).withStartupTimeout(Duration.ofMinutes(10)))
                     .withEnv(Map.of("HYDRA_SCRIPTS_TX_ID", scriptsTxId))
 
                     .withCreateContainerCmdModifier(cmd -> cmd.withName(containerName).withHostName(containerName).withAliases(containerName))
@@ -300,7 +300,7 @@ public class HydraDevNetwork implements Startable {
                             "/keys",
                             READ_ONLY
                     )
-                    .waitingFor(Wait.forLogMessage(".+alice-hydra-node.+PeerConnected.+", 1))
+                        .waitingFor(Wait.forLogMessage(".+bob-hydra-node.+PeerConnected.+", 1).withStartupTimeout(Duration.ofMinutes(10)))
                     .withEnv(Map.of("HYDRA_SCRIPTS_TX_ID", scriptsTxId))
                     .withCreateContainerCmdModifier(cmd -> cmd.withName(containerName).withHostName(containerName).withAliases(containerName))
                     .withCommand(
