@@ -271,7 +271,7 @@ public class HydraWSClientIntegrationTest3 {
             log.info("Let's connect now with full history...");
 
             aliceInMemoryStore = new InMemoryUTxOStore();
-            var aliceHydraWSClient2 = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer(), HYDRA_API_REMOTE_PORT))
+            var aliceHydraWSClient2 = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer()))
                     .withUTxOStore(aliceInMemoryStore)
                     .history(true) // now lets see if connecting with history is fine
                     .build());
