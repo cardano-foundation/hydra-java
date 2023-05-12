@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java</artifactId>
-        <version>0.0.5</version>
+        <version>0.0.6-SNAPSHOT</version>
     </parent>
 
     <artifactId>hydra-java-high-level-client</artifactId>
@@ -18,7 +18,7 @@
         <dependency>
             <groupId>org.cardanofoundation</groupId>
             <artifactId>hydra-java-client</artifactId>
-            <version>0.0.5</version>
+            <version>0.0.6-SNAPSHOT</version>
         </dependency>
 
         <dependency>
