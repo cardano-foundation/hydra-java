@@ -14,7 +14,6 @@ import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.store.UTxOStore;
 import org.cardanofoundation.hydra.core.utils.StringUtils;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,6 +30,7 @@ public class SnapshotUTxOSupplier implements UtxoSupplier {
 
     @Override
     public List<Utxo> getPage(String address, Integer nrOfItems, Integer page, OrderEnum order) {
+        var items = nrOfItems == null ? UtxoSupplier.DEFAULT_NR_OF_ITEMS_TO_FETCH : nrOfItems;
         var snapshot = utxoStore.getLatestUTxO();
         if (snapshot.isEmpty()) {
             return Collections.emptyList();
@@ -44,15 +44,13 @@ public class SnapshotUTxOSupplier implements UtxoSupplier {
                 .stream()
                 .filter(utxoEntry -> utxoEntry.getValue().getAddress().equals(address))
                 .map(utxoEntry -> new Tuple<>(StringUtils.split(utxoEntry.getKey(), "#"), utxoEntry.getValue()))
-                .peek(t -> System.out.println(Arrays.asList(t._1)))
-                .peek(t -> System.out.println(t._2))
                 .map(tuple -> {
-                    String utxoId = tuple._1[0];
+                    String txId = tuple._1[0];
                     int outputIndex = Integer.parseInt(tuple._1[1]);
                     UTXO utxo = tuple._2;
 
                     return Utxo.builder()
-                            .txHash(utxoId)
+                            .txHash(txId)
                             .outputIndex(outputIndex)
                             .address(address)
                             .amount(utxo.getValue().entrySet()
@@ -65,7 +63,7 @@ public class SnapshotUTxOSupplier implements UtxoSupplier {
                             .build();
 
                 })
-                .limit(nrOfItems)
+                .limit(items)
                 .collect(Collectors.toList());
     }
 
