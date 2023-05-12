@@ -246,9 +246,18 @@ public class HydraWSClientIntegrationTest3 {
                         }
 
                         var snapshotConfirmed = aliceSnapshotReceived.get();
-                        System.out.println(snapshotConfirmed);
 
-                        return !snapshotConfirmed.getSnapshot().getUtxo().isEmpty();
+                        var snapshot = snapshotConfirmed.getSnapshot().getUtxo();
+
+                        return
+                            snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#0").getAddress().equals("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k") &&
+                            snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#0").getValue().get("lovelace").longValue() == 10_000_000L && // 10 ADA
+
+                            snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#1").getAddress().equals("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3") &&
+                            snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#1").getValue().get("lovelace").longValue() == 989_834_587L && // 989 ADA
+
+                            snapshot.get("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0").getAddress().equals("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k") &&
+                            snapshot.get("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0").getValue().get("lovelace").longValue() == 500_000_000L; // 500 ADA
                     });
 
             log.info("Let's check if bob received SnapshotConfirmed message... (full consensus validation)");
@@ -260,9 +269,18 @@ public class HydraWSClientIntegrationTest3 {
                         }
 
                         var snapshotConfirmed = bobSnapshotConfirmed.get();
-                        System.out.println(snapshotConfirmed);
 
-                        return !snapshotConfirmed.getSnapshot().getUtxo().isEmpty();
+                        var snapshot = snapshotConfirmed.getSnapshot().getUtxo();
+
+                        return
+                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#0").getAddress().equals("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k") &&
+                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#0").getValue().get("lovelace").longValue() == 10_000_000L && // 10 ADA
+
+                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#1").getAddress().equals("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3") &&
+                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#1").getValue().get("lovelace").longValue() == 989_834_587L && // 989 ADA
+
+                                snapshot.get("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0").getAddress().equals("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k") &&
+                                snapshot.get("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0").getValue().get("lovelace").longValue() == 500_000_000L; // 500 ADA
                     });
 
             aliceHydraWSClient.closeBlocking();
@@ -297,9 +315,17 @@ public class HydraWSClientIntegrationTest3 {
 
                         var greetingsResponse = aliceGreetings.get();
                         var isOpen = greetingsResponse.getHeadStatus() == Open;
-                        var hasUTxOs = !greetingsResponse.getSnapshotUtxo().isEmpty();
+                        var snapshot = greetingsResponse.getSnapshotUtxo();
 
-                        return isOpen && hasUTxOs;
+                        return isOpen &&
+                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#0").getAddress().equals("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k") &&
+                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#0").getValue().get("lovelace").longValue() == 10_000_000L && // 10 ADA
+
+                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#1").getAddress().equals("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3") &&
+                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#1").getValue().get("lovelace").longValue() == 989_834_587L && // 989 ADA
+
+                                snapshot.get("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0").getAddress().equals("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k") &&
+                                snapshot.get("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0").getValue().get("lovelace").longValue() == 500_000_000L; // 500 ADA
                     });
         }
 
