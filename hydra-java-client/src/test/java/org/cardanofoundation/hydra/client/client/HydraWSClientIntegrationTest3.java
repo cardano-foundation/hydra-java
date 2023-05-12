@@ -31,7 +31,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
-import static org.cardanofoundation.hydra.client.client.helpers.HydraDevNetwork.HYDRA_API_REMOTE_PORT;
 import static org.cardanofoundation.hydra.core.model.HydraState.Initializing;
 import static org.cardanofoundation.hydra.core.model.HydraState.Open;
 import static org.cardanofoundation.hydra.core.utils.HexUtils.encodeHexString;
@@ -301,7 +300,7 @@ public class HydraWSClientIntegrationTest3 {
                     .build());
 
             var aliceGreetings = new CompletableFuture<GreetingsResponse>().orTimeout(1, MINUTES);
-            aliceHydraWSClient2.addHydraQueryEventListener(new SLF4JHydraLogger(log, "alice"));
+            aliceHydraWSClient2.addHydraQueryEventListener(SLF4JHydraLogger.of(log, "alice"));
             aliceHydraWSClient2.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
                 @Override
                 public void onSuccess(Response response) {
