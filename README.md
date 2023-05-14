@@ -34,7 +34,7 @@ mvn clean verify -P with-integration-tests
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java-client</artifactId>
-        <version>0.0.5-SNAPSHOT</version>
+        <version>0.0.6-SNAPSHOT</version>
     </dependency>
 </dependencies>
 ```
@@ -83,6 +83,6 @@ System.out.println(hydraWSClient.getState()); // HydraState.Open
 
 ## TODO
 - High-Level client implementation
-- Publish snapshot / release via maven to Sonatype
+- Publish releases and snapshots / Sonatype (Maven Central)
 - JavaDocs and improve documentation
 - Unit tests
