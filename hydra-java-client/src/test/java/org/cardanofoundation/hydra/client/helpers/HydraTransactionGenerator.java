@@ -1,4 +1,4 @@
-package org.cardanofoundation.hydra.client.client.helpers;
+package org.cardanofoundation.hydra.client.helpers;
 
 import com.bloxbean.cardano.client.api.ProtocolParamsSupplier;
 import com.bloxbean.cardano.client.api.UtxoSupplier;

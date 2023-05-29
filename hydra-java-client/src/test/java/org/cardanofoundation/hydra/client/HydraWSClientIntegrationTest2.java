@@ -1,15 +1,11 @@
-package org.cardanofoundation.hydra.client.client;
+package org.cardanofoundation.hydra.client;
 
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
-import org.cardanofoundation.hydra.client.HydraClientOptions;
-import org.cardanofoundation.hydra.client.HydraQueryEventListener;
-import org.cardanofoundation.hydra.client.HydraWSClient;
-import org.cardanofoundation.hydra.client.SLF4JHydraLogger;
-import org.cardanofoundation.hydra.client.client.helpers.HydraDevNetwork;
 import org.cardanofoundation.hydra.core.model.HydraState;
 import org.cardanofoundation.hydra.core.model.query.response.Response;
 import org.cardanofoundation.hydra.core.store.InMemoryUTxOStore;
+import org.cardanofoundation.hydra.test.HydraDevNetwork;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -30,7 +26,7 @@ public class HydraWSClientIntegrationTest2 {
      * - connecting to the head
      * - alice sends init command (getting Hydra in the intializing state)
      * - bob decides to abort
-     * - head reaches aborted state
+     * - head reaches aborted final
      */
     @Test
     public void testHydraNetworkReachesAbortState() throws InterruptedException {

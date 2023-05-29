@@ -1,4 +1,4 @@
-package org.cardanofoundation.hydra.client.client;
+package org.cardanofoundation.hydra.client;
 
 import com.bloxbean.cardano.client.api.ProtocolParamsSupplier;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
@@ -9,16 +9,12 @@ import org.cardanofoundation.hydra.cardano.client.lib.HydraOperator;
 import org.cardanofoundation.hydra.cardano.client.lib.JacksonClasspathProtocolParametersSupplier;
 import org.cardanofoundation.hydra.cardano.client.lib.JacksonClasspathSecretKeySupplierHydra;
 import org.cardanofoundation.hydra.cardano.client.lib.SnapshotUTxOSupplier;
-import org.cardanofoundation.hydra.client.HydraClientOptions;
-import org.cardanofoundation.hydra.client.HydraQueryEventListener;
-import org.cardanofoundation.hydra.client.HydraWSClient;
-import org.cardanofoundation.hydra.client.SLF4JHydraLogger;
-import org.cardanofoundation.hydra.client.client.helpers.HydraDevNetwork;
-import org.cardanofoundation.hydra.client.client.helpers.HydraTransactionGenerator;
+import org.cardanofoundation.hydra.client.helpers.HydraTransactionGenerator;
 import org.cardanofoundation.hydra.core.model.HydraState;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.query.response.*;
 import org.cardanofoundation.hydra.core.store.InMemoryUTxOStore;
+import org.cardanofoundation.hydra.test.HydraDevNetwork;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
