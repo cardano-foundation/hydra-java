@@ -1,17 +1,13 @@
-package org.cardanofoundation.hydra.client.client;
+package org.cardanofoundation.hydra.client;
 
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
-import org.cardanofoundation.hydra.client.HydraClientOptions;
-import org.cardanofoundation.hydra.client.HydraQueryEventListener;
-import org.cardanofoundation.hydra.client.HydraWSClient;
-import org.cardanofoundation.hydra.client.SLF4JHydraLogger;
-import org.cardanofoundation.hydra.client.client.helpers.HydraDevNetwork;
 import org.cardanofoundation.hydra.core.model.HydraState;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.query.response.GreetingsResponse;
 import org.cardanofoundation.hydra.core.model.query.response.Response;
 import org.cardanofoundation.hydra.core.store.InMemoryUTxOStore;
+import org.cardanofoundation.hydra.test.HydraDevNetwork;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;

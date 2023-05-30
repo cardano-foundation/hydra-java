@@ -1,4 +1,4 @@
-package org.cardanofoundation.hydra.client.client.helpers;
+package org.cardanofoundation.hydra.test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Files;
