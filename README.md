@@ -39,6 +39,9 @@ mvn clean verify -P with-integration-tests
 </dependencies>
 ```
 
+## Project Missing features / funtionality
+The current version may not contain exactly what you need. If there is a missing feature / functionality, we happily accept pull requests. Ideally please discuss with us the idea first, file an issue and let's agree on design of it. Should pull request not be possible we are open to do the work for you provided the github issue is raised and documented well enough to understand it. 
+
 ## Compatibility
 This client is compatible with Hydra's master (unreleased version yet).
 
@@ -82,7 +85,7 @@ System.out.println(hydraWSClient.getState()); // HydraState.Open
 ```
 
 ## TODO
-- High-Level client implementation
+- Reactive client implementation (RxJava, Project Reactor or JDK9)
 - Publish releases and snapshots / Sonatype (Maven Central)
 - JavaDocs and improve documentation
-- Unit tests
+- Add Unit tests in addition to existing integration tests
