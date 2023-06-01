@@ -1,9 +1,7 @@
 package org.cardanofoundation.hydra.core.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.List;
 import java.util.Map;
@@ -12,6 +10,9 @@ import java.util.Map;
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
 @ToString
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Snapshot {
 
     private int snapshotNumber;

@@ -10,4 +10,5 @@ import lombok.ToString;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @ToString
 public class TxBody {
+    // TODO
 }

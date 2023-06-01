@@ -2,7 +2,7 @@ package org.cardanofoundation.hydra.cardano.client.lib;
 
 import com.bloxbean.cardano.client.address.Address;
 import com.bloxbean.cardano.client.address.AddressProvider;
-import com.bloxbean.cardano.client.common.model.Networks;
+import com.bloxbean.cardano.client.common.model.Network;
 import com.bloxbean.cardano.client.crypto.KeyGenUtil;
 import com.bloxbean.cardano.client.crypto.SecretKey;
 import com.bloxbean.cardano.client.crypto.VerificationKey;
@@ -21,7 +21,11 @@ public class JacksonClasspathSecretKeySupplierHydra implements HydraOperatorSupp
 
     private final VerificationKey verificationKey;
 
-    public JacksonClasspathSecretKeySupplierHydra(ObjectMapper objectMapper, String classpathLink) throws CborSerializationException {
+    private final Network network;
+
+    public JacksonClasspathSecretKeySupplierHydra(ObjectMapper objectMapper, String classpathLink, Network network) throws CborSerializationException {
+        this.network = network;
+
         try (InputStream is = getClass().getClassLoader().getResourceAsStream(classpathLink)) {
             var tree = objectMapper.readTree(is);
 
@@ -34,14 +38,14 @@ public class JacksonClasspathSecretKeySupplierHydra implements HydraOperatorSupp
 
     @Override
     public HydraOperator getOperator() {
-        return new HydraOperator(getAddressFromVerificationKey(verificationKey.getCborHex()), SignerProviders.signerFrom(secretKey));
+        return new HydraOperator(getAddressFromVerificationKey(verificationKey.getCborHex(), network), SignerProviders.signerFrom(secretKey));
     }
 
-    private static String getAddressFromVerificationKey(String vkCborHex) {
+    private static String getAddressFromVerificationKey(String vkCborHex, Network network) {
         VerificationKey vk = new VerificationKey(vkCborHex);
         HdPublicKey hdPublicKey = new HdPublicKey();
         hdPublicKey.setKeyData(vk.getBytes());
-        Address address = AddressProvider.getEntAddress(hdPublicKey, Networks.testnet());
+        Address address = AddressProvider.getEntAddress(hdPublicKey, network);
 
         return address.toBech32();
     }

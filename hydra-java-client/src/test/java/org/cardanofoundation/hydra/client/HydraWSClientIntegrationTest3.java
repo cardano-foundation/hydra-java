@@ -1,6 +1,7 @@
 package org.cardanofoundation.hydra.client;
 
 import com.bloxbean.cardano.client.api.ProtocolParamsSupplier;
+import com.bloxbean.cardano.client.common.model.Networks;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
@@ -45,8 +46,8 @@ public class HydraWSClientIntegrationTest3 {
         var objectMapper = new ObjectMapper();
         // TODO when hydra supports protocol params via REST we can make it better
         PROTOCOL_PARAMS_SUPPLIER = new JacksonClasspathProtocolParametersSupplier(objectMapper);
-        ALICE_OPERATOR = new JacksonClasspathSecretKeySupplierHydra(objectMapper, "devnet/credentials/alice.sk").getOperator();
-        BOB_OPERATOR = new JacksonClasspathSecretKeySupplierHydra(objectMapper, "devnet/credentials/bob.sk").getOperator();
+        ALICE_OPERATOR = new JacksonClasspathSecretKeySupplierHydra(objectMapper, "devnet/credentials/alice.sk", Networks.testnet()).getOperator();
+        BOB_OPERATOR = new JacksonClasspathSecretKeySupplierHydra(objectMapper, "devnet/credentials/bob.sk", Networks.testnet()).getOperator();
         log.info("Alice OPERATOR:{}", ALICE_OPERATOR);
         log.info("Bob OPERATOR:{}", BOB_OPERATOR);
     }
