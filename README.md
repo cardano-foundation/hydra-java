@@ -2,6 +2,7 @@
 
 [![Build](https://github.com/cardano-foundation/hydra-java/actions/workflows/maven-build.yml/badge.svg)](https://github.com/cardano-foundation/hydra-java/actions/workflows/maven-build.yml)
 [![License](https://img.shields.io:/github/license/cardano-foundation/hydra-java?label=license)](https://github.com/cardano-foundation/hydra-java/blob/master/LICENSE)
+[![Discord](https://dcbadge.vercel.app/api/server/4WVNHgQ7bP)](https://discord.gg/4WVNHgQ7bP)
 
 This is an **incubator project**, which simplifies working with Hydra from java applications. Hydra is an isomorphic state machine L2 network, which works seamlessly with Cardano.
 
