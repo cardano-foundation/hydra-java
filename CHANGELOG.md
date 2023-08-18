@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/cardano-foundation/hydra-java/compare/v0.0.3...v0.0.4) (2023-08-18)
+
+
+### Features
+
+* attempting to force a release ([34c8c65](https://github.com/cardano-foundation/hydra-java/commit/34c8c65ca8066cb858ccd423ad950eaca68a0b02))
+
 ## [0.0.3](https://github.com/cardano-foundation/hydra-java/compare/v0.0.2...v0.0.3) (2023-08-18)
 
 
