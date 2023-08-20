@@ -29,13 +29,19 @@ mvn clean install
 mvn clean verify -P with-integration-tests
 ```
 
+## Version Compatibility Matrix
+
+| Hydra Version | Library Version |
+| ------------- | --------------- |
+| 0.10.x        | 0.0.5           |
+
 ## Dependency
 ```xml
 <dependencies>
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java-client</artifactId>
-        <version>0.0.4-SNAPSHOT</version>
+        <version>0.0.6-SNAPSHOT</version>
     </dependency>
 </dependencies>
 ```
