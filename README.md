@@ -52,6 +52,12 @@ The current version may not contain exactly what you need. If there is a missing
 ## Compatibility
 This client is compatible with Hydra's master (unreleased version yet).
 
+## Additional Docs
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- [SECURITY.md](SECURITY.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [CHANGELOG.md](CHANGELOG.md)
+
 ## Example usage
 
 ```
