@@ -27,10 +27,20 @@ public class HydraClientOptions {
     @Nullable
     private TransactionFormat transactionFormat;
 
+    /**
+     *
+     * @param serverURI
+     * @return
+     */
     public static HydraClientOptionsBuilder builder(String serverURI) {
         return hiddenBuilder().serverURI(serverURI);
     }
 
+    /**
+     *
+     * @param serverURI
+     * @return
+     */
     public static HydraClientOptions createDefault(String serverURI) {
         return HydraClientOptions.builder(serverURI).build();
     }
