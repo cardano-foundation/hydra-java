@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6](https://github.com/cardano-foundation/hydra-java/compare/v0.0.5...v0.0.6) (2023-09-28)
+
+
+### Documentation
+
+* Versions Dependency Matrix ([b58fda7](https://github.com/cardano-foundation/hydra-java/commit/b58fda73f35ca828fa5793e1c68a9b97c41fb34d))
+
 ## [0.0.5](https://github.com/cardano-foundation/hydra-java/compare/v0.0.4...v0.0.5) (2023-08-18)
 
 

@@ -4,7 +4,7 @@
 
     <groupId>org.cardanofoundation</groupId>
     <artifactId>hydra-java</artifactId>
-    <version>0.0.6-SNAPSHOT</version>
+    <version>0.0.6</version>
     <packaging>pom</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Hydra Java Client is a java library that simplifies communication with a Hydra node over websockets.</description>
