@@ -33,7 +33,7 @@ mvn clean verify -P with-integration-tests
 
 | Hydra Version | Library Version |
 | ------------- | --------------- |
-| 0.10.x        | 0.0.5           |
+| 0.10.x        | 0.0.6           |
 
 ## Dependency
 ```xml
@@ -96,9 +96,3 @@ System.out.println(hydraWSClient.getState()); // HydraState.Open
 
 // after finishing operator can close the head... after contenstation period remaining funds will be unlocked on L1
 ```
-
-## TODO
-- Reactive client implementation (RxJava, Project Reactor or JDK9)
-- Publish releases and snapshots / Sonatype (Maven Central)
-- JavaDocs and improve documentation
-- Add Unit tests in addition to existing integration tests
