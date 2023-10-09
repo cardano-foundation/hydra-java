@@ -18,10 +18,11 @@
         <slf4j.version>2.0.7</slf4j.version>
         <Java-WebSocket.version>1.5.3</Java-WebSocket.version>
         <st4.version>4.3.4</st4.version>
-        <lombok.version>1.18.26</lombok.version>
+        <lombok.version>1.18.30</lombok.version>
         <jackson.databind.version>2.15.0</jackson.databind.version>
         <jetbrains.annotations.version>24.0.1</jetbrains.annotations.version>
-        <cardano.client.lib.version>0.4.3</cardano.client.lib.version>
+        <cardano.client.lib.version>0.5.0</cardano.client.lib.version>
+        <reactor.core.lib.version>3.5.10</reactor.core.lib.version>
 
         <test.containers.version>1.18.1</test.containers.version>
         <assertj.core.version>3.24.2</assertj.core.version>
@@ -39,7 +40,6 @@
         <git.repository>cardano-foundation/hydra-java</git.repository>
 
     </properties>
-
 
     <dependencyManagement>
         <dependencies>
@@ -83,14 +83,35 @@
 
             <dependency>
                 <groupId>com.bloxbean.cardano</groupId>
-                <artifactId>cardano-client-lib</artifactId>
+                <artifactId>cardano-client-transaction-spec</artifactId>
                 <version>${cardano.client.lib.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.bloxbean.cardano</groupId>
+                <artifactId>cardano-client-function</artifactId>
+                <version>${cardano.client.lib.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.bloxbean.cardano</groupId>
+                <artifactId>cardano-client-plutus</artifactId>
+                <version>${cardano.client.lib.version}</version>
+                <scope>compile</scope>
             </dependency>
 
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${jackson.databind.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-core</artifactId>
+                <version>${reactor.core.lib.version}</version>
             </dependency>
 
             <dependency>
@@ -345,6 +366,7 @@
         <module>hydra-java-client</module>
         <module>hydra-java-cardano-client-lib-adapter</module>
         <module>hydra-java-test-containers-support</module>
+        <module>hydra-java-reactive-reactor</module>
     </modules>
 
 </project>

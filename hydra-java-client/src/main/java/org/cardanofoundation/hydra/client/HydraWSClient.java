@@ -46,7 +46,7 @@ public class HydraWSClient {
         this.hydraWebSocketHandler = new HydraWebSocketHandler(hydraServerUri);
         this.hydraClientOptions = hydraClientOptions;
         this.hydraState = HydraState.Unknown;
-        this.utxoStore = hydraClientOptions.getWithUTxOStore();
+        this.utxoStore = hydraClientOptions.getUtxoStore();
         this.responseTagHandlers = new ResponseTagHandlers(utxoStore);
     }
 

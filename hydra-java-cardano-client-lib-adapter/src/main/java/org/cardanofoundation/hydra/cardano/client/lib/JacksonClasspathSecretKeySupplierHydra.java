@@ -1,19 +1,18 @@
 package org.cardanofoundation.hydra.cardano.client.lib;
 
-import com.bloxbean.cardano.client.address.Address;
-import com.bloxbean.cardano.client.address.AddressProvider;
 import com.bloxbean.cardano.client.common.model.Network;
 import com.bloxbean.cardano.client.crypto.KeyGenUtil;
 import com.bloxbean.cardano.client.crypto.SecretKey;
 import com.bloxbean.cardano.client.crypto.VerificationKey;
-import com.bloxbean.cardano.client.crypto.bip32.key.HdPublicKey;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
-import com.bloxbean.cardano.client.function.helper.SignerProviders;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.cardanofoundation.hydra.cardano.client.lib.utils.MoreAddress;
 import org.cardanofoundation.hydra.core.HydraException;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import static com.bloxbean.cardano.client.function.helper.SignerProviders.signerFrom;
 
 public class JacksonClasspathSecretKeySupplierHydra implements HydraOperatorSupplier {
 
@@ -38,16 +37,9 @@ public class JacksonClasspathSecretKeySupplierHydra implements HydraOperatorSupp
 
     @Override
     public HydraOperator getOperator() {
-        return new HydraOperator(getAddressFromVerificationKey(verificationKey.getCborHex(), network), SignerProviders.signerFrom(secretKey));
-    }
+        var address = MoreAddress.getBech32AddressFromVerificationKey(verificationKey.getCborHex(), network);
 
-    private static String getAddressFromVerificationKey(String vkCborHex, Network network) {
-        VerificationKey vk = new VerificationKey(vkCborHex);
-        HdPublicKey hdPublicKey = new HdPublicKey();
-        hdPublicKey.setKeyData(vk.getBytes());
-        Address address = AddressProvider.getEntAddress(hdPublicKey, network);
-
-        return address.toBech32();
+        return new HydraOperator(address, signerFrom(secretKey));
     }
 
 }

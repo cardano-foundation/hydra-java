@@ -75,7 +75,7 @@ public class HydraWSClientIntegrationTest3 {
             var bobState = new AtomicReference<HydraState>();
 
             var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer()))
-                    .withUTxOStore(aliceInMemoryStore)
+                    .utxoStore(aliceInMemoryStore)
                     .build());
 
             SLF4JHydraLogger aliceHydraLogger = SLF4JHydraLogger.of(log, "alice");
@@ -119,7 +119,7 @@ public class HydraWSClientIntegrationTest3 {
             });
 
             var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getBobHydraContainer()))
-                    .withUTxOStore(bobInMemoryStore)
+                    .utxoStore(bobInMemoryStore)
                     .build());
             SLF4JHydraLogger bobHydraLogger = SLF4JHydraLogger.of(log, "bob");
             bobHydraWSClient.addHydraQueryEventListener(bobHydraLogger);
@@ -292,7 +292,7 @@ public class HydraWSClientIntegrationTest3 {
             log.info("Let's connect now with full history...");
             aliceInMemoryStore = new InMemoryUTxOStore();
             var aliceHydraWSClient2 = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer()))
-                    .withUTxOStore(aliceInMemoryStore)
+                    .utxoStore(aliceInMemoryStore)
                     .history(true) // now lets see if connecting with history is fine
                     .build());
 

@@ -31,9 +31,10 @@ mvn clean verify -P with-integration-tests
 
 ## Version Compatibility Matrix
 
-| Hydra Version | Library Version |
-| ------------- | --------------- |
-| 0.10.x        | 0.0.6           |
+| Hydra Version | Library Version | Cardano Client Library Version |
+| ------------- |-----------------|--------------------------------|
+| 0.10.x        | 0.0.6           | 0.4.x                          |
+| 0.10.x        | 0.0.7           | 0.5.x                          |
 
 ## Dependency
 ```xml
@@ -41,12 +42,12 @@ mvn clean verify -P with-integration-tests
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java-client</artifactId>
-        <version>0.0.6</version>
+        <version>0.0.7</version>
     </dependency>
 </dependencies>
 ```
 
-## Project Missing features / funtionality
+## Project Missing features / functionality
 The current version may not contain exactly what you need. If there is a missing feature / functionality, we happily accept pull requests. Ideally please discuss with us the idea first, file an issue and let's agree on design of it. Should pull request not be possible we are open to do the work for you provided the github issue is raised and documented well enough to understand it. 
 
 ## Compatibility
