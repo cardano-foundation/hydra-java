@@ -27,7 +27,7 @@
         <test.containers.version>1.18.1</test.containers.version>
         <assertj.core.version>3.24.2</assertj.core.version>
         <awaitability.version>4.2.0</awaitability.version>
-        <guava.version>31.1-jre</guava.version>
+        <guava.version>32.0.0-jre</guava.version>
 
         <junit-jupiter-engine.version>5.9.3</junit-jupiter-engine.version>
         <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
