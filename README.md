@@ -59,12 +59,22 @@ This client is compatible with Hydra's master (unreleased version yet).
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [CHANGELOG.md](CHANGELOG.md)
 
-## Example usage
+## Modules
+
+| Submodule                  | Goal / Description                                                         |
+|----------------------------|----------------------------------------------------------------------------|
+| core                       | main classes  / code                                                       |
+| client                     | low level web socket client                                                |
+| reactive-reactor-client    | experimental request / response high level reactive client (using reactor) |
+| cardano-client-lib-adapter | bindings to BloxBean's cardano-client lib                                  |
+| test-containers-support    | utilities to assist in testing via test containers project                 |
+
+## Example usage (client)
 
 ```
 var wsUrl = "ws://localhost:4001"; // locally running hydra instance
 var hydraClientOptions = HydraClientOptions.builder(wsUrl)
-                    .withUTxOStore(new InMemoryUTxOStore())
+                    .uTxOStore(new InMemoryUTxOStore())
                     .build()
 
 var hydraWSClient = new HydraWSClient(hydraClientOptions);

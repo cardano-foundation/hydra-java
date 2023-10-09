@@ -366,7 +366,7 @@
         <module>hydra-java-client</module>
         <module>hydra-java-cardano-client-lib-adapter</module>
         <module>hydra-java-test-containers-support</module>
-        <module>hydra-java-reactive-reactor</module>
+        <module>hydra-java-reactive-reactor-client</module>
     </modules>
 
 </project>

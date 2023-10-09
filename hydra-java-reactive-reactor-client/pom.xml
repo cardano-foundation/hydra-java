@@ -9,7 +9,7 @@
         <version>0.0.7-SNAPSHOT</version>
     </parent>
 
-    <artifactId>hydra-java-reactive-reactor</artifactId>
+    <artifactId>hydra-java-reactive-reactor-client</artifactId>
 
     <dependencies>
         <dependency>
