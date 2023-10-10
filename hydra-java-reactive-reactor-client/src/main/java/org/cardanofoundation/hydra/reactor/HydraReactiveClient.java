@@ -1,6 +1,5 @@
 package org.cardanofoundation.hydra.reactor;
 
-import com.google.common.hash.Hashing;
 import lombok.extern.slf4j.Slf4j;
 import org.cardanofoundation.hydra.client.HydraClientOptions;
 import org.cardanofoundation.hydra.client.HydraQueryEventListener;
@@ -176,23 +175,17 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         return hydraWSClient.getHydraState();
     }
 
-    public Mono<TxResult> submitTx(byte[] txCbor) {
+    public Mono<TxResult> submitTx(String txId, byte[] txCbor) {
         return Mono.create(monoSink -> {
-            var txHashSha512 = Hashing.sha512().hashBytes(txCbor);
-            var txHashHex = txHashSha512.toString().toUpperCase();
 
-            storeMonoSinkReference(TxSubmitLocalCommand.of(txHashHex).key(), monoSink);
+            storeMonoSinkReference(TxSubmitLocalCommand.of(txId).key(), monoSink);
             hydraWSClient.submitTx(encodeHexString(txCbor));
         });
     }
 
-    public Mono<TxResult> submitTxFullConfirmation(byte[] txCbor) {
+    public Mono<TxResult> submitTxFullConfirmation(String txId, byte[] txCbor) {
         return Mono.create(monoSink -> {
-
-            var txHashSha512 = Hashing.sha512().hashBytes(txCbor);
-            var txHashHex = txHashSha512.toString().toUpperCase();
-
-            storeMonoSinkReference(TxSubmitGlobalCommand.of(txHashHex).key(), monoSink);
+            storeMonoSinkReference(TxSubmitGlobalCommand.of(txId).key(), monoSink);
             hydraWSClient.submitTx(encodeHexString(txCbor));
         });
     }
