@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.cardanofoundation.hydra.core.model.HydraState.*;
+import static org.cardanofoundation.hydra.core.model.Tag.FanoutTx;
 import static org.cardanofoundation.hydra.core.utils.HexUtils.encodeHexString;
 
 @Slf4j
@@ -135,10 +136,13 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             applyMonoSuccess(AbortHeadCommand.key(), ha);
         }
 
-        if (response instanceof HeadIsFinalizedResponse) {
-            HeadIsFinalizedResponse hf = (HeadIsFinalizedResponse) response;
+        if (response instanceof PostTxOnChainFailedResponse) {
+            PostTxOnChainFailedResponse failure = (PostTxOnChainFailedResponse) response;
 
-            applyMonoSuccess(FanOutHeadCommand.key(), hf);
+            if (failure.getPostChainTx().getTag() == FanoutTx) {
+                applyMonoError(FanOutHeadCommand.key(), "Fanout failed.");
+            }
+
         }
 
         if (response instanceof ReadyToFanoutResponse) {

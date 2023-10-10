@@ -34,8 +34,12 @@ public enum Tag {
     Contest,
     Fanout,
     SnapshotConfirmed,
-    CollectComTx,
     CommitTx,
+    InitTx,
+    AbortTx,
+    CollectComTx,
+    CloseTx,
+    ContestTx,
     FanoutTx;
 
     public static Optional<Tag> find(String tag) {
