@@ -9,7 +9,7 @@ import lombok.ToString;
 @AllArgsConstructor(staticName = "of")
 @EqualsAndHashCode
 @ToString
-public class TxLocalCommand {
+public class TxSubmitGlobalCommand {
 
     private String txId;
 

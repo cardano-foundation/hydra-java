@@ -1,5 +1,6 @@
 package org.cardanofoundation.hydra.reactor;
 
+import com.google.common.hash.Hashing;
 import lombok.extern.slf4j.Slf4j;
 import org.cardanofoundation.hydra.client.HydraClientOptions;
 import org.cardanofoundation.hydra.client.HydraQueryEventListener;
@@ -20,9 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.bloxbean.cardano.client.transaction.util.TransactionUtil.getTxHash;
-import static com.bloxbean.cardano.client.util.HexUtil.encodeHexString;
 import static org.cardanofoundation.hydra.core.model.HydraState.*;
+import static org.cardanofoundation.hydra.core.utils.HexUtils.encodeHexString;
 
 @Slf4j
 public class HydraReactiveClient extends HydraQueryEventListener.Stub {
@@ -118,8 +118,8 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             for (Transaction trx : sc.getSnapshot().getConfirmedTransactions()) {
                 TxResult txResult = new TxResult(trx.getId(), trx.getIsValid());
 
-                TxGlobalCommand txGlobalCommand = TxGlobalCommand.of(trx.getId());
-                applyMonoSuccess(txGlobalCommand.key(), txResult);
+                TxSubmitGlobalCommand txSubmitGlobalCommand = TxSubmitGlobalCommand.of(trx.getId());
+                applyMonoSuccess(txSubmitGlobalCommand.key(), txResult);
             }
         }
 
@@ -152,7 +152,7 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             String txId = txResponse.getTransaction().getId();
             TxResult txResult = new TxResult(txId, true);
 
-            applyMonoSuccess(TxLocalCommand.of(txId).toString(), txResult);
+            applyMonoSuccess(TxSubmitLocalCommand.of(txId).toString(), txResult);
         }
         if (response instanceof TxInvalidResponse) {
             TxInvalidResponse txResponse = (TxInvalidResponse) response;
@@ -160,7 +160,7 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             String reason = txResponse.getValidationError().getReason();
             TxResult txResult = new TxResult(txId, true, reason);
 
-            applyMonoSuccess(TxLocalCommand.of(txId).key(), txResult);
+            applyMonoSuccess(TxSubmitLocalCommand.of(txId).key(), txResult);
         }
     }
 
@@ -172,21 +172,24 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         return hydraWSClient.getHydraState();
     }
 
-    public Mono<TxResult> submitTx(byte[] cborTx) {
+    public Mono<TxResult> submitTx(byte[] txCbor) {
         return Mono.create(monoSink -> {
-            String txHash = getTxHash(cborTx);
-            storeMonoSinkReference(TxLocalCommand.of(txHash).key(), monoSink);
-            hydraWSClient.submitTx(encodeHexString(cborTx));
+            var txHashSha512 = Hashing.sha512().hashBytes(txCbor);
+            var txHashHex = txHashSha512.toString().toUpperCase();
+
+            storeMonoSinkReference(TxSubmitLocalCommand.of(txHashHex).key(), monoSink);
+            hydraWSClient.submitTx(encodeHexString(txCbor));
         });
     }
 
-    public Mono<TxResult> submitTxFullConfirmation(byte[] cborTx) {
+    public Mono<TxResult> submitTxFullConfirmation(byte[] txCbor) {
         return Mono.create(monoSink -> {
-            String txHash = getTxHash(cborTx);
-            log.debug("Submitting tx:" + txHash);
 
-            storeMonoSinkReference(TxGlobalCommand.of(txHash).key(), monoSink);
-            hydraWSClient.submitTx(encodeHexString(cborTx));
+            var txHashSha512 = Hashing.sha512().hashBytes(txCbor);
+            var txHashHex = txHashSha512.toString().toUpperCase();
+
+            storeMonoSinkReference(TxSubmitGlobalCommand.of(txHashHex).key(), monoSink);
+            hydraWSClient.submitTx(encodeHexString(txCbor));
         });
     }
 
