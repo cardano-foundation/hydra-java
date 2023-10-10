@@ -45,12 +45,12 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         }
     }
 
-    public Flux<HydraState> getHydraStatesStream() {
+    public Flux<BiHydraState> getHydraStatesStream() {
         if (hydraWSClient == null) {
             return Flux.empty();
         }
 
-        return Flux.create(fluxSink -> hydraWSClient.addHydraStateEventListener((prevState, newState) -> fluxSink.next(newState)));
+        return Flux.create(fluxSink -> hydraWSClient.addHydraStateEventListener((prevState, newState) -> fluxSink.next(new BiHydraState(prevState, newState))));
     }
 
     public Flux<Response> getHydraResponsesStream() {
@@ -133,6 +133,12 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             HeadIsAbortedResponse ha = (HeadIsAbortedResponse) response;
 
             applyMonoSuccess(AbortHeadCommand.key(), ha);
+        }
+
+        if (response instanceof HeadIsFinalizedResponse) {
+            HeadIsFinalizedResponse hf = (HeadIsFinalizedResponse) response;
+
+            applyMonoSuccess(FanOutHeadCommand.key(), hf);
         }
 
         if (response instanceof ReadyToFanoutResponse) {
@@ -310,7 +316,7 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         return Mono.empty();
     }
 
-    public Mono<ReadyToFanoutResponse> fanOutHead() {
+    public Mono<HeadIsFinalizedResponse> fanOutHead() {
         if (hydraWSClient == null) {
             return Mono.empty();
         }

@@ -272,7 +272,7 @@ public class HydraWSClient {
             if (queryResponse instanceof FailureResponse) {
                 var failureResponse = (FailureResponse) queryResponse;
                 if (hydraClientOptions.isDoNotPropagateLowLevelFailures() && failureResponse.isLowLevelFailure()) {
-                    log.info("Low level consensus failure, ignoring...");
+                    log.debug("Low level consensus failure, ignoring...");
                     return;
                 }
             }

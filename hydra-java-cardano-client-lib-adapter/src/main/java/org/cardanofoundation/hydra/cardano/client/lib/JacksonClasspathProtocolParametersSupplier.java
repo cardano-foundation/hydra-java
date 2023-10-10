@@ -36,7 +36,8 @@ public class JacksonClasspathProtocolParametersSupplier implements ProtocolParam
         this(objectMapper, Optional.of(classpathLink));
     }
 
-    private JacksonClasspathProtocolParametersSupplier(ObjectMapper objectMapper, Optional<String> classpathLink) {
+    private JacksonClasspathProtocolParametersSupplier(ObjectMapper objectMapper,
+                                                       Optional<String> classpathLink) {
         try (InputStream is = getClass().getClassLoader().getResourceAsStream(classpathLink.orElse("protocol-parameters.json"))) {
             protoParamsJson = objectMapper.readTree(is);
         } catch (IOException e) {
