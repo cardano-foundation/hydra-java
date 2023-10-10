@@ -165,6 +165,11 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
 
             applyMonoSuccess(TxSubmitLocalCommand.of(txId).key(), txResult);
         }
+        if (response instanceof GetUTxOResponse) {
+            GetUTxOResponse getUTxOResponse = (GetUTxOResponse) response;
+
+            applyMonoSuccess(GetUTxOCommand.key(), getUTxOResponse);
+        }
     }
 
     public HydraState getHydraState() {
@@ -173,6 +178,13 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         }
 
         return hydraWSClient.getHydraState();
+    }
+
+    public Mono<GetUTxOResponse> getUTxOs() {
+        return Mono.create(monoSink -> {
+            storeMonoSinkReference(GetUTxOCommand.key(), monoSink);
+            hydraWSClient.getUTXO();
+        });
     }
 
     public Mono<TxResult> submitTx(String txId, byte[] txCbor) {
