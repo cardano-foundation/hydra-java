@@ -49,9 +49,6 @@ mvn clean verify -P with-integration-tests
 ## Project Missing features / funtionality
 The current version may not contain exactly what you need. If there is a missing feature / functionality, we happily accept pull requests. Ideally please discuss with us the idea first, file an issue and let's agree on design of it. Should pull request not be possible we are open to do the work for you provided the github issue is raised and documented well enough to understand it. 
 
-## Compatibility
-This client is compatible with Hydra's master (unreleased version yet).
-
 ## Additional Docs
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 - [SECURITY.md](SECURITY.md)
