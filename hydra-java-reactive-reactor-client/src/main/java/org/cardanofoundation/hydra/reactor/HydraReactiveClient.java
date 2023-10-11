@@ -181,25 +181,48 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
     }
 
     public Mono<GetUTxOResponse> getUTxOs() {
-        return Mono.create(monoSink -> {
-            storeMonoSinkReference(GetUTxOCommand.key(), monoSink);
-            hydraWSClient.getUTXO();
-        });
+        if (hydraWSClient == null) {
+            return Mono.empty();
+        }
+
+        if (hydraWSClient.getHydraState() == Open) {
+            return Mono.create(monoSink -> {
+                storeMonoSinkReference(GetUTxOCommand.key(), monoSink);
+                hydraWSClient.getUTXO();
+            });
+        }
+
+        return Mono.empty();
     }
 
     public Mono<TxResult> submitTx(String txId, byte[] txCbor) {
-        return Mono.create(monoSink -> {
+        if (hydraWSClient == null) {
+            return Mono.empty();
+        }
 
-            storeMonoSinkReference(TxSubmitLocalCommand.of(txId).key(), monoSink);
-            hydraWSClient.submitTx(encodeHexString(txCbor));
-        });
+        if (hydraWSClient.getHydraState() == Open) {
+            return Mono.create(monoSink -> {
+                storeMonoSinkReference(TxSubmitLocalCommand.of(txId).key(), monoSink);
+                hydraWSClient.submitTx(encodeHexString(txCbor));
+            });
+        }
+
+        return Mono.empty();
     }
 
     public Mono<TxResult> submitTxFullConfirmation(String txId, byte[] txCbor) {
-        return Mono.create(monoSink -> {
-            storeMonoSinkReference(TxSubmitGlobalCommand.of(txId).key(), monoSink);
-            hydraWSClient.submitTx(encodeHexString(txCbor));
-        });
+        if (hydraWSClient == null) {
+            return Mono.empty();
+        }
+
+        if (hydraWSClient.getHydraState() == Open) {
+            return Mono.create(monoSink -> {
+                storeMonoSinkReference(TxSubmitGlobalCommand.of(txId).key(), monoSink);
+                hydraWSClient.submitTx(encodeHexString(txCbor));
+            });
+        }
+
+        return Mono.empty();
     }
 
     protected void storeMonoSinkReference(String key, MonoSink monoSink) {
