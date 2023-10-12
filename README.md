@@ -42,7 +42,7 @@ mvn clean verify -P with-integration-tests
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java-client</artifactId>
-        <version>0.0.7</version>
+        <version>0.0.7-SNAPSHOT</version>
     </dependency>
 </dependencies>
 ```
