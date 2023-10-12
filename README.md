@@ -34,7 +34,7 @@ mvn clean verify -P with-integration-tests
 | Hydra Version | Library Version | Cardano Client Library Version |
 | ------------- |-----------------|--------------------------------|
 | 0.10.x        | 0.0.6           | 0.4.x                          |
-| 0.10.x        | 0.0.7           | 0.5.x                          |
+| 0.10.x        | 0.0.7-SNAPSHOT  | 0.5.x                          |
 
 ## Dependency
 ```xml
