@@ -46,7 +46,7 @@ public class HydraWSClient {
         this.hydraWebSocketHandler = new HydraWebSocketHandler(hydraServerUri);
         this.hydraClientOptions = hydraClientOptions;
         this.hydraState = HydraState.Unknown;
-        this.utxoStore = hydraClientOptions.getWithUTxOStore();
+        this.utxoStore = hydraClientOptions.getUtxoStore();
         this.responseTagHandlers = new ResponseTagHandlers(utxoStore);
     }
 
@@ -272,7 +272,7 @@ public class HydraWSClient {
             if (queryResponse instanceof FailureResponse) {
                 var failureResponse = (FailureResponse) queryResponse;
                 if (hydraClientOptions.isDoNotPropagateLowLevelFailures() && failureResponse.isLowLevelFailure()) {
-                    log.info("Low level consensus failure, ignoring...");
+                    log.debug("Low level consensus failure, ignoring...");
                     return;
                 }
             }

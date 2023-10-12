@@ -34,8 +34,13 @@ public enum Tag {
     Contest,
     Fanout,
     SnapshotConfirmed,
+    CommitTx,
+    InitTx,
+    AbortTx,
     CollectComTx,
-    CommitTx;
+    CloseTx,
+    ContestTx,
+    FanoutTx;
 
     public static Optional<Tag> find(String tag) {
         return Arrays.stream(values()).filter(qt -> qt.name().equals(tag)).findAny();

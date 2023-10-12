@@ -16,7 +16,7 @@ public class HydraClientOptions {
     private boolean history = false;
 
     @Builder.Default
-    private UTxOStore withUTxOStore = new EmptyUTxOStore();
+    private UTxOStore utxoStore = new EmptyUTxOStore();
 
     /**
      * Hydra internal consensus level errors are not propagated to the developer

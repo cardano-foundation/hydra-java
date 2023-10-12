@@ -4,7 +4,6 @@ import com.bloxbean.cardano.client.api.UtxoSupplier;
 import com.bloxbean.cardano.client.api.common.OrderEnum;
 import com.bloxbean.cardano.client.api.model.Amount;
 import com.bloxbean.cardano.client.api.model.Utxo;
-import com.bloxbean.cardano.client.transaction.spec.PlutusData;
 import com.bloxbean.cardano.client.util.Tuple;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,9 +15,10 @@ import org.cardanofoundation.hydra.core.utils.StringUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.bloxbean.cardano.client.transaction.spec.serializers.PlutusDataJsonConverter.toPlutusData;
+import static com.bloxbean.cardano.client.plutus.spec.serializers.PlutusDataJsonConverter.toPlutusData;
 
 public class SnapshotUTxOSupplier implements UtxoSupplier {
 
@@ -67,12 +67,20 @@ public class SnapshotUTxOSupplier implements UtxoSupplier {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public Optional<Utxo> getTxOutput(String txHash, int outputIndex) {
+        return getAll(txHash).stream()
+                .filter(utxo -> utxo.getOutputIndex() == outputIndex)
+                .findFirst();
+    }
+
     private String convertInlineDatum(JsonNode inlineDatum) {
         if (inlineDatum == null || inlineDatum instanceof NullNode)
             return null;
 
         try {
-            PlutusData plutusData = toPlutusData(inlineDatum);
+            var plutusData = toPlutusData(inlineDatum);
+
             return plutusData.serializeToHex();
         } catch (JsonProcessingException e) {
             throw new HydraException("Unable to convert inlineDatum to PlutusData");

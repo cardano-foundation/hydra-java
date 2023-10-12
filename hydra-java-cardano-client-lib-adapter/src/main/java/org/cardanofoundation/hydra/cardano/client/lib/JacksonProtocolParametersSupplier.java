@@ -3,46 +3,25 @@ package org.cardanofoundation.hydra.cardano.client.lib;
 import com.bloxbean.cardano.client.api.ProtocolParamsSupplier;
 import com.bloxbean.cardano.client.api.model.ProtocolParams;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
-import org.cardanofoundation.hydra.core.HydraException;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Optional;
 
-/**
- * Simple implementation that sources protocol parameters from the classpath
- */
 @Getter
 @Setter
-public class JacksonClasspathProtocolParametersSupplier implements ProtocolParamsSupplier {
-
-    private final JsonNode protoParamsJson;
+public class JacksonProtocolParametersSupplier implements ProtocolParamsSupplier {
 
     private int minFeeA = 44;
     private int minFeeB = 155381;
 
-    public JacksonClasspathProtocolParametersSupplier(ObjectMapper objectMapper) {
-        this(objectMapper, Optional.empty());
-    }
+    private final JsonNode protoParamsJson;
 
-    public JacksonClasspathProtocolParametersSupplier(ObjectMapper objectMapper, String classpathLink) {
-        this(objectMapper, Optional.of(classpathLink));
-    }
-
-    private JacksonClasspathProtocolParametersSupplier(ObjectMapper objectMapper,
-                                                       Optional<String> classpathLink) {
-        try (InputStream is = getClass().getClassLoader().getResourceAsStream(classpathLink.orElse("protocol-parameters.json"))) {
-            protoParamsJson = objectMapper.readTree(is);
-        } catch (IOException e) {
-            throw new HydraException(e);
-        }
+    public JacksonProtocolParametersSupplier(JsonNode protoParamsJson) {
+        this.protoParamsJson = protoParamsJson;
     }
 
     @Override
