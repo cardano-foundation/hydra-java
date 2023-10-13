@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.7](https://github.com/cardano-foundation/hydra-java/compare/v0.0.6...v0.0.7) (2023-10-13)
+
+
+### Features
+
+* reactive hydra client module with project reactor plus update to Cardano Client Library 0.5.x ([#41](https://github.com/cardano-foundation/hydra-java/issues/41)) ([35993ea](https://github.com/cardano-foundation/hydra-java/commit/35993eab98560819dc4df5da008f8225ac674e22))
+
+
+### Bug Fixes
+
+* fan-out response fix ([6777595](https://github.com/cardano-foundation/hydra-java/commit/6777595e65b61afc600d1f429cb767f197c323e4))
+* there is no such command as ready to fan-out, head participant has to wait for the contestation period to pass. ([2ff346e](https://github.com/cardano-foundation/hydra-java/commit/2ff346eb46bd147171202bb081675990c9afd106))
+
 ## [0.0.6](https://github.com/cardano-foundation/hydra-java/compare/v0.0.5...v0.0.6) (2023-09-28)
 
 

@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java</artifactId>
-        <version>0.0.7-SNAPSHOT</version>
+        <version>0.0.7</version>
     </parent>
 
     <artifactId>hydra-java-test-containers-support</artifactId>
