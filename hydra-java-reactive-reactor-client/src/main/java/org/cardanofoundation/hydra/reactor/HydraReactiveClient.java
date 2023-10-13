@@ -50,7 +50,14 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Flux.empty();
         }
 
-        return Flux.create(fluxSink -> hydraWSClient.addHydraStateEventListener((prevState, newState) -> fluxSink.next(new BiHydraState(prevState, newState))));
+        var adapter = new FluxSinkHydraStateAdapter();
+        return Flux.<BiHydraState>create(fluxSink -> {
+            adapter.setSink(fluxSink);
+            hydraWSClient.addHydraStateEventListener((adapter));
+        }).doFinally(signal -> {
+            log.info("Removing hydra state event listener.");
+            hydraWSClient.removeHydraStateEventListener(adapter);
+        });
     }
 
     public Flux<Response> getHydraResponsesStream() {
@@ -58,19 +65,20 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Flux.empty();
         }
 
-        return Flux.create(fluxSink -> hydraWSClient.addHydraQueryEventListener(new HydraQueryEventListener.Stub() {
-
-            @Override
-            public void onResponse(Response response) {
-                fluxSink.next(response);
-            }
-
-        }));
+        var adapter = new FluxSinkResponseAdapter();
+        return Flux.<Response>create(fluxSink -> {
+            adapter.setSink(fluxSink);
+            hydraWSClient.addHydraQueryEventListener(adapter);
+        }).doFinally(signal -> {
+            log.info("Removing hydra query event listener.");
+            hydraWSClient.removeHydraQueryEventListener(adapter);
+        });
     }
 
     private void destroyWSClient() {
         if (hydraWSClient != null) {
-            hydraWSClient.removeHydraQueryEventListener(this);
+            hydraWSClient.clearAllHydraQueryEventListeners();
+            hydraWSClient.clearAllHydraStateEventListeners();
         }
         this.monoSinkMap = new ConcurrentHashMap<>();
 
@@ -160,9 +168,11 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             TxInvalidResponse txResponse = (TxInvalidResponse) response;
             String txId = txResponse.getTransaction().getId();
             String reason = txResponse.getValidationError().getReason();
-            TxResult txResult = new TxResult(txId, true, reason);
+
+            TxResult txResult = new TxResult(txId, false, reason);
 
             applyMonoSuccess(TxSubmitLocalCommand.of(txId).key(), txResult);
+            applyMonoError(TxSubmitGlobalCommand.of(txId).key(), txResult);
         }
         if (response instanceof GetUTxOResponse) {
             GetUTxOResponse getUTxOResponse = (GetUTxOResponse) response;
