@@ -34,7 +34,7 @@ mvn clean verify -P with-integration-tests
 | Hydra Version | Library Version | Cardano Client Library Version |
 | ------------- |-----------------|--------------------------------|
 | 0.10.x        | 0.0.6           | 0.4.x                          |
-| 0.10.x        | 0.0.7-SNAPSHOT  | 0.5.x                          |
+| 0.10.x        | 0.0.7           | 0.5.x                          |
 
 ## Dependency
 ```xml
@@ -42,7 +42,17 @@ mvn clean verify -P with-integration-tests
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java-client</artifactId>
-        <version>0.0.7-SNAPSHOT</version>
+        <version>0.0.7</version>
+    </dependency>
+    <dependency>
+        <groupId>org.cardanofoundation</groupId>
+        <artifactId>cardano-client-lib-adapter</artifactId>
+        <version>0.0.7</version>
+    </dependency>
+    <dependency>
+        <groupId>org.cardanofoundation</groupId>
+        <artifactId>reactive-reactor-client</artifactId>
+        <version>0.0.7</version>
     </dependency>
 </dependencies>
 ```
@@ -60,8 +70,8 @@ The current version may not contain exactly what you need. If there is a missing
 
 | Submodule                  | Goal / Description                                                         |
 |----------------------------|----------------------------------------------------------------------------|
-| core                       | main classes  / code                                                       |
-| client                     | low level web socket client                                                |
+| hydra-java-core            | main classes  / code                                                       |
+| hydra-java-client          | low level web socket client                                                |
 | reactive-reactor-client    | experimental request / response high level reactive client (using reactor) |
 | cardano-client-lib-adapter | bindings to BloxBean's cardano-client lib                                  |
 | test-containers-support    | utilities to assist in testing via test containers project                 |
