@@ -170,9 +170,9 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             String reason = txResponse.getValidationError().getReason();
 
             TxResult txResult = new TxResult(txId, false, reason);
-
+            
             applyMonoSuccess(TxSubmitLocalCommand.of(txId).key(), txResult);
-            applyMonoError(TxSubmitGlobalCommand.of(txId).key(), txResult);
+            applyMonoSuccess(TxSubmitGlobalCommand.of(txId).key(), txResult);
         }
         if (response instanceof GetUTxOResponse) {
             GetUTxOResponse getUTxOResponse = (GetUTxOResponse) response;
