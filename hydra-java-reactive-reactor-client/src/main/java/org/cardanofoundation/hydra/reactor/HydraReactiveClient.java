@@ -144,12 +144,6 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
 
         }
 
-        if (response instanceof ReadyToFanoutResponse) {
-            ReadyToFanoutResponse rf = (ReadyToFanoutResponse) response;
-
-            applyMonoSuccess(ReadyToFanOutHeadCommand.key(), rf);
-        }
-
         if (response instanceof TxValidResponse) {
             TxValidResponse txResponse = (TxValidResponse) response;
             String txId = txResponse.getTransaction().getId();
@@ -311,7 +305,7 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        if (hydraWSClient.getHydraState() == Idle) {
+        if (hydraWSClient.getHydraState() == Idle || hydraWSClient.getHydraState() == Final) {
             return Mono.create(monoSink -> {
                 storeMonoSinkReference(InitHeadCommand.key(), monoSink);
                 hydraWSClient.init();
@@ -359,21 +353,6 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         if (hydraWSClient.getHydraState() == FanoutPossible) {
             return Mono.create(monoSink -> {
                 storeMonoSinkReference(FanOutHeadCommand.key(), monoSink);
-                hydraWSClient.fanOut();
-            });
-        }
-
-        return Mono.empty();
-    }
-
-    public Mono<ReadyToFanoutResponse> readyToFanOut() {
-        if (hydraWSClient == null) {
-            return Mono.empty();
-        }
-
-        if (hydraWSClient.getHydraState() == Closed) {
-            return Mono.create(monoSink -> {
-                storeMonoSinkReference(ReadyToFanOutHeadCommand.key(), monoSink);
                 hydraWSClient.fanOut();
             });
         }
