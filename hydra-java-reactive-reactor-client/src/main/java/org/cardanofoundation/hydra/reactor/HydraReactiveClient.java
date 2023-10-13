@@ -135,13 +135,18 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             applyMonoSuccess(AbortHeadCommand.key(), ha);
         }
 
+        if (response instanceof HeadIsFinalizedResponse) {
+            HeadIsFinalizedResponse hf = (HeadIsFinalizedResponse) response;
+
+            applyMonoSuccess(FanOutHeadCommand.key(), hf);
+        }
+
         if (response instanceof PostTxOnChainFailedResponse) {
             PostTxOnChainFailedResponse failure = (PostTxOnChainFailedResponse) response;
 
             if (failure.getPostChainTx().getTag() == FanoutTx) {
                 applyMonoError(FanOutHeadCommand.key(), "Fanout failed.");
             }
-
         }
 
         if (response instanceof TxValidResponse) {
