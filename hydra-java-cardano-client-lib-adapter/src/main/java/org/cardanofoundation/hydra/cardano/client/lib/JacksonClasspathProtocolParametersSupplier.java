@@ -21,6 +21,8 @@ import java.util.Optional;
  */
 @Getter
 @Setter
+@Deprecated
+// use HydraNodeProtocolParametersAdapter instead and read ProtocolParameters remotely from hydra node itself
 public class JacksonClasspathProtocolParametersSupplier implements ProtocolParamsSupplier {
 
     private final JsonNode protoParamsJson;

@@ -55,7 +55,7 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             adapter.setSink(fluxSink);
             hydraWSClient.addHydraStateEventListener((adapter));
         }).doFinally(signal -> {
-            log.info("Removing hydra state event listener.");
+            log.debug("Removing hydra state event listener...");
             hydraWSClient.removeHydraStateEventListener(adapter);
         });
     }
@@ -70,7 +70,7 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             adapter.setSink(fluxSink);
             hydraWSClient.addHydraQueryEventListener(adapter);
         }).doFinally(signal -> {
-            log.info("Removing hydra query event listener.");
+            log.debug("Removing hydra query event listener...");
             hydraWSClient.removeHydraQueryEventListener(adapter);
         });
     }
@@ -170,7 +170,7 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             String reason = txResponse.getValidationError().getReason();
 
             TxResult txResult = new TxResult(txId, false, reason);
-            
+
             applyMonoSuccess(TxSubmitLocalCommand.of(txId).key(), txResult);
             applyMonoSuccess(TxSubmitGlobalCommand.of(txId).key(), txResult);
         }

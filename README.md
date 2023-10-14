@@ -14,7 +14,7 @@ Hydra API specs: https://hydra.family/head-protocol/api-reference
 Hydra State Machine Diagram: https://hydra.family/head-protocol/core-concepts/behavior
 
 ## Requirements
-- JDK11
+- JDK17
 - maven3
 
 ## Building
@@ -31,10 +31,11 @@ mvn clean verify -P with-integration-tests
 
 ## Version Compatibility Matrix
 
-| Hydra Version | Library Version | Cardano Client Library Version |
-| ------------- |-----------------|--------------------------------|
-| 0.10.x        | 0.0.6           | 0.4.x                          |
-| 0.10.x        | 0.0.7           | 0.5.x                          |
+| Hydra Version | Library Version | Cardano Client Library Version | JDK VERSION |
+|---------------|-----------------|--------------------------------|-------------|
+| 0.10.x        | 0.0.6           | 0.4.x                          | JDK 11      |
+| 0.10.x        | 0.0.7           | 0.5.x                          | JDK 11      |
+| 0.13.x        | 0.0.9           | 0.5.x                          | JDK 17      |
 
 ## Dependency
 ```xml
@@ -42,17 +43,17 @@ mvn clean verify -P with-integration-tests
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java-client</artifactId>
-        <version>0.0.7</version>
+        <version>0.0.9</version>
     </dependency>
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>cardano-client-lib-adapter</artifactId>
-        <version>0.0.7</version>
+        <version>0.0.9</version>
     </dependency>
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>reactive-reactor-client</artifactId>
-        <version>0.0.7</version>
+        <version>0.0.9</version>
     </dependency>
 </dependencies>
 ```
