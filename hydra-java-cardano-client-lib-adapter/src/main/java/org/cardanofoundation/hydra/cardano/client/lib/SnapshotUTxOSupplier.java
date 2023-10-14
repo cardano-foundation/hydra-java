@@ -71,7 +71,7 @@ public class SnapshotUTxOSupplier implements UtxoSupplier {
 
                     return createUtxo(address, tuple);
                 })
-                .toList();
+                .collect(java.util.stream.Collectors.toList());
     }
 
     private static @Nullable String convertInlineDatum(@Nullable JsonNode inlineDatum) {
