@@ -49,7 +49,7 @@ public class SnapshotUTxOSupplier implements UtxoSupplier {
                 .map(utxoEntry -> new Tuple<>(split(utxoEntry.getKey(), "#"), utxoEntry.getValue()))
                 .map(tuple -> createUtxo(address, tuple))
                 .limit(items)
-                .collect(java.util.stream.Collectors.toList();
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
