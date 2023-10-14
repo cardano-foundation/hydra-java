@@ -7,7 +7,6 @@ import com.bloxbean.cardano.client.api.model.Utxo;
 import com.bloxbean.cardano.client.util.Tuple;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
 import org.cardanofoundation.hydra.core.HydraException;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.store.UTxOStore;
@@ -16,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.bloxbean.cardano.client.plutus.spec.serializers.PlutusDataJsonConverter.toPlutusData;
 import static org.cardanofoundation.hydra.core.utils.StringUtils.split;
@@ -49,12 +49,14 @@ public class SnapshotUTxOSupplier implements UtxoSupplier {
                 .map(utxoEntry -> new Tuple<>(split(utxoEntry.getKey(), "#"), utxoEntry.getValue()))
                 .map(tuple -> createUtxo(address, tuple))
                 .limit(items)
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     @Override
     public Optional<Utxo> getTxOutput(String txHash, int outputIndex) {
-        return getAll().stream()
+        var all = getAll();
+
+        return all.stream()
                 .filter(utxo -> utxo.getTxHash().equals(txHash) && utxo.getOutputIndex() == outputIndex)
                 .findFirst();
     }
@@ -71,7 +73,7 @@ public class SnapshotUTxOSupplier implements UtxoSupplier {
 
                     return createUtxo(address, tuple);
                 })
-                .toList();
+                .collect(Collectors.toList());
     }
 
     private static @Nullable String convertInlineDatum(@Nullable JsonNode inlineDatum) {
@@ -101,7 +103,7 @@ public class SnapshotUTxOSupplier implements UtxoSupplier {
                 .amount(utxo.getValue().entrySet()
                         .stream()
                         .map(entry -> new Amount(entry.getKey(), entry.getValue()))
-                        .toList())
+                        .collect(Collectors.toList()))
                 .dataHash(utxo.getDatumhash())
                 .inlineDatum(convertInlineDatum(utxo.getInlineDatum()))
                 .referenceScriptHash(utxo.getReferenceScript())
