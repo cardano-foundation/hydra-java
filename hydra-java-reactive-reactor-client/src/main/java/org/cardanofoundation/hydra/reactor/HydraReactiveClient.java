@@ -17,9 +17,7 @@ import reactor.core.publisher.MonoSink;
 import reactor.util.annotation.Nullable;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
@@ -40,7 +38,7 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
 
     private final Duration timeout;
 
-    private Map<String, MonoSinkWrapper> monoSinkMap = new ConcurrentHashMap<>();
+    private Map<String, MonoSink> monoSinkMap = new ConcurrentHashMap<>();
 
     public HydraReactiveClient(UTxOStore uTxOStore,
                                String baseUrl) {
@@ -146,22 +144,9 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             for (var txId : sc.getSnapshot().getConfirmedTransactions()) {
                 var txSubmitGlobalCommand = TxSubmitGlobalCommand.of(txId);
 
-                var sinkM = getMonoSink(txSubmitGlobalCommand.key());
+                var txResult = new TxConfirmedResult(txId);
 
-                sinkM.ifPresent(monoSinkWrapper -> {
-                    var isTxValidM = monoSinkWrapper.getContextObj("is_tx_valid")
-                            .map(obj -> (Boolean) obj)
-                            .filter(Objects::nonNull);
-
-                    isTxValidM.ifPresentOrElse(isValid -> {
-                        var txResult = new TxResult(txId, isValid);
-
-                        applyMonoSuccess(txSubmitGlobalCommand.key(), txResult);
-                    },
-                    () -> {
-                        applyMonoError(txSubmitGlobalCommand.key(), "tx valid or invalid not found!");
-                    });
-                });
+                applyMonoSuccess(txSubmitGlobalCommand.key(), txResult);
             }
         }
 
@@ -301,11 +286,9 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         return localTxMono
                 .flatMap(localTxResult -> {
                     return Mono.<TxResult>create(monoSink -> {
-                        var monoSinkWrapper = new MonoSinkWrapper(monoSink);
-                        monoSinkWrapper.putContextObj("is_tx_valid", localTxResult.isValid());
-
-                        storeMonoSinkReference(commandKey, monoSinkWrapper);
-                    });
+                        storeMonoSinkReference(commandKey, monoSink);
+                    })
+                    .map(txConfirmedResult -> new TxResult(txConfirmedResult.getTxId(), localTxResult.isValid()));
                 })
                 .timeout(timeout, Mono.defer(() -> {
                     applyMonoCleanup(commandKey);
@@ -314,15 +297,11 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
                 }));
     }
 
-    protected void storeMonoSinkReference(String key, MonoSinkWrapper monoSinkWrapper) {
-        monoSinkMap.put(key, monoSinkWrapper);
-    }
-
     protected void storeMonoSinkReference(String key, MonoSink monoSink) {
-        monoSinkMap.put(key, new MonoSinkWrapper(monoSink));
+        monoSinkMap.put(key, monoSink);
     }
 
-    protected Optional<MonoSinkWrapper> getMonoSink(String key) {
+    protected Optional<MonoSink> getMonoSink(String key) {
         return Optional.ofNullable(monoSinkMap.get(key));
     }
 
@@ -332,20 +311,20 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return;
         }
 
-        monoSink.sink.success(result);
+        monoSink.success(result);
     }
 
     protected <T extends Request> void applyMonoSuccess(String key) {
         var monoSink = monoSinkMap.remove(key);
 
-        monoSink.sink.success();
+        monoSink.success();
     }
 
     protected <T extends Request> void applyMonoError(String key,
                                                       Object result) {
         var monoSink = monoSinkMap.remove(key);
 
-        monoSink.sink.error(new HydraException(String.valueOf(result)));
+        monoSink.error(new HydraException(String.valueOf(result)));
     }
 
     protected  void applyMonoCleanup(String key) {
@@ -575,27 +554,6 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
 
             return Mono.error(new TimeoutException("closeHead timeout!"));
         }));
-    }
-
-    record MonoSinkWrapper(MonoSink sink,
-                           Map<String, Object> context) {
-
-        public MonoSinkWrapper {
-            context = new HashMap<>();
-        }
-
-        public MonoSinkWrapper(MonoSink sink) {
-            this(sink, new HashMap<>());
-        }
-
-        public void putContextObj(String key, Object value) {
-            context.put(key, value);
-        }
-
-        public Optional<Object> getContextObj(String key) {
-            return Optional.ofNullable(context.get(key));
-        }
-
     }
 
 }
