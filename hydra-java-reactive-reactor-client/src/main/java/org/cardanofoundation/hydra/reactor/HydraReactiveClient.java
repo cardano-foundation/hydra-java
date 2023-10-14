@@ -17,7 +17,9 @@ import reactor.core.publisher.MonoSink;
 import reactor.util.annotation.Nullable;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
@@ -30,17 +32,21 @@ import static org.cardanofoundation.hydra.core.utils.HexUtils.encodeHexString;
 @Slf4j
 public class HydraReactiveClient extends HydraQueryEventListener.Stub {
 
-    public static final Duration DEF_TIMEOUT_DURATION = Duration.ofMinutes(1);
+    private static final Duration DEF_TIMEOUT_DURATION = Duration.ofMinutes(1);
+
     @Nullable private HydraWSClient hydraWSClient;
 
     private final HydraClientOptions hydraClientOptions;
 
     private final Duration timeout;
 
+    private Map<String, MonoSinkWrapper> monoSinkMap = new ConcurrentHashMap<>();
+
     public HydraReactiveClient(UTxOStore uTxOStore,
                                String baseUrl) {
         this(uTxOStore, baseUrl, DEF_TIMEOUT_DURATION);
     }
+
     public HydraReactiveClient(UTxOStore uTxOStore,
                                String baseUrl,
                                Duration timeout) {
@@ -53,8 +59,6 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
                 .snapshotUtxo(true)
                 .build();
     }
-
-    private Map<String, MonoSink> monoSinkMap = new ConcurrentHashMap<>();
 
     private void initWSClient() {
         if (this.hydraWSClient == null) {
@@ -86,6 +90,7 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Flux.empty();
         }
 
+        // TODO when we close the connection how do we terminate the flux here?
         var adapter = new FluxSinkResponseAdapter();
         return Flux.<Response>create(fluxSink -> {
             adapter.setSink(fluxSink);
@@ -109,22 +114,20 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
     @Override
     public void onResponse(Response response) {
         log.debug("Tag:{}, seq:{}", response.getTag(), response.getSeq());
+        log.info("monoSinkMap current size: {}", monoSinkMap.size()); // this is debugging only
 
         if (response instanceof GreetingsResponse gr) {
-            var utxo = gr.getSnapshotUtxo();
-            hydraClientOptions.getUtxoStore().storeLatestUtxO(utxo);
+            var snapshotUtxo = gr.getSnapshotUtxo();
+            hydraClientOptions.getUtxoStore().storeLatestUtxO(snapshotUtxo);
 
             applyMonoSuccess(ConnectCommand.key(), gr);
         }
 
         if (response instanceof HeadIsOpenResponse ho) {
-            // we get initial UTxOs here as well
-            var utxoMap = ho.getUtxo();
-            hydraClientOptions.getUtxoStore().storeLatestUtxO(utxoMap);
+            hydraClientOptions.getUtxoStore().storeLatestUtxO(ho.getUtxo());
         }
 
-        if (response instanceof CommittedResponse) {
-            CommittedResponse cr = (CommittedResponse) response;
+        if (response instanceof CommittedResponse cr) {
             var utxoMap = cr.getUtxo();
             hydraClientOptions.getUtxoStore().storeLatestUtxO(utxoMap);
 
@@ -136,17 +139,29 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         }
 
         if (response instanceof SnapshotConfirmed sc) {
-            Map<String, UTXO> utxo = sc.getSnapshot().getUtxo();
+            var utxo = sc.getSnapshot().getUtxo();
 
             hydraClientOptions.getUtxoStore().storeLatestUtxO(utxo);
 
             for (var txId : sc.getSnapshot().getConfirmedTransactions()) {
-                var txResult = new TxResult(txId, true); // TODO - is this correct to assume trx will be valid???
+                var txSubmitGlobalCommand = TxSubmitGlobalCommand.of(txId);
 
-                // get isValid from MonoSinkWrapper
-                TxSubmitGlobalCommand txSubmitGlobalCommand = TxSubmitGlobalCommand.of(txId, TODO);
+                var sinkM = getMonoSink(txSubmitGlobalCommand.key());
 
-                applyMonoSuccess(txSubmitGlobalCommand.key(), txResult);
+                sinkM.ifPresent(monoSinkWrapper -> {
+                    var isTxValidM = monoSinkWrapper.getContextObj("is_tx_valid")
+                            .map(obj -> (Boolean) obj)
+                            .filter(Objects::nonNull);
+
+                    isTxValidM.ifPresentOrElse(isValid -> {
+                        var txResult = new TxResult(txId, isValid);
+
+                        applyMonoSuccess(txSubmitGlobalCommand.key(), txResult);
+                    },
+                    () -> {
+                        applyMonoError(txSubmitGlobalCommand.key(), "tx valid or invalid not found!");
+                    });
+                });
             }
         }
 
@@ -168,20 +183,19 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             }
         }
 
-        if (response instanceof TxValidResponse txResponse) {
-            String txId = txResponse.getTransaction().getId();
-            TxResult txResult = new TxResult(txId, true);
-
-            applyMonoSuccess(TxSubmitLocalCommand.of(txId).toString(), txResult);
-        }
-        if (response instanceof TxInvalidResponse txResponse) {
-            String txId = txResponse.getTransaction().getId();
-            String reason = txResponse.getValidationError().getReason();
-
-            TxResult txResult = new TxResult(txId, false, reason);
+        if (response instanceof TxValidResponse txValidResponse) {
+            var txId = txValidResponse.getTransaction().getId();
+            var txResult = new TxResult(txId, true);
 
             applyMonoSuccess(TxSubmitLocalCommand.of(txId).key(), txResult);
-            //applyMonoSuccess(TxSubmitGlobalCommand.of(txId).key(), txResult);
+        }
+        if (response instanceof TxInvalidResponse txInvalidResponse) {
+            var txId = txInvalidResponse.getTransaction().getId();
+            var reason = txInvalidResponse.getValidationError().getReason();
+
+            var txResult = new TxResult(txId, false, reason);
+
+            applyMonoSuccess(TxSubmitLocalCommand.of(txId).key(), txResult);
         }
 
         if (response instanceof GetUTxOResponse getUTxOResponse) {
@@ -208,7 +222,8 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        var sinkM = getMonoSink(GetUTxOCommand.key());
+        var commandKey = GetUTxOCommand.key();
+        var sinkM = getMonoSink(commandKey);
 
         if (sinkM.isPresent()) {
             log.warn("getUTxO request already in progress...");
@@ -216,10 +231,15 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        return Mono.create(monoSink -> {
-            storeMonoSinkReference(GetUTxOCommand.key(), monoSink);
+        return Mono.<GetUTxOResponse>create(monoSink -> {
+            storeMonoSinkReference(commandKey, monoSink);
             hydraWSClient.getUTXO();
-        });
+        })
+        .timeout(timeout, Mono.defer(() -> {
+            applyMonoCleanup(commandKey);
+
+            return Mono.error(new TimeoutException("getUTxOs rquest timeout!"));
+        }));
     }
 
     public Mono<TxResult> submitTx(String txId, byte[] txCbor) {
@@ -233,16 +253,24 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        var command = TxSubmitLocalCommand.of(txId);
+        var commandKey = TxSubmitLocalCommand.of(txId).key();
+
+        var sinkM = getMonoSink(commandKey);
+
+        if (sinkM.isPresent()) {
+            log.warn("tx submit request already in progress...");
+
+            return Mono.empty();
+        }
 
         return Mono.<TxResult>create(monoSink -> {
-                    storeMonoSinkReference(command.key(), monoSink);
+                    storeMonoSinkReference(commandKey, monoSink);
                     hydraWSClient.submitTx(encodeHexString(txCbor));
                 })
                 .timeout(timeout, Mono.defer(() -> {
-                    applyMonoCleanup(command.key());
+                    applyMonoCleanup(commandKey);
 
-                    return Mono.error(new TimeoutException("tx submit timeout, txId: " + txId));
+                    return Mono.error(new TimeoutException("TxLocalSubmit timeout, txId: " + txId));
                 }));
     }
 
@@ -258,31 +286,43 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        var command = TxSubmitGlobalCommand.of(txId);
+        var commandKey = TxSubmitGlobalCommand.of(txId).key();
 
         var localTxMono = submitTx(txId, txCbor);
 
+        var sinkM = getMonoSink(commandKey);
+
+        if (sinkM.isPresent()) {
+            log.warn("tx submit request already in progress...");
+
+            return Mono.empty();
+        }
+
         return localTxMono
                 .flatMap(localTxResult -> {
-                    var isTxValid = localTxResult.isValid();
-
                     return Mono.<TxResult>create(monoSink -> {
-                        storeMonoSinkReference(command.key(), monoSink);
-                        hydraWSClient.submitTx(encodeHexString(txCbor));
-                    })
-                    .timeout(timeout, Mono.defer(() -> {
-                        applyMonoCleanup(command.key());
+                        var monoSinkWrapper = new MonoSinkWrapper(monoSink);
+                        monoSinkWrapper.putContextObj("is_tx_valid", localTxResult.isValid());
 
-                        return Mono.error(new TimeoutException("tx submit timeout, txId: " + txId));
-                    }));
-                });
+                        storeMonoSinkReference(commandKey, monoSinkWrapper);
+                    });
+                })
+                .timeout(timeout, Mono.defer(() -> {
+                    applyMonoCleanup(commandKey);
+
+                    return Mono.error(new TimeoutException("TxGlobalSubmit timeout, txId: " + txId));
+                }));
+    }
+
+    protected void storeMonoSinkReference(String key, MonoSinkWrapper monoSinkWrapper) {
+        monoSinkMap.put(key, monoSinkWrapper);
     }
 
     protected void storeMonoSinkReference(String key, MonoSink monoSink) {
-        monoSinkMap.put(key, monoSink);
+        monoSinkMap.put(key, new MonoSinkWrapper(monoSink));
     }
 
-    protected Optional<MonoSink> getMonoSink(String key) {
+    protected Optional<MonoSinkWrapper> getMonoSink(String key) {
         return Optional.ofNullable(monoSinkMap.get(key));
     }
 
@@ -292,19 +332,20 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return;
         }
 
-        monoSink.success(result);
+        monoSink.sink.success(result);
     }
 
     protected <T extends Request> void applyMonoSuccess(String key) {
         var monoSink = monoSinkMap.remove(key);
 
-        monoSink.success();
+        monoSink.sink.success();
     }
 
-    protected <T extends Request> void applyMonoError(String key, Object result) {
+    protected <T extends Request> void applyMonoError(String key,
+                                                      Object result) {
         var monoSink = monoSinkMap.remove(key);
 
-        monoSink.error(new HydraException(String.valueOf(result)));
+        monoSink.sink.error(new HydraException(String.valueOf(result)));
     }
 
     protected  void applyMonoCleanup(String key) {
@@ -322,7 +363,8 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        var sinkM = getMonoSink(ConnectCommand.key());
+        var commandKey = ConnectCommand.key();
+        var sinkM = getMonoSink(commandKey);
 
         if (sinkM.isPresent()) {
             log.warn("connect request already in progress...");
@@ -330,10 +372,14 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        return Mono.create(monoSink -> {
-            storeMonoSinkReference(ConnectCommand.key(), monoSink);
+        return Mono.<GreetingsResponse>create(monoSink -> {
+            storeMonoSinkReference(commandKey, monoSink);
             hydraWSClient.connect();
-        });
+        }).timeout(timeout, Mono.defer(() -> {
+            applyMonoCleanup(commandKey);
+
+            return Mono.error(new TimeoutException("head connect timeout!"));
+        }));
     }
 
     public Mono<Boolean> closeConnection() throws InterruptedException {
@@ -358,7 +404,8 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        var sinkM = getMonoSink(AbortHeadCommand.key());
+        var commandKey = AbortHeadCommand.key();
+        var sinkM = getMonoSink(commandKey);
 
         if (sinkM.isPresent()) {
             log.warn("abortHead request already in progress...");
@@ -366,10 +413,14 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        return Mono.create(monoSink -> {
-            storeMonoSinkReference(AbortHeadCommand.key(), monoSink);
+        return Mono.<HeadIsAbortedResponse>create(monoSink -> {
+            storeMonoSinkReference(commandKey, monoSink);
             hydraWSClient.abort();
-        });
+        }).timeout(timeout, Mono.defer(() -> {
+            applyMonoCleanup(commandKey);
+
+            return Mono.error(new TimeoutException("abortHead timeout!"));
+        }));
     }
 
     public Mono<HeadIsInitializingResponse> initHead() {
@@ -383,7 +434,8 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        var sinkM = getMonoSink(InitHeadCommand.key());
+        var commandKey = InitHeadCommand.key();
+        var sinkM = getMonoSink(commandKey);
 
         if (sinkM.isPresent()) {
             log.warn("init head request already in progress!");
@@ -391,10 +443,15 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        return Mono.create(monoSink -> {
-            storeMonoSinkReference(InitHeadCommand.key(), monoSink);
+        return Mono.<HeadIsInitializingResponse>create(monoSink -> {
+            storeMonoSinkReference(commandKey, monoSink);
             hydraWSClient.init();
-        });
+        })
+        .timeout(timeout, Mono.defer(() -> {
+            applyMonoCleanup(commandKey);
+
+            return Mono.error(new TimeoutException("initHead timeout"));
+        }));
     }
 
     public Mono<CommittedResponse> commitEmptyToTheHead() {
@@ -408,18 +465,24 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        var sinkM = getMonoSink(CommittedCommand.key());
+        var commandKey = CommittedCommand.key();
 
+        var sinkM = getMonoSink(commandKey);
         if (sinkM.isPresent()) {
             log.warn("commit request already in progress!");
 
             return Mono.empty();
         }
 
-        return Mono.create(monoSink -> {
-            storeMonoSinkReference(CommittedCommand.key(), monoSink);
+        return Mono.<CommittedResponse>create(monoSink -> {
+            storeMonoSinkReference(commandKey, monoSink);
             hydraWSClient.commit();
-        });
+        })
+        .timeout(timeout, Mono.defer(() -> {
+            applyMonoCleanup(commandKey);
+
+            return Mono.error(new TimeoutException("commit funds timeout!"));
+        }));
     }
 
     public Mono<CommittedResponse> commitFundsToTheHead(Map<String, UTXO> commitMap) {
@@ -433,7 +496,8 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        var sinkM = getMonoSink(CommittedCommand.key());
+        var commandKey = CommittedCommand.key();
+        var sinkM = getMonoSink(commandKey);
 
         if (sinkM.isPresent()) {
             log.warn("commit request already in progress!");
@@ -441,10 +505,15 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        return Mono.create(monoSink -> {
-            storeMonoSinkReference(CommittedCommand.key(), monoSink);
+        return Mono.<CommittedResponse>create(monoSink -> {
+            storeMonoSinkReference(commandKey, monoSink);
             hydraWSClient.commit(commitMap);
-        });
+        })
+        .timeout(timeout, Mono.defer(() -> {
+            applyMonoCleanup(commandKey);
+
+            return Mono.error(new TimeoutException("commit funds timeout!"));
+        }));
     }
 
     public Mono<HeadIsFinalizedResponse> fanOutHead() {
@@ -458,7 +527,9 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        var sinkM = getMonoSink(FanOutHeadCommand.key());
+        var commandKey = FanOutHeadCommand.key();
+
+        var sinkM = getMonoSink(commandKey);
 
         if (sinkM.isPresent()) {
             log.warn("fanOutHead request already in progress!");
@@ -466,10 +537,14 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        return Mono.create(monoSink -> {
-            storeMonoSinkReference(FanOutHeadCommand.key(), monoSink);
+        return Mono.<HeadIsFinalizedResponse>create(monoSink -> {
+            storeMonoSinkReference(commandKey, monoSink);
             hydraWSClient.fanOut();
-        });
+        }).timeout(timeout, Mono.defer(() -> {
+            applyMonoCleanup(commandKey);
+
+            return Mono.error(new TimeoutException("commit funds timeout!"));
+        }));
     }
 
     public Mono<HeadIsClosedResponse> closeHead() {
@@ -483,7 +558,8 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        var sinkM = getMonoSink(CloseHeadCommand.key());
+        var commandKey = CloseHeadCommand.key();
+        var sinkM = getMonoSink(commandKey);
 
         if (sinkM.isPresent()) {
             log.warn("closeHead request already in progress!");
@@ -491,10 +567,35 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             return Mono.empty();
         }
 
-        return Mono.create(monoSink -> {
-            storeMonoSinkReference(CloseHeadCommand.key(), monoSink);
+        return Mono.<HeadIsClosedResponse>create(monoSink -> {
+            storeMonoSinkReference(commandKey, monoSink);
             hydraWSClient.closeHead();
-        });
+        }).timeout(timeout, Mono.defer(() -> {
+            applyMonoCleanup(commandKey);
+
+            return Mono.error(new TimeoutException("closeHead timeout!"));
+        }));
+    }
+
+    record MonoSinkWrapper(MonoSink sink,
+                           Map<String, Object> context) {
+
+        public MonoSinkWrapper {
+            context = new HashMap<>();
+        }
+
+        public MonoSinkWrapper(MonoSink sink) {
+            this(sink, new HashMap<>());
+        }
+
+        public void putContextObj(String key, Object value) {
+            context.put(key, value);
+        }
+
+        public Optional<Object> getContextObj(String key) {
+            return Optional.ofNullable(context.get(key));
+        }
+
     }
 
 }
