@@ -16,8 +16,9 @@ import java.util.Map;
 public class Snapshot {
 
     private int snapshotNumber;
+
     private Map<String, UTXO> utxo;
 
-    private List<Transaction> confirmedTransactions;
+    private List<String> confirmedTransactions;
 
 }

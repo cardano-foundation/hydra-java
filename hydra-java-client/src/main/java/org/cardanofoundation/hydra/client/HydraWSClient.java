@@ -20,6 +20,8 @@ import java.util.StringJoiner;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.String.format;
+
 @Slf4j
 // not thread safe yet
 public class HydraWSClient {
@@ -145,21 +147,22 @@ public class HydraWSClient {
     private static URI createHydraServerUri(HydraClientOptions hydraClientOptions) {
         String serverURI = hydraClientOptions.getServerURI();
         if (!serverURI.startsWith("ws://") && !serverURI.startsWith("wss://")) {
-            throw new IllegalArgumentException("Invalid web socket url:" + serverURI);
+            throw new IllegalArgumentException("Invalid web socket urlPath:" + serverURI);
         }
 
         if (serverURI.endsWith("?")) {
             return URI.create(serverURI);
         }
 
-        var transactionFormat = hydraClientOptions.getTransactionFormat();
-
         var delim = "&";
-        var joiner = new StringJoiner(delim)
-                .add(String.format("history=%s", (hydraClientOptions.isHistory() ? "yes" : "no")))
-                .merge(transactionFormat == null ? new StringJoiner(delim) : new StringJoiner(delim).add(String.format("tx-output=%s", transactionFormat.name().toLowerCase())));
 
-        return URI.create(String.format("%s?%s", serverURI, joiner));
+        var urlPath = new StringJoiner(delim)
+                .add(format("history=%s", (hydraClientOptions.isHistory() ? "yes" : "no")))
+                .add(format("snapshot-utxo=%s", (hydraClientOptions.isSnapshotUtxo() ? "yes" : "no")))
+                .add(format("tx-output=%s", hydraClientOptions.getTransactionFormat().name().toLowerCase()))
+                .toString();
+
+        return URI.create(format("%s?%s", serverURI, urlPath));
     }
 
     // Initializes a new Head. This command is a no-op when a Head is already open and the server will output an CommandFailed message should this happen.
@@ -272,7 +275,7 @@ public class HydraWSClient {
             if (queryResponse instanceof FailureResponse) {
                 var failureResponse = (FailureResponse) queryResponse;
                 if (hydraClientOptions.isDoNotPropagateLowLevelFailures() && failureResponse.isLowLevelFailure()) {
-                    log.debug("Low level consensus failure, ignoring...");
+                    log.warn("Low level consensus failure, ignoring...");
                     return;
                 }
             }

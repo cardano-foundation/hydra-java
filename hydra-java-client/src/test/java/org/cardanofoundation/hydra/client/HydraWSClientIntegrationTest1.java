@@ -49,6 +49,7 @@ public class HydraWSClientIntegrationTest1 {
 
             var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(aliceHydraContainer))
                     .utxoStore(new InMemoryUTxOStore())
+                    .snapshotUtxo(true)
                     .build());
             SLF4JHydraLogger aliceHydraLogger = SLF4JHydraLogger.of(log, "alice");
             aliceHydraWSClient.addHydraQueryEventListener(aliceHydraLogger);

@@ -18,14 +18,17 @@ public class HydraClientOptions {
     @Builder.Default
     private UTxOStore utxoStore = new EmptyUTxOStore();
 
+    @Builder.Default
+    private boolean snapshotUtxo = false;
+
     /**
      * Hydra internal consensus level errors are not propagated to the developer
      */
     @Builder.Default
     private boolean doNotPropagateLowLevelFailures = true;
 
-    @Nullable
-    private TransactionFormat transactionFormat;
+    @Builder.Default
+    private TransactionFormat transactionFormat = TransactionFormat.CBOR;
 
     /**
      *
