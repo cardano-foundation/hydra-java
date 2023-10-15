@@ -13,27 +13,28 @@ public final class HexUtils {
         if (byteArray == null)
             return null;
 
-        StringBuffer hexStringBuffer = new StringBuffer();
-        for (int i = 0; i < byteArray.length; i++) {
-            hexStringBuffer.append(byteToHex(byteArray[i]));
+        StringBuilder hexStringBuffer = new StringBuilder();
+        for (byte b : byteArray) {
+            hexStringBuffer.append(byteToHex(b));
         }
         String hexString = hexStringBuffer.toString();
-        if(hexString == null)
-            return null;
 
-        if(withPrefix)
+        if (withPrefix) {
             return "0x" + hexString;
-        else
-            return hexString;
+        }
+
+        return hexString;
     }
 
     public static byte[] decodeHexString(String hexString) {
-        if(hexString != null && hexString.startsWith("0x"))
+        if (hexString != null && hexString.startsWith("0x")) {
             hexString = hexString.substring(2);
+        }
+
+        assert hexString != null;
 
         if (hexString.length() % 2 == 1) {
-            throw new IllegalArgumentException(
-                    "Invalid hexadecimal String supplied. " + hexString);
+            throw new IllegalArgumentException("Invalid hexadecimal String supplied. " + hexString);
         }
 
         byte[] bytes = new byte[hexString.length() / 2];
@@ -60,10 +61,11 @@ public final class HexUtils {
 
     private static int toDigit(char hexChar) {
         int digit = Character.digit(hexChar, 16);
-        if(digit == -1) {
+        if (digit == -1) {
             throw new IllegalArgumentException(
                     "Invalid Hexadecimal Character: "+ hexChar);
         }
+
         return digit;
     }
 

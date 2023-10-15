@@ -7,10 +7,18 @@ import org.stringtemplate.v4.ST;
 
 public class GetUTxORequest extends Request {
 
+    /**
+     * Create a new request.
+     */
     public GetUTxORequest() {
         super(Tag.GetUTxO);
     }
 
+    /**
+     * The tag of the request.
+     *
+     * @return
+     */
     @Override
     public String getRequestBody() {
         val template = new ST("{ \"tag\": \"<tag>\" }");
