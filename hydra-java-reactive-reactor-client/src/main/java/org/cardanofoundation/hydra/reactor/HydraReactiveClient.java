@@ -30,21 +30,49 @@ import static org.cardanofoundation.hydra.core.utils.HexUtils.encodeHexString;
 @Slf4j
 public class HydraReactiveClient extends HydraQueryEventListener.Stub {
 
+    /**
+     * Default timeout duration for requests.
+     */
     private static final Duration DEF_TIMEOUT_DURATION = Duration.ofMinutes(1);
 
+    /**
+     * WebSocket client for communication with the Hydra network.
+     */
     @Nullable private HydraWSClient hydraWSClient;
 
+    /**
+     * Options for configuring the Hydra client.
+     */
     private final HydraClientOptions hydraClientOptions;
 
+    /**
+     * Timeout duration for requests.
+     */
     private final Duration timeout;
 
+    /**
+     * Map to store MonoSink references for ongoing requests.
+     */
     private Map<String, MonoSink> monoSinkMap = new ConcurrentHashMap<>();
 
+    /**
+     * Constructs a HydraReactiveClient with the given parameters.
+     *
+     * @param uTxOStore The UTXO store for Hydra.
+     * @param baseUrl   The base URL for Hydra communication.
+     */
     public HydraReactiveClient(UTxOStore uTxOStore,
                                String baseUrl) {
         this(uTxOStore, baseUrl, DEF_TIMEOUT_DURATION);
     }
 
+    /**
+     * Constructs a HydraReactiveClient with the given parameters.
+     *
+     * @param uTxOStore The UTXO store for Hydra.
+     * @param baseUrl   The base URL for Hydra communication.
+     * @param timeout   The timeout duration for requests.
+     */
     public HydraReactiveClient(UTxOStore uTxOStore,
                                String baseUrl,
                                Duration timeout) {
@@ -58,6 +86,9 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
                 .build();
     }
 
+    /**
+     * Initializes the WebSocket client for communication with Hydra.
+     */
     private void initWSClient() {
         if (this.hydraWSClient == null) {
             this.hydraWSClient = new HydraWSClient(hydraClientOptions);
@@ -66,6 +97,11 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         }
     }
 
+    /**
+     * Gets a reactive stream of Hydra states.
+     *
+     * @return A Flux emitting BiHydraState objects.
+     */
     public Flux<BiHydraState> getHydraStatesStream() {
         if (hydraWSClient == null) {
             return Flux.empty();
@@ -83,6 +119,11 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         });
     }
 
+    /**
+     * Gets a reactive stream of Hydra responses.
+     *
+     * @return A Flux emitting Response objects.
+     */
     public Flux<Response> getHydraResponsesStream() {
         if (hydraWSClient == null) {
             return Flux.empty();
@@ -99,6 +140,9 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         });
     }
 
+    /**
+     * Destroys the WebSocket client and clears event listeners.
+     */
     private void destroyWSClient() {
         if (hydraWSClient != null) {
             hydraWSClient.clearAllHydraQueryEventListeners();
@@ -109,6 +153,13 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         this.hydraWSClient = null;
     }
 
+    /**
+     * Handles Hydra responses and triggers corresponding actions.
+     *
+     * WARNING: internal API, subject to remove in the future
+     *
+     * @param response The Hydra response.
+     */
     @Override
     public void onResponse(Response response) {
         log.debug("Tag:{}, seq:{}", response.getTag(), response.getSeq());
@@ -188,6 +239,11 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         }
     }
 
+    /**
+     * Gets the current state of the Hydra network.
+     *
+     * @return The current Hydra state.
+     */
     public HydraState getHydraState() {
         if (hydraWSClient == null) {
             return Unknown;
@@ -196,6 +252,11 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         return hydraWSClient.getHydraState();
     }
 
+    /**
+     * Gets the UTXOs from the Hydra network.
+     *
+     * @return A Mono emitting the GetUTxOResponse.
+     */
     public Mono<GetUTxOResponse> getUTxOs() {
         if (hydraWSClient == null) {
             return Mono.empty();
@@ -227,6 +288,14 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         }));
     }
 
+    /**
+     * Submit transaction to the hydra network and do not wait for confirmation of this transaction
+     * from all head participants.
+     *
+     * @param txId
+     * @param txCbor
+     * @return
+     */
     public Mono<TxResult> submitTx(String txId, byte[] txCbor) {
         if (hydraWSClient == null) {
             return Mono.empty();
@@ -259,6 +328,13 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
                 }));
     }
 
+    /**
+     * Submit transaction to the hydra head network and wait for all head participants to confirm it.
+     *
+     * @param txId
+     * @param txCbor
+     * @return
+     */
     public Mono<TxResult> submitTxFullConfirmation(String txId,
                                                    byte[] txCbor) {
         if (hydraWSClient == null) {
@@ -337,6 +413,11 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         monoSinkMap.remove(key);
     }
 
+    /**
+     * Opens a connection to the Hydra network.
+     *
+     * @return A Mono emitting GreetingsResponse upon successful connection.
+     */
     public Mono<GreetingsResponse> openConnection() {
         initWSClient();
 
@@ -367,6 +448,12 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         }));
     }
 
+    /**
+     * Closes the connection to the Hydra network.
+     *
+     * @return A Mono emitting true if the connection is closed successfully.
+     * @throws InterruptedException If the thread is interrupted during the close operation.
+     */
     public Mono<Boolean> closeConnection() throws InterruptedException {
         if (hydraWSClient == null) {
             return Mono.empty();
@@ -378,6 +465,11 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         return Mono.just(true);
     }
 
+    /**
+     * Aborts the head initialization process.
+     *
+     * @return A Mono emitting HeadIsAbortedResponse upon successful abortion.
+     */
     public Mono<HeadIsAbortedResponse> abortHead() {
         if (hydraWSClient == null) {
             return Mono.empty();
@@ -408,6 +500,11 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         }));
     }
 
+    /**
+     * Initiates the head initialization process.
+     *
+     * @return A Mono emitting HeadIsInitializingResponse upon successful initiation.
+     */
     public Mono<HeadIsInitializingResponse> initHead() {
         if (hydraWSClient == null) {
             return Mono.empty();
@@ -439,6 +536,11 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         }));
     }
 
+    /**
+     * Commits empty data to the Hydra head during initialization.
+     *
+     * @return A Mono emitting CommittedResponse upon successful commit.
+     */
     public Mono<CommittedResponse> commitEmptyToTheHead() {
         if (hydraWSClient == null) {
             return Mono.empty();
@@ -470,6 +572,12 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         }));
     }
 
+    /**
+     * Commits funds to the Hydra head during initialization.
+     *
+     * @param commitMap The map of commit data.
+     * @return A Mono emitting CommittedResponse upon successful commit.
+     */
     public Mono<CommittedResponse> commitFundsToTheHead(Map<String, UTXO> commitMap) {
         if (hydraWSClient == null) {
             return Mono.empty();
@@ -501,6 +609,11 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         }));
     }
 
+    /**
+     * Initializes the head fanout, committing snapshot state back to Cardano's L1.
+     *
+     * @return A Mono emitting HeadIsFinalizedResponse upon successful fanout.
+     */
     public Mono<HeadIsFinalizedResponse> fanOutHead() {
         if (hydraWSClient == null) {
             return Mono.empty();
@@ -532,6 +645,11 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         }));
     }
 
+    /**
+     * Initiates the request to clos Hydra's head.
+     *
+     * @return A Mono emitting HeadIsClosedResponse upon successful initiation of head closing.
+     */
     public Mono<HeadIsClosedResponse> closeHead() {
         if (hydraWSClient == null) {
             return Mono.empty();
