@@ -1,5 +1,6 @@
 package org.cardanofoundation.hydra.client;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.cardanofoundation.hydra.core.model.HydraState;
@@ -30,7 +31,7 @@ public class HydraWSClient {
 
     private final ResponseTagHandlers responseTagHandlers;
 
-    protected final HydraWebSocketHandler hydraWebSocketHandler;
+    private final HydraWebSocketHandler hydraWebSocketHandler;
 
     private final List<HydraStateEventListener> hydraStateEventListeners = new CopyOnWriteArrayList<>();
 
@@ -38,9 +39,12 @@ public class HydraWSClient {
 
     private final HydraClientOptions hydraClientOptions;
 
+    @Getter
     private final UTxOStore utxoStore;
 
+    @Getter
     private HydraState hydraState;
+
 
     public HydraWSClient(HydraClientOptions hydraClientOptions) {
         final URI hydraServerUri = createHydraServerUri(hydraClientOptions);
@@ -52,26 +56,39 @@ public class HydraWSClient {
         this.responseTagHandlers = new ResponseTagHandlers(utxoStore);
     }
 
-    public UTxOStore getUtxoStore() {
-        return utxoStore;
-    }
-
-    public HydraState getHydraState() {
-        return hydraState;
-    }
-
+    /**
+     * Returns true if the websocket connection is open.
+     * @return
+     */
     public boolean isOpen() {
         return hydraWebSocketHandler.isOpen();
     }
 
+    /**
+     * Returns true if the websocket connection is closed.
+     *
+     * @return true if the websocket connection is closed
+     */
     public boolean isClosed() {
         return hydraWebSocketHandler.isClosed();
     }
 
+    /**
+     * Returns true if the websocket connection is closing.
+     *
+     * @return true if the websocket connection is closing
+     */
     public boolean isClosing() {
         return hydraWebSocketHandler.isClosing();
     }
 
+
+    /**
+     * Add a HydraQueryEventListener instance to the list of listeners.
+     *
+     * @param eventListener - listener to add
+     * @return this instance
+     */
     public HydraWSClient addHydraQueryEventListener(HydraQueryEventListener eventListener) {
         if (eventListener == null) {
             throw new IllegalArgumentException("HydraQueryEventListener instance cannot be null!");
@@ -82,6 +99,12 @@ public class HydraWSClient {
         return this;
     }
 
+    /**
+     * Add a HydraStateEventListener instance to the list of listeners.
+     *
+     * @param eventListener - listener to add
+     * @return this instance
+     */
     public HydraWSClient addHydraStateEventListener(HydraStateEventListener eventListener) {
         if (eventListener == null) {
             throw new IllegalArgumentException("HydraStateEventListener instance cannot be null!");
@@ -92,6 +115,11 @@ public class HydraWSClient {
         return this;
     }
 
+    /**
+     * Remove a HydraQueryEventListener instance from the list of listeners.
+     * @param eventListener - listener to remove
+     * @return this instance
+     */
     public HydraWSClient removeHydraQueryEventListener(HydraQueryEventListener eventListener) {
         if (eventListener == null) {
             throw new IllegalArgumentException("HydraQueryEventListener instance cannot be null!");
@@ -102,14 +130,12 @@ public class HydraWSClient {
         return this;
     }
 
-    public void clearAllHydraQueryEventListeners() {
-        hydraQueryEventListeners.clear();
-    }
-
-    public void clearAllHydraStateEventListeners() {
-        hydraStateEventListeners.clear();
-    }
-
+    /**
+     * Remove a HydraStateEventListener instance from the list of listeners.
+     *
+     * @param eventListener - listener to remove
+     * @return this instance
+     */
     public HydraWSClient removeHydraStateEventListener(HydraStateEventListener eventListener) {
         if (eventListener == null) {
             throw new IllegalArgumentException("HydraStateEventListener instance cannot be null!");
@@ -120,26 +146,65 @@ public class HydraWSClient {
         return this;
     }
 
+    /**
+     * Remove all HydraQueryEventListener instances from the list of listeners.
+     */
+    public void clearAllHydraQueryEventListeners() {
+        hydraQueryEventListeners.clear();
+    }
+
+    /**
+     * Remove all HydraStateEventListener instances from the list of listeners.
+     */
+    public void clearAllHydraStateEventListeners() {
+        hydraStateEventListeners.clear();
+    }
+
+    /**
+     * Connect to the hydra server.
+     */
     public void connect() {
         hydraWebSocketHandler.connect();
     }
 
+    /**
+     * Connect to the hydra server and block until the connection is established.
+     * @throws InterruptedException
+     */
     public void connectBlocking() throws InterruptedException {
         hydraWebSocketHandler.connectBlocking();
     }
 
+    /**
+     * Connect to the hydra server and block until the connection is established or the timeout is reached.
+     * @param time
+     * @param timeUnit
+     * @throws InterruptedException
+     */
     public void connectBlocking(int time, TimeUnit timeUnit) throws InterruptedException {
         hydraWebSocketHandler.connectBlocking(time, timeUnit);
     }
 
+    /**
+     * Close the websocket connection.
+     */
     public void close() {
         hydraWebSocketHandler.close();
     }
 
+    /**
+     * Close the websocket connection with the code and message
+     *
+     * @param code - code to close the websocket connection with
+     * @param message - message to pass on the websocket connection closing
+     */
     public void close(int code, String message) {
         hydraWebSocketHandler.close(code, message);
     }
 
+    /**
+     * Close the websocket connection and block until the connection is closed.
+     */
     public void closeBlocking() throws InterruptedException {
         hydraWebSocketHandler.closeBlocking();
     }
@@ -165,62 +230,110 @@ public class HydraWSClient {
         return URI.create(format("%s?%s", serverURI, urlPath));
     }
 
-    // Initializes a new Head. This command is a no-op when a Head is already open and the server will output an CommandFailed message should this happen.
+    /**
+     * Initializes a new Hydra head.
+     * This command is a no-op when a Head is already open and the server will output an CommandFailed message should this happen.
+     */
     public void init() {
         val request = new InitRequest();
         hydraWebSocketHandler.send(request.getRequestBody());
     }
 
-    // Aborts a head before it is opened. This can only be done before all participants have committed. Once opened, the head can't be aborted anymore but it can be closed using: Close.
+    /**
+     * Aborts already initialized Hydra head before it is opened.
+     *
+     * This can only be done BEFORE all participants have committed. Once opened, the head can't be aborted anymore, but it can be closed using:
+     * close head request instead.
+     */
     public void abort() {
         val request = new AbortHeadRequest();
         hydraWebSocketHandler.send(request.getRequestBody());
     }
 
-    // Join an initialized head. This is how parties get to inject funds inside a head. Note however that the utxo is an object and can be empty should a participant wants to join a head without locking any funds.
+    /**
+     * Join an initialized Hydra head and commit a single UTXO.
+     *
+     * This is how parties get to inject funds inside a head. Note, however,
+     * that the utxo is an object and can be empty should a participant wants to join a head without locking any funds.
+     *
+     * Note that once all Hydra head participants commit the hydra head will open.
+     */
     public void commit(String utxoId, UTXO utxo) {
         val request = new CommitRequest();
         request.addUTXO(utxoId, utxo);
         hydraWebSocketHandler.send(request.getRequestBody());
     }
 
+    /**
+     * Join an initialized Hydra head and commit multiple UTXOs.
+     *
+     * Note that once all Hydra head participants commit the hydra head will open.
+     * @param utxoMap
+     */
     public void commit(Map<String, UTXO> utxoMap) {
         val request = new CommitRequest();
         utxoMap.forEach(request::addUTXO);
         hydraWebSocketHandler.send(request.getRequestBody());
     }
 
-    // Join an initialized head. This is how parties get to inject funds inside a head. Note however that the utxo is an object and can be empty should a participant wants to join a head without locking any funds.
+    /**
+     ** Join an initialized Hydra head and commit no UTXOs.
+     *
+     * Note that once all Hydra head participants commit the hydra head will open.
+     */
     public void commit() {
         val request = new CommitRequest();
         hydraWebSocketHandler.send(request.getRequestBody());
     }
 
-    // Submit a transaction through the head. Note that the transaction is only broadcast if well-formed and valid.
+    /**
+     * Submit a transaction through the head. Note that the transaction is only broadcast among all Hydra head
+     * participants if well-formed and valid.
+     *
+     * You should expect to get either <code>TransactionValidResponse</code> or <code>TransactionInvalidResponse</code>
+     */
     public void submitTx(String transaction) {
         val request = new NewTxRequest(transaction);
         hydraWebSocketHandler.send(request.getRequestBody());
     }
 
-    // Terminate a head with the latest known snapshot. This effectively moves the head from the Open state to the Close state where the contestation phase begin. As a result of closing a head, no more transactions can be submitted via NewTx.
+    /**
+     * Terminate a Hydra head with the latest known snapshot.
+     * This request effectively moves the head from the <em>Open</em> state to the <em>Close</em> state where the contestation phase begin.
+     *
+     * As a result of closing a head, no more transactions can be submitted to the Hydra network via <em>NewTx</em> request.
+     */
     public void closeHead() {
         val request = new CloseHeadRequest();
         hydraWebSocketHandler.send(request.getRequestBody());
     }
 
-    // Challenge the latest snapshot announced as a result of a head closure from another participant. Note that this necessarily contest with the latest snapshot known of your local Hydra node. Participants can only contest once.
+    /**
+     * Challenge the latest snapshot announced as a result of a Hydra head closure from another participant.
+     *
+     * Note that this necessarily contest with the latest snapshot known of your local Hydra node.
+     * Participants can only contest once.
+     */
     public void contest() {
         val request = new ContestHeadRequest();
         hydraWebSocketHandler.send(request.getRequestBody());
     }
 
-    // Finalize a head after the contestation period passed. This will distribute the final (as closed and maybe contested) head state back on the layer 1.
+    /**
+     * Finalize a Hydra head after the contestation period passed.
+     *
+     * This will distribute the final (as closed and maybe contested) head state back on the Cardano's layer 1.
+     */
     public void fanOut() {
         val request = new FanoutRequest();
         hydraWebSocketHandler.send(request.getRequestBody());
     }
 
-    // Asynchronously access the current UTxO set of the Hydra node. This eventually triggers a UTxO event from the server.
+    /**
+     * Asynchronously access the current UTxO set of the Hydra node.
+     *
+     * This eventually triggers a response with all UTxOs (last known snapshot) from the server.
+     */
     public void getUTXO() {
         val request = new GetUTxORequest();
         hydraWebSocketHandler.send(request.getRequestBody());
@@ -272,8 +385,7 @@ public class HydraWSClient {
                 });
             }
 
-            if (queryResponse instanceof FailureResponse) {
-                var failureResponse = (FailureResponse) queryResponse;
+            if (queryResponse instanceof FailureResponse failureResponse) {
                 if (hydraClientOptions.isDoNotPropagateLowLevelFailures() && failureResponse.isLowLevelFailure()) {
                     log.warn("Low level consensus failure, ignoring...");
                     return;
@@ -303,15 +415,13 @@ public class HydraWSClient {
         }
     }
 
-    private boolean fireHydraStateChanged(HydraState currentState, HydraState newState) {
+    private void fireHydraStateChanged(HydraState currentState, HydraState newState) {
         if (currentState == newState) {
-            return false;
+            return;
         }
         HydraWSClient.this.hydraState = newState;
 
         List.copyOf(hydraStateEventListeners).forEach(l -> l.onStateChanged(currentState, newState));
-
-        return true;
     }
 
 }
