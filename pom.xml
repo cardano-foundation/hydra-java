@@ -26,7 +26,7 @@
         <reactor.netty.version>1.1.9</reactor.netty.version>
         <reactor.test.version>3.5.8</reactor.test.version>
 
-        <test.containers.version>1.18.1</test.containers.version>
+        <test.containers.version>1.19.1</test.containers.version>
         <assertj.core.version>3.24.2</assertj.core.version>
         <awaitability.version>4.2.0</awaitability.version>
         <guava.version>32.0.0-jre</guava.version>

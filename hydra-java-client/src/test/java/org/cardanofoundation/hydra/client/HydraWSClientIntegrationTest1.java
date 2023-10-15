@@ -1,16 +1,26 @@
 package org.cardanofoundation.hydra.client;
 
+import com.bloxbean.cardano.client.common.model.Networks;
+import com.bloxbean.cardano.client.exception.CborDeserializationException;
+import com.bloxbean.cardano.client.exception.CborSerializationException;
+import com.bloxbean.cardano.client.transaction.spec.Transaction;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
+import org.cardanofoundation.hydra.cardano.client.lib.HydraNodeProtocolParametersAdapter;
+import org.cardanofoundation.hydra.cardano.client.lib.JacksonClasspathSecretKeySupplierHydra;
 import org.cardanofoundation.hydra.core.model.HydraState;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.query.response.GreetingsResponse;
 import org.cardanofoundation.hydra.core.model.query.response.Response;
 import org.cardanofoundation.hydra.core.store.InMemoryUTxOStore;
+import org.cardanofoundation.hydra.core.utils.HexUtils;
 import org.cardanofoundation.hydra.test.HydraDevNetwork;
+import org.junit.BeforeClass;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
+import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -23,6 +33,13 @@ import static org.cardanofoundation.hydra.core.model.HydraState.*;
 
 @Slf4j
 public class HydraWSClientIntegrationTest1 {
+
+    private static ObjectMapper objectMapper;
+
+    @BeforeClass
+    public static void beforeApp() {
+        objectMapper = new ObjectMapper();
+    }
 
     /**
      * Here we will test the following things:
@@ -38,22 +55,35 @@ public class HydraWSClientIntegrationTest1 {
      * - Head reaches final state
      */
     @Test
-    public void test() throws InterruptedException {
+    public void test() throws InterruptedException, CborSerializationException, CborDeserializationException {
         var stopWatch = Stopwatch.createStarted();
 
         try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
             hydraDevNetwork.start();
 
+            var aliceOperator = new JacksonClasspathSecretKeySupplierHydra(new ObjectMapper(),
+                    "devnet/credentials/alice-funds.sk",
+                    Networks.testnet()).getOperator();
+
+            var bobOperator = new JacksonClasspathSecretKeySupplierHydra(new ObjectMapper(),
+                    "devnet/credentials/bob-funds.sk",
+                    Networks.testnet()).getOperator();
+
             var aliceHydraContainer = hydraDevNetwork.getAliceHydraContainer();
             var bobHydraContainer = hydraDevNetwork.getBobHydraContainer();
 
-            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(aliceHydraContainer))
+            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiWebSocketUrl(aliceHydraContainer))
                     .utxoStore(new InMemoryUTxOStore())
                     .snapshotUtxo(true)
                     .build());
             SLF4JHydraLogger aliceHydraLogger = SLF4JHydraLogger.of(log, "alice");
             aliceHydraWSClient.addHydraQueryEventListener(aliceHydraLogger);
             aliceHydraWSClient.addHydraStateEventListener(aliceHydraLogger);
+
+            var aliceHydraWebClient = new HydraWebClient(HttpClient.newHttpClient(), HydraDevNetwork.getHydraApiWebUrl(aliceHydraContainer));
+            var bobHydraWebClient = new HydraWebClient(HttpClient.newHttpClient(), HydraDevNetwork.getHydraApiWebUrl(bobHydraContainer));
+
+            var protocolParamsSupplier = new HydraNodeProtocolParametersAdapter(aliceHydraWebClient.fetchProtocolParameters());
 
             var errorFuture = new CompletableFuture<Response>();
 
@@ -80,7 +110,7 @@ public class HydraWSClientIntegrationTest1 {
                }
             });
 
-            var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(bobHydraContainer))
+            var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiWebSocketUrl(bobHydraContainer))
                     .utxoStore(new InMemoryUTxOStore())
                     .build());
             SLF4JHydraLogger bobHydraLogger = SLF4JHydraLogger.of(log, "bob");
@@ -137,21 +167,35 @@ public class HydraWSClientIntegrationTest1 {
                     .until(() -> bobState.get() == Initializing);
 
             var aliceUtxo = new UTXO();
-            aliceUtxo.setAddress("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3");
-            aliceUtxo.setValue(Map.of("lovelace", BigInteger.valueOf(1000 * 1_000_000)));
+            aliceUtxo.setAddress("addr_test1vp5cxztpc6hep9ds7fjgmle3l225tk8ske3rmwr9adu0m6qchmx5z");
+            aliceUtxo.setValue(Map.of("lovelace", BigInteger.valueOf(100 * 1_000_000)));
 
             var bobUtxo = new UTXO();
             bobUtxo.setAddress("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k");
-            bobUtxo.setValue(Map.of("lovelace", BigInteger.valueOf(500 * 1_000_000)));
+            bobUtxo.setValue(Map.of("lovelace", BigInteger.valueOf(100 * 1_000_000)));
 
-            aliceHydraWSClient.commit("ddf1db5cc1d110528828e22984d237b275af510dc82d0e7a8fc941469277e31e#0", aliceUtxo);
-            bobHydraWSClient.commit("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0", bobUtxo);
+            var aliceHeadCommitted = aliceHydraWebClient.commitRequest(Map.of("2790f724bd99e2f5e35cc4b9598ca95d1b003ab2f5ecef00dad7b47fa5f4d359#0", aliceUtxo));
+            var bobHeadCommitted = bobHydraWebClient.commitRequest(Map.of("88167818c3377fd1405880028693078a4cbf689d86834c18a71a4388cc8a216f#0", bobUtxo));
 
-            log.info("Checking if alice and bob will see head is open...");
+            log.info("Alice head committed: {}", aliceHeadCommitted);
+            log.info("Bob head committed: {}", bobHeadCommitted);
+
+            var aliceCommitTxToSign = aliceHeadCommitted.getCborHex();
+            var bobCommitTxToSign = bobHeadCommitted.getCborHex();
+
+            var aliceCommitTxSigned = aliceOperator.getTxSigner().sign(Transaction.deserialize(HexUtils.decodeHexString(aliceCommitTxToSign)));
+            var bobCommitTxSigned = bobOperator.getTxSigner().sign(Transaction.deserialize(HexUtils.decodeHexString(bobCommitTxToSign)));
+
+            log.info("Alice aliceCommitTxSigned: {}", aliceCommitTxSigned);
+            log.info("Bob bobCommitTxSigned: {}", bobCommitTxSigned);
+
+            log.info("Checking if alice will see head is open...");
             await()
                     .atMost(Duration.ofMinutes(1))
                      .failFast(errorFuture::isDone)
                     .until(() -> aliceState.get() == Open);
+
+            log.info("Checking if bob will see head is open...");
             await()
                     .atMost(Duration.ofMinutes(1))
                     .failFast(errorFuture::isDone)

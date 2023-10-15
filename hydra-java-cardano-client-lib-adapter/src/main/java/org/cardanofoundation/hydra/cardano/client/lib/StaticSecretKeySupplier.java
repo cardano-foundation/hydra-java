@@ -9,6 +9,9 @@ import org.cardanofoundation.hydra.cardano.client.lib.utils.MoreAddress;
 import static com.bloxbean.cardano.client.crypto.KeyGenUtil.getPublicKeyFromPrivateKey;
 import static com.bloxbean.cardano.client.function.helper.SignerProviders.signerFrom;
 
+/**
+ * A static secret key supplier.
+ */
 public class StaticSecretKeySupplier implements HydraOperatorSupplier {
 
     private final SecretKey secretKey;
@@ -16,7 +19,15 @@ public class StaticSecretKeySupplier implements HydraOperatorSupplier {
 
     private final VerificationKey verificationKey;
 
-    public StaticSecretKeySupplier(String cborHex, Network network) throws CborSerializationException {
+    /**
+     * Constructor.
+     *
+     * @param cborHex - the payment key hex (skey)
+     * @param network - the network
+     * @throws CborSerializationException
+     */
+    public StaticSecretKeySupplier(String cborHex,
+                                   Network network) throws CborSerializationException {
         this.secretKey = new SecretKey(cborHex);
         this.network = network;
         this.verificationKey = getPublicKeyFromPrivateKey(secretKey);

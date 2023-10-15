@@ -1,6 +1,5 @@
 package org.cardanofoundation.hydra.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.cardanofoundation.hydra.core.HydraException;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.http.HeadCommitResponse;
@@ -16,30 +15,28 @@ import java.util.Map;
 
 import static java.lang.String.format;
 import static java.net.http.HttpRequest.BodyPublishers.ofString;
+import static org.cardanofoundation.hydra.core.utils.MoreJson.readValue;
+import static org.cardanofoundation.hydra.core.utils.MoreJson.serialise;
 
 public class HydraWebClient {
 
     private static final Duration DEF_TIMEOUT = Duration.ofMinutes(1);
 
     private final HttpClient httpClient;
-    private final ObjectMapper objectMapper;
     private final String baseUrl;
     private final Duration timeout;
 
     public HydraWebClient(HttpClient httpClient,
-                          ObjectMapper objectMapper,
                           String baseUrl,
                           Duration timeout) {
         this.httpClient = httpClient;
-        this.objectMapper = objectMapper;
         this.baseUrl = baseUrl;
         this.timeout = timeout;
     }
 
     public HydraWebClient(HttpClient httpClient,
-                          ObjectMapper objectMapper,
                           String baseUrl) {
-        this(httpClient, objectMapper, baseUrl, DEF_TIMEOUT);
+        this(httpClient, baseUrl, DEF_TIMEOUT);
     }
 
     private URI commitUrl() {
@@ -62,7 +59,7 @@ public class HydraWebClient {
             var response = httpClient.send(request, BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                return objectMapper.readValue(response.body(), HydraProtocolParameters.class);
+                return readValue(response.body(), HydraProtocolParameters.class);
             }
 
             throw new IOException(format("Unable to read protocol parameters from the url: %s, statusCode: %d, reason: %s",
@@ -74,7 +71,7 @@ public class HydraWebClient {
 
     public HeadCommitResponse commitRequest(Map<String, UTXO> commitDataMap) throws HydraException {
         try {
-            var postBody = objectMapper.writeValueAsString(commitDataMap);
+            var postBody = serialise(commitDataMap);
 
             var request = HttpRequest.newBuilder()
                     .uri(commitUrl())
@@ -86,11 +83,11 @@ public class HydraWebClient {
             var response = httpClient.send(request, BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                return objectMapper.readValue(response.body(), HeadCommitResponse.class);
+                return readValue(response.body(), HeadCommitResponse.class);
             }
 
             throw new HydraException(format("Unable to commit to the head with the url: %s, statusCode: %d, reason: %s",
-                    protocolParametersUrl(), response.statusCode(), response.body()));
+                    commitUrl(), response.statusCode(), response.body()));
         } catch (IOException | InterruptedException e) {
             throw new HydraException("Unable to commit utxos to the head", e);
         }

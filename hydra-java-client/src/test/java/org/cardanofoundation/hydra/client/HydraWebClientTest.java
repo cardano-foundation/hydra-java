@@ -1,6 +1,5 @@
 package org.cardanofoundation.hydra.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.cardanofoundation.hydra.core.model.UTXO;
@@ -21,8 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class HydraWebClientTest {
 
     private static WireMockServer wireMockServer;
-
-    private final static ObjectMapper objectMapper = new ObjectMapper();
 
     private final static String PROTOCOL_PARAMETERS_RESPONSE = "{\"minFeeA\":0,\"minFeeB\":0,\"maxBlockBodySize\":65536,\"maxTxSize\":16384,\"maxBlockHeaderSize\":1100,\"keyDeposit\":400000,\"poolDeposit\":500000000,\"eMax\":18,\"nOpt\":50,\"a0\":0.1,\"rho\":1.78650067e-3,\"tau\":0.1,\"protocolVersion\":{\"major\":7,\"minor\":0},\"minPoolCost\":0,\"costmdls\":{},\"prices\":{\"prMem\":0,\"prSteps\":0},\"maxTxExUnits\":{\"exUnitsMem\":9223372036854775806,\"exUnitsSteps\":9223372036854775806},\"maxBlockExUnits\":{\"exUnitsMem\":80000000,\"exUnitsSteps\":40000000000},\"maxValSize\":5000,\"collateralPercentage\":150,\"maxCollateralInputs\":3,\"coinsPerUTxOByte\":0}⏎\n";
 
@@ -51,7 +48,7 @@ class HydraWebClientTest {
         var baseUrl = "http://localhost:" + wireMockServer.port(); // WireMock server URL
         var client = HttpClient.newHttpClient();
 
-        var hydraWebClient = new HydraWebClient(client, objectMapper, baseUrl);
+        var hydraWebClient = new HydraWebClient(client, baseUrl);
 
         HydraProtocolParameters hydraProtocolParameters = hydraWebClient.fetchProtocolParameters();
 
@@ -78,7 +75,7 @@ class HydraWebClientTest {
         var baseUrl = "http://localhost:" + wireMockServer.port();
         var client = HttpClient.newHttpClient();
 
-        var hydraWebClient = new HydraWebClient(client, objectMapper, baseUrl);
+        var hydraWebClient = new HydraWebClient(client, baseUrl);
 
         var utxo = UTXO.builder()
                 .address("addr_test1vp0yug22dtwaxdcjdvaxr74dthlpunc57cm639578gz7algset3fh")

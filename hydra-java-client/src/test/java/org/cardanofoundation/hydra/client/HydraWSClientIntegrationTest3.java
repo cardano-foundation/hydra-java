@@ -74,7 +74,7 @@ public class HydraWSClientIntegrationTest3 {
             var aliceState = new AtomicReference<HydraState>();
             var bobState = new AtomicReference<HydraState>();
 
-            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer()))
+            var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiWebSocketUrl(hydraDevNetwork.getAliceHydraContainer()))
                     .utxoStore(aliceInMemoryStore)
                     .build());
 
@@ -118,7 +118,7 @@ public class HydraWSClientIntegrationTest3 {
                 }
             });
 
-            var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getBobHydraContainer()))
+            var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiWebSocketUrl(hydraDevNetwork.getBobHydraContainer()))
                     .utxoStore(bobInMemoryStore)
                     .build());
             SLF4JHydraLogger bobHydraLogger = SLF4JHydraLogger.of(log, "bob");
@@ -291,7 +291,7 @@ public class HydraWSClientIntegrationTest3 {
 
             log.info("Let's connect now with full history...");
             aliceInMemoryStore = new InMemoryUTxOStore();
-            var aliceHydraWSClient2 = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiUrl(hydraDevNetwork.getAliceHydraContainer()))
+            var aliceHydraWSClient2 = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiWebSocketUrl(hydraDevNetwork.getAliceHydraContainer()))
                     .utxoStore(aliceInMemoryStore)
                     .history(true) // now lets see if connecting with history is fine
                     .build());

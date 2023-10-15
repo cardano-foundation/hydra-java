@@ -42,6 +42,14 @@ public class MoreJson {
         }
     }
 
+    public static <T> T readValue(String json, Class<T> clazz) throws HydraException {
+        try {
+            return MAPPER.readValue(json, clazz);
+        } catch (JsonProcessingException e) {
+            throw new HydraException("Unable to deserialise json", e);
+        }
+    }
+
     public static Map<String, UTXO> convertUTxOMap(JsonNode o) throws HydraException {
         return MAPPER.convertValue(o, new TypeReference<Map<String, UTXO>>(){});
     }

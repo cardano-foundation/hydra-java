@@ -1,6 +1,5 @@
 package org.cardanofoundation.hydra.reactor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.cardanofoundation.hydra.core.model.UTXO;
@@ -44,7 +43,6 @@ public class HydraReactiveWebClientTest {
 
         hydraReactiveWebClient = new HydraReactiveWebClient(
                 client,
-                new ObjectMapper(),
                 baseUrl
         );
     }
