@@ -288,7 +288,13 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
                     return Mono.<TxResult>create(monoSink -> {
                         storeMonoSinkReference(commandKey, monoSink);
                     })
-                    .map(txConfirmedResult -> new TxResult(txConfirmedResult.getTxId(), localTxResult.isValid()));
+                    .map(txConfirmedResult -> {
+                        var confirmedTxId = txConfirmedResult.getTxId();
+                        var isTxValid = localTxResult.isValid();
+                        var reason = localTxResult.getReason();
+
+                        return new TxResult(confirmedTxId, isTxValid, reason);
+                    });
                 })
                 .timeout(timeout, Mono.defer(() -> {
                     applyMonoCleanup(commandKey);

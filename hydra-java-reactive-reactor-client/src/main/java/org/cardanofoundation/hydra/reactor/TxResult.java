@@ -9,14 +9,14 @@ public class TxResult {
     private final String txId;
     private final boolean isValid;
 
-    @Nullable private String message;
+    @Nullable private String reason;
 
     public TxResult(String txId,
                     boolean isValid,
-                    String message) {
+                    @Nullable String reason) {
         this.txId = txId;
         this.isValid = isValid;
-        this.message = message;
+        this.reason = reason;
     }
 
     public TxResult(String txId, boolean isValid) {
