@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
 import java.net.http.HttpClient;
-import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 
@@ -54,7 +53,7 @@ class HydraWebClientTest {
 
         var hydraWebClient = new HydraWebClient(client, objectMapper, baseUrl);
 
-        HydraProtocolParameters hydraProtocolParameters = hydraWebClient.fetchProtocolParameters(Duration.ofMinutes(1));
+        HydraProtocolParameters hydraProtocolParameters = hydraWebClient.fetchProtocolParameters();
 
         assertNotNull(hydraProtocolParameters);
 
@@ -88,7 +87,7 @@ class HydraWebClientTest {
 
         var commitDataMap = Collections.singletonMap("88167818c3377fd1405880028693078a4cbf689d86834c18a71a4388cc8a216f#0", utxo);
 
-        var headCommitResponse = hydraWebClient.commitRequest(commitDataMap, Duration.ofMinutes(1));
+        var headCommitResponse = hydraWebClient.commitRequest(commitDataMap);
 
         assertEquals("84a7008382582088167818c3377fd1405880028693078a4cbf689d86834c18a71a4388cc8a216f008258209d3b99f4226b343ac3c33f72356a702c03bd792f6e36c59944bd693cb2f9c074018258209d3b99f4226b343ac3c33f72356a702c03bd792f6e36c59944bd693cb2f9c074040d818258209d3b99f4226b343ac3c33f72356a702c03bd792f6e36c59944bd693cb2f9c07404128182582033de8a815e3c2762402571d56124e2db905bf696934341ac2b0e580689ec64d6000182a300581d708dcc1fb34d1ba168dfb0b82e7d1a31956a2db5856f268146b0fd7f2a01821a03197500a1581c9031ff34954478aa3cdc34c9c86e2efec800a0a0aff968362250838fa1581cf8a68cd18e59a6ace848155a0e967af64f4d00cf8acee8adc95a6b0d010282005820efcb830f02acd98a6e3f5445dc5d08e6df905e2686061b85cf8b9b6ea68589c1a200581d60f8a68cd18e59a6ace848155a0e967af64f4d00cf8acee8adc95a6b0d011a00e400c0021a0035d8600e81581cf8a68cd18e59a6ace848155a0e967af64f4d00cf8acee8adc95a6b0d0b5820b6bbf9b19a4ff82c3504d3148b504116d51045d459a1bfd08616e38a9331402fa30081825820eb94e8236e2099357fa499bfbc415968691573f25ec77435b7949f5fdfaa5da05840902b11eb0bf16a4f9dd6cef019cbb87c6338845e471a8a35b983221f8035dd4ff16a141ac2ed145afe5c55d470cbcdfaffa68585639d416e6b3ed78a730d86090482581c9031ff34954478aa3cdc34c9c86e2efec800a0a0aff968362250838fd8799f5820b37aabd81024c043f53a069c91e51a5b52e4ea399ae17ee1fe3cb9c44db707eb9fd8799fd8799fd8799f582088167818c3377fd1405880028693078a4cbf689d86834c18a71a4388cc8a216fff00ff583cd8799fd8799fd8799f581c5e4e214a6addd337126b3a61faad5dfe1e4f14f637a8969e3a05eefdffd87a80ffa140a1401a02faf080d87980d87a80ffffff581c9031ff34954478aa3cdc34c9c86e2efec800a0a0aff968362250838fff0581840001d87a9f9fd8799fd8799f582088167818c3377fd1405880028693078a4cbf689d86834c18a71a4388cc8a216fff00ffffff821a00d59f801b00000002540be400f5f6", headCommitResponse.getCborHex());
         assertEquals("Tx BabbageEra", headCommitResponse.getType());

@@ -19,30 +19,41 @@ import static java.net.http.HttpRequest.BodyPublishers.ofString;
 
 public class HydraWebClient {
 
+    private static final Duration DEF_TIMEOUT = Duration.ofMinutes(1);
+
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String baseUrl;
+    private final Duration timeout;
+
+    public HydraWebClient(HttpClient httpClient,
+                          ObjectMapper objectMapper,
+                          String baseUrl,
+                          Duration timeout) {
+        this.httpClient = httpClient;
+        this.objectMapper = objectMapper;
+        this.baseUrl = baseUrl;
+        this.timeout = timeout;
+    }
 
     public HydraWebClient(HttpClient httpClient,
                           ObjectMapper objectMapper,
                           String baseUrl) {
-        this.httpClient = httpClient;
-        this.objectMapper = objectMapper;
-        this.baseUrl = baseUrl;
+        this(httpClient, objectMapper, baseUrl, DEF_TIMEOUT);
     }
 
-    private String commitUrl() {
-        return format("%s/commit", baseUrl);
+    private URI commitUrl() {
+        return URI.create(format("%s/commit", baseUrl));
     }
 
-    private String protocolParametersUrl() {
-        return format("%s/protocol-parameters", baseUrl);
+    private URI protocolParametersUrl() {
+        return URI.create(format("%s/protocol-parameters", baseUrl));
     }
 
-    public HydraProtocolParameters fetchProtocolParameters(Duration timeout) throws HydraException {
+    public HydraProtocolParameters fetchProtocolParameters() throws HydraException {
         try {
             var request = HttpRequest.newBuilder()
-                    .uri(URI.create(protocolParametersUrl()))
+                    .uri(protocolParametersUrl())
                     .GET()
                     .header("Accept", "application/json")
                     .timeout(timeout)
@@ -61,13 +72,12 @@ public class HydraWebClient {
         }
     }
 
-    public HeadCommitResponse commitRequest(Map<String, UTXO> commitDataMap,
-                                            Duration timeout) throws HydraException {
+    public HeadCommitResponse commitRequest(Map<String, UTXO> commitDataMap) throws HydraException {
         try {
             var postBody = objectMapper.writeValueAsString(commitDataMap);
 
             var request = HttpRequest.newBuilder()
-                    .uri(URI.create(commitUrl()))
+                    .uri(commitUrl())
                     .POST(ofString(postBody))
                     .header("Accept", "application/json")
                     .timeout(timeout)

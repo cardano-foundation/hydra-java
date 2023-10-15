@@ -1,5 +1,6 @@
 package org.cardanofoundation.hydra.reactor;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.cardanofoundation.hydra.core.model.UTXO;
@@ -7,10 +8,9 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.test.StepVerifier;
 
-import java.time.Duration;
+import java.net.http.HttpClient;
 import java.util.Collections;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -39,8 +39,14 @@ public class HydraReactiveWebClientTest {
 
     @BeforeEach
     public void setUp() {
-        WebClient webClient = WebClient.create("http://localhost:" + wireMockServer.port());
-        hydraReactiveWebClient = new HydraReactiveWebClient(webClient);
+        var baseUrl = "http://localhost:" + wireMockServer.port(); // WireMock server URL
+        var client = HttpClient.newHttpClient();
+
+        hydraReactiveWebClient = new HydraReactiveWebClient(
+                client,
+                new ObjectMapper(),
+                baseUrl
+        );
     }
 
     @Test
@@ -51,7 +57,7 @@ public class HydraReactiveWebClientTest {
                         .withHeader("Content-Type", "application/json")
                         .withBody(PROTOCOL_PARAMETERS_RESPONSE)));
 
-        var resultMono = hydraReactiveWebClient.fetchProtocolParameters(Duration.ofSeconds(1));
+        var resultMono = hydraReactiveWebClient.fetchProtocolParameters();
 
         StepVerifier.create(resultMono)
                 .expectNextMatches(parameters -> {
@@ -72,7 +78,7 @@ public class HydraReactiveWebClientTest {
         var commitDataMap = Collections.singletonMap("yourKey",
                 UTXO.builder().address("addr_test1vp0yug22dtwaxdcjdvaxr74dthlpunc57cm639578gz7algset3fh").build());
 
-        var resultMono = hydraReactiveWebClient.commitRequest(commitDataMap, Duration.ofSeconds(1));
+        var resultMono = hydraReactiveWebClient.commitRequest(commitDataMap);
 
         StepVerifier.create(resultMono)
                 .expectNextMatches(response -> {
