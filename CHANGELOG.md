@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.8](https://github.com/cardano-foundation/hydra-java/compare/v0.0.7...v0.0.8) (2023-10-16)
+
+
+### Bug Fixes
+
+* mono error to mono success but with invalid transaction. ([180322f](https://github.com/cardano-foundation/hydra-java/commit/180322feb7eeaee0515b9ee35683ea0b36bc9ebf))
+* potential memory leak fix ([86bce91](https://github.com/cardano-foundation/hydra-java/commit/86bce9181f7b8933308111bc578d3a17655363fc))
+* re-implemented getTxOutput method ([fad57bb](https://github.com/cardano-foundation/hydra-java/commit/fad57bb12f20215ccbb67bea53bfce40220a91ce))
+
 ## [0.0.7](https://github.com/cardano-foundation/hydra-java/compare/v0.0.6...v0.0.7) (2023-10-13)
 
 
