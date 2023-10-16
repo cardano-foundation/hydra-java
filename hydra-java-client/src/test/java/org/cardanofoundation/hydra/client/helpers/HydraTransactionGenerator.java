@@ -16,6 +16,7 @@ import static com.bloxbean.cardano.client.function.helper.InputBuilders.createFr
 public class HydraTransactionGenerator {
 
     private final UtxoSupplier utxoSupplier;
+
     private final ProtocolParamsSupplier protocolParamsSupplier;
 
     public HydraTransactionGenerator(UtxoSupplier utxoSupplier,
@@ -24,7 +25,9 @@ public class HydraTransactionGenerator {
         this.protocolParamsSupplier = protocolParamsSupplier;
     }
 
-    public byte[] simpleTransfer(HydraOperator sender, HydraOperator receiver, int adaAmount) throws CborSerializationException {
+    public byte[] simpleTransfer(HydraOperator sender,
+                                 HydraOperator receiver,
+                                 int adaAmount) throws CborSerializationException {
         var senderAddress = sender.getAddress();
         var receiverAddress = receiver.getAddress();
 

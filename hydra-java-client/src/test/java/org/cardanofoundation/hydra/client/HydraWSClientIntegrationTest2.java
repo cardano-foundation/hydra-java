@@ -41,6 +41,7 @@ public class HydraWSClientIntegrationTest2 {
 
             var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiWebSocketUrl(hydraDevNetwork.getAliceHydraContainer()))
                     .utxoStore(new InMemoryUTxOStore())
+                    .snapshotUtxo(true)
                     .build());
             SLF4JHydraLogger aliceHydraLogger = SLF4JHydraLogger.of(log, "alice");
             aliceHydraWSClient.addHydraQueryEventListener(aliceHydraLogger);
@@ -56,6 +57,7 @@ public class HydraWSClientIntegrationTest2 {
 
             var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiWebSocketUrl(hydraDevNetwork.getBobHydraContainer()))
                     .utxoStore(new InMemoryUTxOStore())
+                    .snapshotUtxo(true)
                     .build());
 
             SLF4JHydraLogger bobHydraLogger = SLF4JHydraLogger.of(log, "bob");

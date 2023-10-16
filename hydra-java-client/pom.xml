@@ -79,8 +79,8 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
+            <groupId>com.bloxbean.cardano</groupId>
+            <artifactId>yaci</artifactId>
             <scope>test</scope>
         </dependency>
 

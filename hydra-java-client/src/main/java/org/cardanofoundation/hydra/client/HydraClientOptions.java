@@ -4,7 +4,8 @@ import lombok.Builder;
 import lombok.Getter;
 import org.cardanofoundation.hydra.core.store.EmptyUTxOStore;
 import org.cardanofoundation.hydra.core.store.UTxOStore;
-import org.jetbrains.annotations.Nullable;
+
+import static org.cardanofoundation.hydra.client.HydraClientOptions.TransactionFormat.CBOR;
 
 @Getter
 @Builder(builderMethodName = "hiddenBuilder")
@@ -28,7 +29,7 @@ public class HydraClientOptions {
     private boolean doNotPropagateLowLevelFailures = true;
 
     @Builder.Default
-    private TransactionFormat transactionFormat = TransactionFormat.CBOR;
+    private TransactionFormat transactionFormat = CBOR;
 
     /**
      *

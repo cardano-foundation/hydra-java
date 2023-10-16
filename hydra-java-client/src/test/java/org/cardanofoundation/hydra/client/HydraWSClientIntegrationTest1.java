@@ -1,9 +1,12 @@
 package org.cardanofoundation.hydra.client;
 
+import com.bloxbean.cardano.client.common.model.Network;
 import com.bloxbean.cardano.client.common.model.Networks;
 import com.bloxbean.cardano.client.exception.CborDeserializationException;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
 import com.bloxbean.cardano.client.transaction.spec.Transaction;
+import com.bloxbean.cardano.yaci.core.protocol.localtx.model.TxSubmissionRequest;
+import com.bloxbean.cardano.yaci.helper.LocalClientProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +19,6 @@ import org.cardanofoundation.hydra.core.model.query.response.Response;
 import org.cardanofoundation.hydra.core.store.InMemoryUTxOStore;
 import org.cardanofoundation.hydra.core.utils.HexUtils;
 import org.cardanofoundation.hydra.test.HydraDevNetwork;
-import org.junit.BeforeClass;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
@@ -30,16 +32,13 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 import static org.cardanofoundation.hydra.core.model.HydraState.*;
+import static org.cardanofoundation.hydra.core.utils.HexUtils.decodeHexString;
 
 @Slf4j
 public class HydraWSClientIntegrationTest1 {
 
-    private static ObjectMapper objectMapper;
-
-    @BeforeClass
-    public static void beforeApp() {
-        objectMapper = new ObjectMapper();
-    }
+    private final static Network NETWORK = Networks.testnet();
+    public static final long PROTOCOL_MAGIC = NETWORK.getProtocolMagic();
 
     /**
      * Here we will test the following things:
@@ -61,13 +60,21 @@ public class HydraWSClientIntegrationTest1 {
         try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
             hydraDevNetwork.start();
 
+            var nodeSocketPath = hydraDevNetwork.getRemoteCardanoLocalSocketPath();
+            log.info("Node socket path: {}", nodeSocketPath);
+
+            var localClientProvider = new LocalClientProvider(hydraDevNetwork.getRemoteCardanoLocalSocketPath(), PROTOCOL_MAGIC);
+            //var localClientProvider = new LocalClientProvider("localhost", hydraDevNetwork.getCardanoPort());
+            localClientProvider.start();
+            var txSubmissionClient = localClientProvider.getTxSubmissionClient();
+
             var aliceOperator = new JacksonClasspathSecretKeySupplierHydra(new ObjectMapper(),
                     "devnet/credentials/alice-funds.sk",
-                    Networks.testnet()).getOperator();
+                    NETWORK).getOperator();
 
             var bobOperator = new JacksonClasspathSecretKeySupplierHydra(new ObjectMapper(),
                     "devnet/credentials/bob-funds.sk",
-                    Networks.testnet()).getOperator();
+                    NETWORK).getOperator();
 
             var aliceHydraContainer = hydraDevNetwork.getAliceHydraContainer();
             var bobHydraContainer = hydraDevNetwork.getBobHydraContainer();
@@ -112,6 +119,7 @@ public class HydraWSClientIntegrationTest1 {
 
             var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiWebSocketUrl(bobHydraContainer))
                     .utxoStore(new InMemoryUTxOStore())
+                    .snapshotUtxo(true)
                     .build());
             SLF4JHydraLogger bobHydraLogger = SLF4JHydraLogger.of(log, "bob");
             bobHydraWSClient.addHydraQueryEventListener(bobHydraLogger);
@@ -183,11 +191,16 @@ public class HydraWSClientIntegrationTest1 {
             var aliceCommitTxToSign = aliceHeadCommitted.getCborHex();
             var bobCommitTxToSign = bobHeadCommitted.getCborHex();
 
-            var aliceCommitTxSigned = aliceOperator.getTxSigner().sign(Transaction.deserialize(HexUtils.decodeHexString(aliceCommitTxToSign)));
-            var bobCommitTxSigned = bobOperator.getTxSigner().sign(Transaction.deserialize(HexUtils.decodeHexString(bobCommitTxToSign)));
+            var aliceCommitTxSigned = aliceOperator.getTxSigner().sign(Transaction.deserialize(decodeHexString(aliceCommitTxToSign)));
+            var bobCommitTxSigned = bobOperator.getTxSigner().sign(Transaction.deserialize(decodeHexString(bobCommitTxToSign)));
 
             log.info("Alice aliceCommitTxSigned: {}", aliceCommitTxSigned);
             log.info("Bob bobCommitTxSigned: {}", bobCommitTxSigned);
+
+            txSubmissionClient.submitTx(new TxSubmissionRequest(aliceCommitTxSigned.serialize()))
+                    .block(Duration.ofMinutes(1));
+            txSubmissionClient.submitTx(new TxSubmissionRequest(bobCommitTxSigned.serialize()))
+                    .block(Duration.ofMinutes(1));
 
             log.info("Checking if alice will see head is open...");
             await()

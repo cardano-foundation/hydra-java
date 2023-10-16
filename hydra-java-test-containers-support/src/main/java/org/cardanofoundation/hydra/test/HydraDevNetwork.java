@@ -55,6 +55,7 @@ public class HydraDevNetwork implements Startable {
 
     private final Map<String, Integer> initialFunds;
 
+    @Getter
     protected GenericContainer<?> cardanoContainer;
 
     @Getter
@@ -92,6 +93,15 @@ public class HydraDevNetwork implements Startable {
         initialFunds.put("bob-funds", 100);
 
         return initialFunds;
+    }
+
+    public String getCardanoLocalSocketPath() {
+        return "/devnet/node.socket";
+    }
+
+    public String getRemoteCardanoLocalSocketPath() {
+        //return "/devnet/node.socket";
+        return getClass().getClassLoader().getResource("devnet/node.socket").getFile();
     }
 
     @Override
@@ -180,6 +190,10 @@ public class HydraDevNetwork implements Startable {
         return String.format("http://%s:%d", host, mappedPort);
     }
 
+    public int getCardanoPort() {
+        return getCardanoContainer().getMappedPort(CARDANO_REMOTE_PORT);
+    }
+
     // docker run --rm -it -v ./devnet:/devnet ghcr.io/input-output-hk/hydra-node:unstable publish-scripts --testnet-magic 42 --node-socket /devnet/node.socket --cardano-signing-key /devnet/credentials/faucet.sk
     private String publishReferenceScripts(GenericContainer<?> cardanoContainer) {
         StringBuilder commandOutputBuilder = new StringBuilder();
@@ -196,7 +210,7 @@ public class HydraDevNetwork implements Startable {
                     .withCommand(
                             "publish-scripts",
                             "--testnet-magic", "42",
-                            "--node-socket", "/devnet/node.socket",
+                            "--node-socket", getCardanoLocalSocketPath(),
                             "--cardano-signing-key", "/devnet/credentials/faucet.sk"
                     );
 
@@ -242,14 +256,17 @@ public class HydraDevNetwork implements Startable {
     protected GenericContainer<?> createCardanoNodeContainer() {
         //val mem = 32 * 1024L * 1024L * 1024L;
         try (var cardanoNode = new GenericContainer<>(INPUT_OUTPUT_CARDANO_NODE)) {
-                cardanoNode.withClasspathResourceMapping("/devnet",
+                cardanoNode
+                        .withExposedPorts(3001)
+                        .withAccessToHost(true)
+                        .withClasspathResourceMapping("/devnet",
                     "/devnet",
                     READ_WRITE
             )
                     .withEnv(Map.of(
                             "CARDANO_BLOCK_PRODUCER", "true",
-                            "CARDANO_NODE_SOCKET_PATH", "/devnet/node.socket",
-                            "CARDANO_SOCKET_PATH", "/devnet/node.socket"
+                            "CARDANO_NODE_SOCKET_PATH", getCardanoLocalSocketPath(),
+                            "CARDANO_SOCKET_PATH", getCardanoLocalSocketPath()
                     ))
                     .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("cardano-node").withSeparateOutputStreams())
                     .withExposedPorts(CARDANO_REMOTE_PORT)
@@ -264,7 +281,8 @@ public class HydraDevNetwork implements Startable {
                             , "--shelley-operational-certificate", "/devnet/opcert.cert"
                             , "--byron-delegation-certificate", "/devnet/byron-delegation.cert"
                             , "--byron-signing-key", "/devnet/byron-delegate.key"
-                    );
+                    )
+                    .addExposedPort(CARDANO_REMOTE_PORT);
 
                 return cardanoNode;
         }
