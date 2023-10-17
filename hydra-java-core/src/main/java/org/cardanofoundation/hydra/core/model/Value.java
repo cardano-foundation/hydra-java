@@ -11,6 +11,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Value {
 
-    String lovelace;
+    private String lovelace;
 
 }
