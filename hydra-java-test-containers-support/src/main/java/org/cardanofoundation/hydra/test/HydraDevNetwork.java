@@ -74,19 +74,6 @@ public class HydraDevNetwork implements Startable {
 
         this.network = Network.builder()
                 .driver("bridge")
-//                .createNetworkCmdModifier(cmd -> {
-//                    var ipamConfig = new com.github.dockerjava.api.model.Network.Ipam.Config();
-//                    ipamConfig.withSubnet("172.16.238.0/24");
-//                    ipamConfig.withGateway("172.16.238.1");
-//                    //ipamConfig.setNetworkID("hydra_net");
-//
-//                    var ipam = new com.github.dockerjava.api.model.Network.Ipam();
-//                    ipam.withConfig(ipamConfig);
-//
-//                    cmd
-//                            //.withName("hydra_net")
-//                            .withIpam(ipam);
-//                })
                 .build();
 
         this.cardanoLogging = withCardanoLogging;
@@ -217,7 +204,7 @@ public class HydraDevNetwork implements Startable {
         return String.format("http://%s:%d", host, mappedPort);
     }
 
-    // docker run --rm -it -v ./devnet:/devnet ghcr.io/input-output-hk/hydra-node:unstable publish-scripts --testnet-magic 42 --node-socket /devnet/node.socket --cardano-signing-key /devnet/credentials/faucet.sk
+    // docker run --rm -it -v ./devnet:/devnet ghcr.io/input-output-hk/hydra-node:0.13 publish-scripts --testnet-magic 42 --node-socket /devnet/node.socket --cardano-signing-key /devnet/credentials/faucet.sk
     private String publishReferenceScripts(GenericContainer<?> cardanoContainer) {
         StringBuilder commandOutputBuilder = new StringBuilder();
         try (var hydraCliContainer = new GenericContainer<>(INPUT_OUTPUT_HYDRA_NODE)) {
@@ -380,7 +367,6 @@ public class HydraDevNetwork implements Startable {
                         cmd.withName(containerName)
                         .withHostName(containerName)
                         .withAliases(containerName)
-                        //.withIpv4Address("172.16.238.3")
                         ;
                     })
                     .withCommand(
@@ -430,10 +416,8 @@ public class HydraDevNetwork implements Startable {
                         cmd.withName(containerName)
                                 .withHostName(containerName)
                                 .withAliases(containerName)
-                                //.withIpv4Address("172.16.238.4")
                          ;
                     })
-                    //.withCommand("/bin/tx-submit-api")
                     ;
 
             return txSubmitContainer;
