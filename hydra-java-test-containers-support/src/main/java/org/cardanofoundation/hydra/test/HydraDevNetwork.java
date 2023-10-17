@@ -48,6 +48,7 @@ public class HydraDevNetwork implements Startable {
     public final static int HYDRA_API_REMOTE_PORT = 4001;
 
     public final static int TX_SUBMIT_API_PORT = 8090;
+    public static final String GHCR_IO_BLINKLABS_IO_TX_SUBMIT_API_LATEST = "ghcr.io/blinklabs-io/tx-submit-api:latest";
 
     private final boolean cardanoLogging;
 
@@ -319,7 +320,6 @@ public class HydraDevNetwork implements Startable {
                                 .withHostName(containerName)
                                 .withAliases(containerName)
                                 ;
-                                //.withIpv4Address("172.16.238.2")
                     })
                     .withCommand(
                             "--node-id", "alice"
@@ -399,7 +399,7 @@ public class HydraDevNetwork implements Startable {
     protected GenericContainer<?> createTxSubmitAPI(GenericContainer<?> cardanoContainer, Network network) {
         String containerName = "tx-submit-api";
 
-        try (var txSubmitContainer = new GenericContainer<>("ghcr.io/blinklabs-io/tx-submit-api:latest")) {
+        try (var txSubmitContainer = new GenericContainer<>(GHCR_IO_BLINKLABS_IO_TX_SUBMIT_API_LATEST)) {
             txSubmitContainer.withExposedPorts(TX_SUBMIT_API_PORT)
                     .withAccessToHost(true)
                     .withNetwork(network)
