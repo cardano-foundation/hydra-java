@@ -8,6 +8,7 @@ import org.cardanofoundation.hydra.core.model.Snapshot;
 import org.cardanofoundation.hydra.core.model.Tag;
 import org.cardanofoundation.hydra.core.store.UTxOStore;
 import org.cardanofoundation.hydra.core.utils.MoreJson;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDateTime;
 
@@ -20,12 +21,12 @@ public class SnapshotConfirmed extends Response {
 
     private final LocalDateTime timestamp;
 
-    private final Snapshot snapshot;
+    @Nullable private final Snapshot snapshot;
 
     public SnapshotConfirmed(String headId,
                              int seq,
                              LocalDateTime timestamp,
-                             Snapshot snapshot) {
+                             @Nullable Snapshot snapshot) {
         super(Tag.SnapshotConfirmed, seq);
         this.headId = headId;
         this.timestamp = timestamp;

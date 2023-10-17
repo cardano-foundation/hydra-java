@@ -258,6 +258,8 @@ public class HydraWSClient {
      *
      * Note that once all Hydra head participants commit the hydra head will open.
      */
+    @Deprecated
+    // use HydraWebClient instead
     public void commit(String utxoId, UTXO utxo) {
         val request = new CommitRequest();
         request.addUTXO(utxoId, utxo);
@@ -270,6 +272,8 @@ public class HydraWSClient {
      * Note that once all Hydra head participants commit the hydra head will open.
      * @param utxoMap
      */
+    @Deprecated
+    // use HydraWebClient instead
     public void commit(Map<String, UTXO> utxoMap) {
         val request = new CommitRequest();
         utxoMap.forEach(request::addUTXO);
@@ -281,6 +285,8 @@ public class HydraWSClient {
      *
      * Note that once all Hydra head participants commit the hydra head will open.
      */
+    @Deprecated
+    // use HydraWebClient instead
     public void commit() {
         val request = new CommitRequest();
         hydraWebSocketHandler.send(request.getRequestBody());

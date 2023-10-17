@@ -5,7 +5,7 @@ import com.bloxbean.cardano.client.common.model.Networks;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
-import org.cardanofoundation.hydra.cardano.client.lib.CardanoOperator;
+import org.cardanofoundation.hydra.cardano.client.lib.CardanoTxSubmissionClient;
 import org.cardanofoundation.hydra.cardano.client.lib.HydraNodeProtocolParametersAdapter;
 import org.cardanofoundation.hydra.cardano.client.lib.JacksonClasspathSecretKeyCardanoOperatorSupplier;
 import org.cardanofoundation.hydra.cardano.client.lib.SnapshotUTxOSupplier;
@@ -15,7 +15,7 @@ import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.query.response.*;
 import org.cardanofoundation.hydra.core.store.InMemoryUTxOStore;
 import org.cardanofoundation.hydra.test.HydraDevNetwork;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
@@ -28,27 +28,17 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
+import static org.cardanofoundation.hydra.cardano.client.lib.utils.TransactionSigningUtil.sign;
 import static org.cardanofoundation.hydra.core.model.HydraState.Initializing;
 import static org.cardanofoundation.hydra.core.model.HydraState.Open;
+import static org.cardanofoundation.hydra.core.utils.HexUtils.decodeHexString;
 import static org.cardanofoundation.hydra.core.utils.HexUtils.encodeHexString;
+import static org.cardanofoundation.hydra.test.HydraDevNetwork.getTxSubmitWebUrl;
 
 @Slf4j
 public class HydraWSClientIntegrationTest3 {
 
-    private static CardanoOperator ALICE_OPERATOR;
-
-    private static CardanoOperator BOB_OPERATOR;
-
-    @BeforeAll
-    public static void setUpOnce() throws CborSerializationException {
-        // TODO when hydra supports protocol params via REST we can make it better
-        Network testnet = Networks.testnet();
-
-        ALICE_OPERATOR = new JacksonClasspathSecretKeyCardanoOperatorSupplier("devnet/credentials/alice.sk", testnet).getOperator();
-        BOB_OPERATOR = new JacksonClasspathSecretKeyCardanoOperatorSupplier("devnet/credentials/bob.sk", testnet).getOperator();
-        log.info("Alice OPERATOR:{}", ALICE_OPERATOR);
-        log.info("Bob OPERATOR:{}", BOB_OPERATOR);
-    }
+    private final static Network NETWORK = Networks.testnet();
 
     /**
      * Scenario tests:
@@ -68,11 +58,25 @@ public class HydraWSClientIntegrationTest3 {
         try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
             hydraDevNetwork.start();
 
-            HttpClient httpClient = HttpClient.newBuilder().build();
-            var hydraWebClient = new HydraWebClient(httpClient, HydraDevNetwork.getTxSubmitWebUrl(hydraDevNetwork.getAliceHydraContainer()));
+            var httpClient = HttpClient.newBuilder().build();
+            var txSubmitWebUrl = getTxSubmitWebUrl(hydraDevNetwork.getTxSubmitContainer());
+            log.info("Tx submit web url: {}", txSubmitWebUrl);
+            var txSubmissionClient = new CardanoTxSubmissionClient(httpClient, txSubmitWebUrl);
 
-            var hydraProtocolParams = hydraWebClient.fetchProtocolParameters();
-            var protocolParams = new HydraNodeProtocolParametersAdapter(hydraProtocolParams);
+            var aliceHydraWebClient = new HydraWebClient(HttpClient.newHttpClient(), HydraDevNetwork.getHydraApiWebUrl(hydraDevNetwork.getAliceHydraContainer()));
+            var bobHydraWebClient = new HydraWebClient(HttpClient.newHttpClient(), HydraDevNetwork.getHydraApiWebUrl(hydraDevNetwork.getBobHydraContainer()));
+
+            var protocolParamsSupplier = new HydraNodeProtocolParametersAdapter(aliceHydraWebClient.fetchProtocolParameters());
+            var snapshotUTxOSupplier = new SnapshotUTxOSupplier(aliceInMemoryStore);
+
+            var aliceOperator = new JacksonClasspathSecretKeyCardanoOperatorSupplier(
+                    "devnet/credentials/alice-funds.sk",
+                    NETWORK).getOperator();
+
+            var bobOperator = new JacksonClasspathSecretKeyCardanoOperatorSupplier(
+                    "devnet/credentials/bob-funds.sk",
+                    NETWORK)
+                    .getOperator();
 
             var errorFuture = new CompletableFuture<Response>();
             var aliceState = new AtomicReference<HydraState>();
@@ -80,6 +84,7 @@ public class HydraWSClientIntegrationTest3 {
 
             var aliceHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiWebSocketUrl(hydraDevNetwork.getAliceHydraContainer()))
                     .utxoStore(aliceInMemoryStore)
+                    .snapshotUtxo(true)
                     .build());
 
             SLF4JHydraLogger aliceHydraLogger = SLF4JHydraLogger.of(log, "alice");
@@ -122,8 +127,10 @@ public class HydraWSClientIntegrationTest3 {
                 }
             });
 
-            var bobHydraWSClient = new HydraWSClient(HydraClientOptions.builder(HydraDevNetwork.getHydraApiWebSocketUrl(hydraDevNetwork.getBobHydraContainer()))
+            var bobHydraWSClient = new HydraWSClient(HydraClientOptions
+                    .builder(HydraDevNetwork.getHydraApiWebSocketUrl(hydraDevNetwork.getBobHydraContainer()))
                     .utxoStore(bobInMemoryStore)
+                    .snapshotUtxo(true)
                     .build());
             SLF4JHydraLogger bobHydraLogger = SLF4JHydraLogger.of(log, "bob");
             bobHydraWSClient.addHydraQueryEventListener(bobHydraLogger);
@@ -168,15 +175,44 @@ public class HydraWSClientIntegrationTest3 {
                     .until(() -> bobState.get() == Initializing);
 
             var aliceUtxo = new UTXO();
-            aliceUtxo.setAddress("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3");
-            aliceUtxo.setValue(Map.of("lovelace", BigInteger.valueOf(1000 * 1_000_000)));
+            aliceUtxo.setAddress("addr_test1vp5cxztpc6hep9ds7fjgmle3l225tk8ske3rmwr9adu0m6qchmx5z");
+            aliceUtxo.setValue(Map.of("lovelace", BigInteger.valueOf(100 * 1_000_000)));
 
             var bobUtxo = new UTXO();
-            bobUtxo.setAddress("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k");
-            bobUtxo.setValue(Map.of("lovelace", BigInteger.valueOf(500 * 1_000_000)));
+            bobUtxo.setAddress("addr_test1vp0yug22dtwaxdcjdvaxr74dthlpunc57cm639578gz7algset3fh");
+            bobUtxo.setValue(Map.of("lovelace", BigInteger.valueOf(100 * 1_000_000)));
 
-            aliceHydraWSClient.commit("ddf1db5cc1d110528828e22984d237b275af510dc82d0e7a8fc941469277e31e#0", aliceUtxo);
-            bobHydraWSClient.commit("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0", bobUtxo);
+            var aliceUtxoMap = Map.of("c8870bcd3602a685ba24b567ae5fec7ecab8500798b427d3d2f04605db1ea9fb#0", aliceUtxo);
+            var bobUtxoMap = Map.of("2af765b516d9d99777333029e9abfb4d2bfe462df9c6a8366a4bd11a8ec8d4bd#0", bobUtxo);
+
+            var aliceHeadCommitted = aliceHydraWebClient.commitRequest(aliceUtxoMap);
+            var bobHeadCommitted = bobHydraWebClient.commitRequest(bobUtxoMap);
+
+            log.info("Alice head committed: {}", aliceHeadCommitted);
+            log.info("Bob head committed: {}", bobHeadCommitted);
+
+            var aliceCommitTxToSign = aliceHeadCommitted.getCborHex();
+            var bobCommitTxToSign = bobHeadCommitted.getCborHex();
+
+            var aliceCommitTxSigned = sign(decodeHexString(aliceCommitTxToSign), aliceOperator.getSecretKey());
+            var bobCommitTxSigned = sign(decodeHexString(bobCommitTxToSign), bobOperator.getSecretKey());
+
+            log.info("Alice aliceCommitTxSigned: {}", aliceCommitTxSigned);
+            log.info("Bob bobCommitTxSigned: {}", bobCommitTxSigned);
+
+            var aliceCommitResult = txSubmissionClient.submitTransaction(aliceCommitTxSigned);
+            var bobCommitResult = txSubmissionClient.submitTransaction(bobCommitTxSigned);
+
+            if (!aliceCommitResult.isSuccessful()) {
+                log.warn("Alice funds commitment failed, reason: {}", aliceCommitResult.getResponse());
+            }
+
+            if (!bobCommitResult.isSuccessful()) {
+                log.warn("Bob funds commitment failed, reason: {}", bobCommitResult.getResponse());
+            }
+
+            Assertions.assertTrue(aliceCommitResult.isSuccessful());
+            Assertions.assertTrue(bobCommitResult.isSuccessful());
 
             await()
                     .atMost(Duration.ofMinutes(1))
@@ -196,13 +232,13 @@ public class HydraWSClientIntegrationTest3 {
                         }
                         var headIsOpenResponse = aliceHeadIsOpen.get();
 
-                        var localAliceUtxo = headIsOpenResponse.getUtxo().get("ddf1db5cc1d110528828e22984d237b275af510dc82d0e7a8fc941469277e31e#0");
-                        var localBobUtxo = headIsOpenResponse.getUtxo().get("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0");
+                        var localAliceUtxo = headIsOpenResponse.getUtxo().get("c8870bcd3602a685ba24b567ae5fec7ecab8500798b427d3d2f04605db1ea9fb#0");
+                        var localBobUtxo = headIsOpenResponse.getUtxo().get("2af765b516d9d99777333029e9abfb4d2bfe462df9c6a8366a4bd11a8ec8d4bd#0");
 
-                        return localAliceUtxo.getAddress().equals("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3")
-                                && localAliceUtxo.getValue().get("lovelace").longValue() == 1000_000_000L
-                                && localBobUtxo.getAddress().equals("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k")
-                                && localBobUtxo.getValue().get("lovelace").longValue() == 500_000_000L;
+                        return localAliceUtxo.getAddress().equals("addr_test1vp5cxztpc6hep9ds7fjgmle3l225tk8ske3rmwr9adu0m6qchmx5z")
+                                && localAliceUtxo.getValue().get("lovelace").longValue() == 100_000_000L
+                                && localBobUtxo.getAddress().equals("addr_test1vp0yug22dtwaxdcjdvaxr74dthlpunc57cm639578gz7algset3fh")
+                                && localBobUtxo.getValue().get("lovelace").longValue() == 100_000_000L;
                     });
 
             log.info("Check if bob receives head is open...");
@@ -214,19 +250,19 @@ public class HydraWSClientIntegrationTest3 {
                         }
                         var headIsOpenResponse = bobHeadIsOpen.get();
 
-                        var localAliceUtxo = headIsOpenResponse.getUtxo().get("ddf1db5cc1d110528828e22984d237b275af510dc82d0e7a8fc941469277e31e#0");
-                        var localBobUtxo = headIsOpenResponse.getUtxo().get("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0");
+                        var localAliceUtxo = headIsOpenResponse.getUtxo().get("c8870bcd3602a685ba24b567ae5fec7ecab8500798b427d3d2f04605db1ea9fb#0");
+                        var localBobUtxo = headIsOpenResponse.getUtxo().get("2af765b516d9d99777333029e9abfb4d2bfe462df9c6a8366a4bd11a8ec8d4bd#0");
 
-                        return localAliceUtxo.getAddress().equals("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3")
-                                && localAliceUtxo.getValue().get("lovelace").longValue() == 1000000000L
-                                && localBobUtxo.getAddress().equals("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k")
-                                && localBobUtxo.getValue().get("lovelace").longValue() == 500_000_000L;
+                        return localAliceUtxo.getAddress().equals("addr_test1vp5cxztpc6hep9ds7fjgmle3l225tk8ske3rmwr9adu0m6qchmx5z")
+                                && localAliceUtxo.getValue().get("lovelace").longValue() == 100_000_000L
+                                && localBobUtxo.getAddress().equals("addr_test1vp0yug22dtwaxdcjdvaxr74dthlpunc57cm639578gz7algset3fh")
+                                && localBobUtxo.getValue().get("lovelace").longValue() == 100_000_000L;
                     });
 
-            var transactionSender = new HydraTransactionGenerator(new SnapshotUTxOSupplier(aliceHydraWSClient.getUtxoStore()), protocolParams);
+            var transactionSender = new HydraTransactionGenerator(snapshotUTxOSupplier, protocolParamsSupplier);
 
             log.info("Let's check if alice sends bob 10 ADA...");
-            var trxBytes = transactionSender.simpleTransfer(ALICE_OPERATOR, BOB_OPERATOR, 10);
+            var trxBytes = transactionSender.simpleTransfer(aliceOperator, bobOperator, 10);
 
             aliceHydraWSClient.submitTx(encodeHexString(trxBytes));
 
@@ -256,15 +292,17 @@ public class HydraWSClientIntegrationTest3 {
 
                         var snapshot = snapshotConfirmed.getSnapshot().getUtxo();
 
+                        System.out.println(snapshot);
+
                         return
-                            snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#0").getAddress().equals("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k") &&
-                            snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#0").getValue().get("lovelace").longValue() == 10_000_000L && // 10 ADA
+                            snapshot.get("2af765b516d9d99777333029e9abfb4d2bfe462df9c6a8366a4bd11a8ec8d4bd#0").getAddress().equals("addr_test1vp0yug22dtwaxdcjdvaxr74dthlpunc57cm639578gz7algset3fh") &&
+                            snapshot.get("2af765b516d9d99777333029e9abfb4d2bfe462df9c6a8366a4bd11a8ec8d4bd#0").getValue().get("lovelace").longValue() == 100_000_000L &&
 
-                            snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#1").getAddress().equals("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3") &&
-                            snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#1").getValue().get("lovelace").longValue() == 989_834_587L && // 989 ADA
+                            snapshot.get("c12fdf25a74f5c58c50da90b4c4df6d2dc4e64e4c804858677001856ff4ac89d#1").getAddress().equals("addr_test1vp5cxztpc6hep9ds7fjgmle3l225tk8ske3rmwr9adu0m6qchmx5z") &&
+                            snapshot.get("c12fdf25a74f5c58c50da90b4c4df6d2dc4e64e4c804858677001856ff4ac89d#1").getValue().get("lovelace").longValue() == 89834587L &&
 
-                            snapshot.get("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0").getAddress().equals("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k") &&
-                            snapshot.get("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0").getValue().get("lovelace").longValue() == 500_000_000L; // 500 ADA
+                            snapshot.get("c12fdf25a74f5c58c50da90b4c4df6d2dc4e64e4c804858677001856ff4ac89d#0").getAddress().equals("addr_test1vp0yug22dtwaxdcjdvaxr74dthlpunc57cm639578gz7algset3fh") &&
+                            snapshot.get("c12fdf25a74f5c58c50da90b4c4df6d2dc4e64e4c804858677001856ff4ac89d#0").getValue().get("lovelace").longValue() == 10000000L;
                     });
 
             log.info("Let's check if bob received SnapshotConfirmed message... (full consensus validation)");
@@ -280,14 +318,14 @@ public class HydraWSClientIntegrationTest3 {
                         var snapshot = snapshotConfirmed.getSnapshot().getUtxo();
 
                         return
-                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#0").getAddress().equals("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k") &&
-                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#0").getValue().get("lovelace").longValue() == 10_000_000L && // 10 ADA
+                                snapshot.get("2af765b516d9d99777333029e9abfb4d2bfe462df9c6a8366a4bd11a8ec8d4bd#0").getAddress().equals("addr_test1vp0yug22dtwaxdcjdvaxr74dthlpunc57cm639578gz7algset3fh") &&
+                                snapshot.get("2af765b516d9d99777333029e9abfb4d2bfe462df9c6a8366a4bd11a8ec8d4bd#0").getValue().get("lovelace").longValue() == 100_000_000L &&
 
-                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#1").getAddress().equals("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3") &&
-                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#1").getValue().get("lovelace").longValue() == 989_834_587L && // 989 ADA
+                                snapshot.get("c12fdf25a74f5c58c50da90b4c4df6d2dc4e64e4c804858677001856ff4ac89d#1").getAddress().equals("addr_test1vp5cxztpc6hep9ds7fjgmle3l225tk8ske3rmwr9adu0m6qchmx5z") &&
+                                snapshot.get("c12fdf25a74f5c58c50da90b4c4df6d2dc4e64e4c804858677001856ff4ac89d#1").getValue().get("lovelace").longValue() == 89834587L &&
 
-                                snapshot.get("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0").getAddress().equals("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k") &&
-                                snapshot.get("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0").getValue().get("lovelace").longValue() == 500_000_000L; // 500 ADA
+                                snapshot.get("c12fdf25a74f5c58c50da90b4c4df6d2dc4e64e4c804858677001856ff4ac89d#0").getAddress().equals("addr_test1vp0yug22dtwaxdcjdvaxr74dthlpunc57cm639578gz7algset3fh") &&
+                                snapshot.get("c12fdf25a74f5c58c50da90b4c4df6d2dc4e64e4c804858677001856ff4ac89d#0").getValue().get("lovelace").longValue() == 10000000L;
                     });
 
             aliceHydraWSClient.closeBlocking();
@@ -324,14 +362,14 @@ public class HydraWSClientIntegrationTest3 {
                         var snapshot = greetingsResponse.getSnapshotUtxo();
 
                         return isOpen &&
-                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#0").getAddress().equals("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k") &&
-                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#0").getValue().get("lovelace").longValue() == 10_000_000L && // 10 ADA
+                            snapshot.get("2af765b516d9d99777333029e9abfb4d2bfe462df9c6a8366a4bd11a8ec8d4bd#0").getAddress().equals("addr_test1vp0yug22dtwaxdcjdvaxr74dthlpunc57cm639578gz7algset3fh") &&
+                            snapshot.get("2af765b516d9d99777333029e9abfb4d2bfe462df9c6a8366a4bd11a8ec8d4bd#0").getValue().get("lovelace").longValue() == 100_000_000L &&
 
-                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#1").getAddress().equals("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3") &&
-                                snapshot.get("b9f48dd61b739c7deb55a55bc8fe8097165379efcfa918010fec75de6c6b8f64#1").getValue().get("lovelace").longValue() == 989_834_587L && // 989 ADA
+                            snapshot.get("c12fdf25a74f5c58c50da90b4c4df6d2dc4e64e4c804858677001856ff4ac89d#1").getAddress().equals("addr_test1vp5cxztpc6hep9ds7fjgmle3l225tk8ske3rmwr9adu0m6qchmx5z") &&
+                            snapshot.get("c12fdf25a74f5c58c50da90b4c4df6d2dc4e64e4c804858677001856ff4ac89d#1").getValue().get("lovelace").longValue() == 89834587L &&
 
-                                snapshot.get("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0").getAddress().equals("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k") &&
-                                snapshot.get("db982e0b69fb742188e45feedfd631bbce6738884d266356868efb9907e10cf9#0").getValue().get("lovelace").longValue() == 500_000_000L; // 500 ADA
+                            snapshot.get("c12fdf25a74f5c58c50da90b4c4df6d2dc4e64e4c804858677001856ff4ac89d#0").getAddress().equals("addr_test1vp0yug22dtwaxdcjdvaxr74dthlpunc57cm639578gz7algset3fh") &&
+                            snapshot.get("c12fdf25a74f5c58c50da90b4c4df6d2dc4e64e4c804858677001856ff4ac89d#0").getValue().get("lovelace").longValue() == 10000000L;
                     });
         }
 

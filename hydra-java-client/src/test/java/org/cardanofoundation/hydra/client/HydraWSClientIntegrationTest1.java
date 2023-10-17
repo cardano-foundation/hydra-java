@@ -204,6 +204,9 @@ public class HydraWSClientIntegrationTest1 {
 
             if (!aliceCommitResult.isSuccessful()) {
                 log.warn("Alice funds commitment failed, reason: {}", aliceCommitResult.getResponse());
+            }
+
+            if (!bobCommitResult.isSuccessful()) {
                 log.warn("Bob funds commitment failed, reason: {}", bobCommitResult.getResponse());
             }
 
