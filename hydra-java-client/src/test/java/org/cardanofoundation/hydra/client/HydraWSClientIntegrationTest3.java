@@ -69,7 +69,7 @@ public class HydraWSClientIntegrationTest3 {
             hydraDevNetwork.start();
 
             HttpClient httpClient = HttpClient.newBuilder().build();
-            var hydraWebClient = new HydraWebClient(httpClient, HydraDevNetwork.getHydraApiWebUrl(hydraDevNetwork.getAliceHydraContainer()));
+            var hydraWebClient = new HydraWebClient(httpClient, HydraDevNetwork.getTxSubmitWebUrl(hydraDevNetwork.getAliceHydraContainer()));
 
             var hydraProtocolParams = hydraWebClient.fetchProtocolParameters();
             var protocolParams = new HydraNodeProtocolParametersAdapter(hydraProtocolParams);

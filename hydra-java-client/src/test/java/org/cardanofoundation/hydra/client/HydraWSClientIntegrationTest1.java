@@ -30,7 +30,7 @@ import static org.awaitility.Awaitility.await;
 import static org.cardanofoundation.hydra.cardano.client.lib.utils.TransactionSigningUtil.sign;
 import static org.cardanofoundation.hydra.core.model.HydraState.*;
 import static org.cardanofoundation.hydra.core.utils.HexUtils.decodeHexString;
-import static org.cardanofoundation.hydra.core.utils.HexUtils.encodeHexString;
+import static org.cardanofoundation.hydra.test.HydraDevNetwork.getTxSubmitWebUrl;
 
 @Slf4j
 public class HydraWSClientIntegrationTest1 {
@@ -59,7 +59,9 @@ public class HydraWSClientIntegrationTest1 {
 
             var httpClient = HttpClient.newHttpClient();
 
-            var txSubmissionClient = new CardanoTxSubmissionClient(httpClient, HydraDevNetwork.getHydraApiWebUrl(hydraDevNetwork.getTxSubmitContainer()));
+            var txSubmitWebUrl = getTxSubmitWebUrl(hydraDevNetwork.getTxSubmitContainer());
+            log.info("Tx submit web url: {}", txSubmitWebUrl);
+            var txSubmissionClient = new CardanoTxSubmissionClient(httpClient, txSubmitWebUrl);
 
             var nodeSocketPath = hydraDevNetwork.getRemoteCardanoLocalSocketPath();
             log.info("Node socket path: {}", nodeSocketPath);
@@ -172,15 +174,15 @@ public class HydraWSClientIntegrationTest1 {
                     .until(() -> bobState.get() == Initializing);
 
             var aliceUtxo = new UTXO();
-            aliceUtxo.setAddress("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3");
+            aliceUtxo.setAddress("addr_test1vp5cxztpc6hep9ds7fjgmle3l225tk8ske3rmwr9adu0m6qchmx5z");
             aliceUtxo.setValue(Map.of("lovelace", BigInteger.valueOf(100 * 1_000_000)));
 
             var bobUtxo = new UTXO();
-            bobUtxo.setAddress("addr_test1vqg9ywrpx6e50uam03nlu0ewunh3yrscxmjayurmkp52lfskgkq5k");
+            bobUtxo.setAddress("addr_test1vp0yug22dtwaxdcjdvaxr74dthlpunc57cm639578gz7algset3fh");
             bobUtxo.setValue(Map.of("lovelace", BigInteger.valueOf(100 * 1_000_000)));
 
-            var aliceUtxoMap = Map.of("04f28331799469d3670acf606675d3ea976fdf67a6506c99d85a8617666c90a0#0", aliceUtxo);
-            var bobUtxoMap = Map.of("ee8a611892e7ab02d4ad41caef84b02b224483a3d04b599b9d21e5cbcc940e7b#0", bobUtxo);
+            var aliceUtxoMap = Map.of("c8870bcd3602a685ba24b567ae5fec7ecab8500798b427d3d2f04605db1ea9fb#0", aliceUtxo);
+            var bobUtxoMap = Map.of("2af765b516d9d99777333029e9abfb4d2bfe462df9c6a8366a4bd11a8ec8d4bd#0", bobUtxo);
 
             var aliceHeadCommitted = aliceHydraWebClient.commitRequest(aliceUtxoMap);
             var bobHeadCommitted = bobHydraWebClient.commitRequest(bobUtxoMap);
@@ -197,8 +199,13 @@ public class HydraWSClientIntegrationTest1 {
             log.info("Alice aliceCommitTxSigned: {}", aliceCommitTxSigned);
             log.info("Bob bobCommitTxSigned: {}", bobCommitTxSigned);
 
-            var aliceCommitResult = txSubmissionClient.submitTransaction(encodeHexString(aliceCommitTxSigned));
-            var bobCommitResult = txSubmissionClient.submitTransaction(encodeHexString(bobCommitTxSigned));
+            var aliceCommitResult = txSubmissionClient.submitTransaction(aliceCommitTxSigned);
+            var bobCommitResult = txSubmissionClient.submitTransaction(bobCommitTxSigned);
+
+            if (!aliceCommitResult.isSuccessful()) {
+                log.warn("Alice funds commitment failed, reason: {}", aliceCommitResult.getResponse());
+                log.warn("Bob funds commitment failed, reason: {}", bobCommitResult.getResponse());
+            }
 
             Assertions.assertTrue(aliceCommitResult.isSuccessful());
             Assertions.assertTrue(bobCommitResult.isSuccessful());
@@ -236,7 +243,7 @@ public class HydraWSClientIntegrationTest1 {
                     .failFast(errorFuture::isDone)
                     .until(() -> bobState.get() == FanoutPossible);
 
-            // it is enough that any participant fans out
+            // it is enough that any participant fans out, bob fans out
             bobHydraWSClient.fanOut();
 
             await()

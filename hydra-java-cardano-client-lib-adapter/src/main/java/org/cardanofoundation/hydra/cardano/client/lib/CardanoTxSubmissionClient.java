@@ -31,9 +31,13 @@ public class CardanoTxSubmissionClient {
     }
 
     public Result<String> submitTransaction(String cborHex) {
+        return submitTransaction(decodeHexString(cborHex));
+    }
+
+    public Result<String> submitTransaction(byte[] txData) {
         var txTransactionSubmitPostRequest = HttpRequest.newBuilder()
                 .uri(URI.create(cardanoSubmitApiUrl))
-                .POST(HttpRequest.BodyPublishers.ofByteArray(decodeHexString(cborHex)))
+                .POST(HttpRequest.BodyPublishers.ofByteArray(txData))
                 .header("Content-Type", "application/cbor")
                 .build();
         try {

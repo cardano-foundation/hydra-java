@@ -54,6 +54,7 @@ public class HydraDevNetwork implements Startable {
     private final boolean hydraLogging;
 
     private final Map<String, Integer> initialFunds;
+    private final Network.NetworkImpl network;
 
     @Getter
     protected GenericContainer<?> cardanoContainer;
@@ -70,18 +71,33 @@ public class HydraDevNetwork implements Startable {
     public HydraDevNetwork(boolean withCardanoLogging,
                            boolean withHydraLogging,
                            Map<String, Integer> initialFunds) {
+
+        this.network = Network.builder()
+                .driver("bridge")
+//                .createNetworkCmdModifier(cmd -> {
+//                    var ipamConfig = new com.github.dockerjava.api.model.Network.Ipam.Config();
+//                    ipamConfig.withSubnet("172.16.238.0/24");
+//                    ipamConfig.withGateway("172.16.238.1");
+//                    //ipamConfig.setNetworkID("hydra_net");
+//
+//                    var ipam = new com.github.dockerjava.api.model.Network.Ipam();
+//                    ipam.withConfig(ipamConfig);
+//
+//                    cmd
+//                            //.withName("hydra_net")
+//                            .withIpam(ipam);
+//                })
+                .build();
+
         this.cardanoLogging = withCardanoLogging;
         this.hydraLogging = withHydraLogging;
         this.initialFunds = initialFunds;
-        this.cardanoContainer = createCardanoNodeContainer();
+        this.cardanoContainer = createCardanoNodeContainer(network);
     }
 
     public HydraDevNetwork(boolean withCardanoLogging,
                            boolean withHydraLogging) {
-        this.cardanoLogging = withCardanoLogging;
-        this.hydraLogging = withHydraLogging;
-        this.initialFunds = getInitialFunds();
-        this.cardanoContainer = createCardanoNodeContainer();
+        this(withCardanoLogging, withHydraLogging, getInitialFunds());
     }
 
     public HydraDevNetwork() {
@@ -121,22 +137,6 @@ public class HydraDevNetwork implements Startable {
         var referenceScriptsTxId = publishReferenceScripts(cardanoContainer);
 
         log.info("ReferenceScriptsTxId: {}", referenceScriptsTxId);
-
-        var network = Network.builder()
-                .driver("bridge")
-                .createNetworkCmdModifier(cmd -> {
-                    var ipamConfig = new com.github.dockerjava.api.model.Network.Ipam.Config();
-                    ipamConfig.withSubnet("172.16.238.0/24");
-                    ipamConfig.withGateway("172.16.238.1");
-                    ipamConfig.setNetworkID("hydra_net");
-
-                    var ipam = new com.github.dockerjava.api.model.Network.Ipam();
-                    ipam.withConfig(ipamConfig);
-
-                    cmd.withName("hydra_net")
-                    .withIpam(ipam);
-                })
-                .build();
 
         log.info("Creating network:" + network);
 
@@ -198,9 +198,16 @@ public class HydraDevNetwork implements Startable {
 
     public static String getHydraApiWebUrl(GenericContainer<?> container) {
         var host = container.getHost();
-        var mappedPort = container.getMappedPort(TX_SUBMIT_API_PORT);
+        var mappedPort = container.getMappedPort(HYDRA_API_REMOTE_PORT);
 
         return String.format("http://%s:%d", host, mappedPort);
+    }
+
+    public static String getTxSubmitWebUrl(GenericContainer<?> container) {
+        var host = container.getHost();
+        var mappedPort = container.getMappedPort(TX_SUBMIT_API_PORT);
+
+        return String.format("http://%s:%d/api/submit/tx", host, mappedPort);
     }
 
     public static String getCardanoRemoteNetworkSocketUrl(GenericContainer<?> container) {
@@ -269,7 +276,7 @@ public class HydraDevNetwork implements Startable {
         java.nio.file.Files.setPosixFilePermissions(vrfPath, PosixFilePermissions.fromString("rw-------"));
     }
 
-    protected GenericContainer<?> createCardanoNodeContainer() {
+    protected GenericContainer<?> createCardanoNodeContainer(Network network) {
         //val mem = 32 * 1024L * 1024L * 1024L;
         try (var cardanoNode = new GenericContainer<>(INPUT_OUTPUT_CARDANO_NODE)) {
                 cardanoNode
@@ -278,7 +285,7 @@ public class HydraDevNetwork implements Startable {
                         .withClasspathResourceMapping("/devnet",
                     "/devnet",
                     READ_WRITE
-            )
+            )       .withNetwork(network)
                     .withEnv(Map.of(
                             "CARDANO_BLOCK_PRODUCER", "true",
                             "CARDANO_NODE_SOCKET_PATH", getCardanoLocalSocketPath(),
@@ -324,12 +331,13 @@ public class HydraDevNetwork implements Startable {
                         cmd.withName(containerName)
                                 .withHostName(containerName)
                                 .withAliases(containerName)
-                                .withIpv4Address("172.16.238.2");
+                                ;
+                                //.withIpv4Address("172.16.238.2")
                     })
                     .withCommand(
                             "--node-id", "alice"
                             , "--api-host", "0.0.0.0"
-                            , "--host", "172.16.238.2"
+                            , "--host", "0.0.0.0"
                             , "--monitoring-port", "6001"
                             , "--peer", "hydra-node-bob:5001"
                             , "--hydra-scripts-tx-id", scriptsTxId
@@ -372,12 +380,13 @@ public class HydraDevNetwork implements Startable {
                         cmd.withName(containerName)
                         .withHostName(containerName)
                         .withAliases(containerName)
-                        .withIpv4Address("172.16.238.3");
+                        //.withIpv4Address("172.16.238.3")
+                        ;
                     })
                     .withCommand(
                             "--node-id", "bob"
                             , "--api-host", "0.0.0.0"
-                            , "--host", "172.16.238.3"
+                            , "--host", "0.0.0.0"
                             , "--monitoring-port", "6001"
                             , "--api-port", "4001"
                             , "--peer", "hydra-node-alice:5001"
@@ -410,7 +419,8 @@ public class HydraDevNetwork implements Startable {
                     .withNetwork(network)
                     .withNetworkAliases(containerName)
                     .withVolumesFrom(cardanoContainer, READ_WRITE)
-                    .waitingFor(Wait.forListeningPort())
+                    .waitingFor(Wait.forLogMessage(".+starting API listener on :.+", 1))
+                    .withStartupTimeout(Duration.ofMinutes(1))
                     .withEnv(Map.of(
                             "CARDANO_NODE_SOCKET_PATH", getCardanoLocalSocketPath(),
                             "CARDANO_NODE_NETWORK_MAGIC", "42",
@@ -420,7 +430,8 @@ public class HydraDevNetwork implements Startable {
                         cmd.withName(containerName)
                                 .withHostName(containerName)
                                 .withAliases(containerName)
-                                .withIpv4Address("172.16.238.4");
+                                //.withIpv4Address("172.16.238.4")
+                         ;
                     })
                     //.withCommand("/bin/tx-submit-api")
                     ;
