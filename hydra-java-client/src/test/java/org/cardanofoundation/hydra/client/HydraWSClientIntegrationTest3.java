@@ -1,14 +1,13 @@
 package org.cardanofoundation.hydra.client;
 
-import com.bloxbean.cardano.client.api.ProtocolParamsSupplier;
+import com.bloxbean.cardano.client.common.model.Network;
 import com.bloxbean.cardano.client.common.model.Networks;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
-import org.cardanofoundation.hydra.cardano.client.lib.HydraOperator;
-import org.cardanofoundation.hydra.cardano.client.lib.JacksonClasspathProtocolParametersSupplier;
-import org.cardanofoundation.hydra.cardano.client.lib.JacksonClasspathSecretKeySupplierHydra;
+import org.cardanofoundation.hydra.cardano.client.lib.CardanoOperator;
+import org.cardanofoundation.hydra.cardano.client.lib.HydraNodeProtocolParametersAdapter;
+import org.cardanofoundation.hydra.cardano.client.lib.JacksonClasspathSecretKeyCardanoOperatorSupplier;
 import org.cardanofoundation.hydra.cardano.client.lib.SnapshotUTxOSupplier;
 import org.cardanofoundation.hydra.client.helpers.HydraTransactionGenerator;
 import org.cardanofoundation.hydra.core.model.HydraState;
@@ -20,6 +19,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
+import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -35,19 +35,17 @@ import static org.cardanofoundation.hydra.core.utils.HexUtils.encodeHexString;
 @Slf4j
 public class HydraWSClientIntegrationTest3 {
 
-    private static ProtocolParamsSupplier PROTOCOL_PARAMS_SUPPLIER;
+    private static CardanoOperator ALICE_OPERATOR;
 
-    private static HydraOperator ALICE_OPERATOR;
-
-    private static HydraOperator BOB_OPERATOR;
+    private static CardanoOperator BOB_OPERATOR;
 
     @BeforeAll
     public static void setUpOnce() throws CborSerializationException {
-        var objectMapper = new ObjectMapper();
         // TODO when hydra supports protocol params via REST we can make it better
-        PROTOCOL_PARAMS_SUPPLIER = new JacksonClasspathProtocolParametersSupplier(objectMapper);
-        ALICE_OPERATOR = new JacksonClasspathSecretKeySupplierHydra(objectMapper, "devnet/credentials/alice.sk", Networks.testnet()).getOperator();
-        BOB_OPERATOR = new JacksonClasspathSecretKeySupplierHydra(objectMapper, "devnet/credentials/bob.sk", Networks.testnet()).getOperator();
+        Network testnet = Networks.testnet();
+
+        ALICE_OPERATOR = new JacksonClasspathSecretKeyCardanoOperatorSupplier("devnet/credentials/alice.sk", testnet).getOperator();
+        BOB_OPERATOR = new JacksonClasspathSecretKeyCardanoOperatorSupplier("devnet/credentials/bob.sk", testnet).getOperator();
         log.info("Alice OPERATOR:{}", ALICE_OPERATOR);
         log.info("Bob OPERATOR:{}", BOB_OPERATOR);
     }
@@ -69,6 +67,12 @@ public class HydraWSClientIntegrationTest3 {
 
         try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
             hydraDevNetwork.start();
+
+            HttpClient httpClient = HttpClient.newBuilder().build();
+            var hydraWebClient = new HydraWebClient(httpClient, HydraDevNetwork.getHydraApiWebUrl(hydraDevNetwork.getAliceHydraContainer()));
+
+            var hydraProtocolParams = hydraWebClient.fetchProtocolParameters();
+            var protocolParams = new HydraNodeProtocolParametersAdapter(hydraProtocolParams);
 
             var errorFuture = new CompletableFuture<Response>();
             var aliceState = new AtomicReference<HydraState>();
@@ -219,7 +223,7 @@ public class HydraWSClientIntegrationTest3 {
                                 && localBobUtxo.getValue().get("lovelace").longValue() == 500_000_000L;
                     });
 
-            var transactionSender = new HydraTransactionGenerator(new SnapshotUTxOSupplier(aliceHydraWSClient.getUtxoStore()), PROTOCOL_PARAMS_SUPPLIER);
+            var transactionSender = new HydraTransactionGenerator(new SnapshotUTxOSupplier(aliceHydraWSClient.getUtxoStore()), protocolParams);
 
             log.info("Let's check if alice sends bob 10 ADA...");
             var trxBytes = transactionSender.simpleTransfer(ALICE_OPERATOR, BOB_OPERATOR, 10);
@@ -237,7 +241,7 @@ public class HydraWSClientIntegrationTest3 {
 
                         var txValidResponse = aliceTxValidResponse.get();
 
-                        return !txValidResponse.isFailure() && txValidResponse.getTransaction().getIsValid();
+                        return !txValidResponse.isFailure();
                     });
 
             log.info("Let's check if alice received SnapshotConfirmed message... (full consensus validation)");

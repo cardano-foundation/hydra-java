@@ -6,7 +6,7 @@ import com.bloxbean.cardano.client.exception.CborSerializationException;
 import com.bloxbean.cardano.client.function.Output;
 import com.bloxbean.cardano.client.function.TxBuilderContext;
 import lombok.val;
-import org.cardanofoundation.hydra.cardano.client.lib.HydraOperator;
+import org.cardanofoundation.hydra.cardano.client.lib.CardanoOperator;
 
 import static com.bloxbean.cardano.client.common.ADAConversionUtil.adaToLovelace;
 import static com.bloxbean.cardano.client.common.CardanoConstants.LOVELACE;
@@ -25,8 +25,8 @@ public class HydraTransactionGenerator {
         this.protocolParamsSupplier = protocolParamsSupplier;
     }
 
-    public byte[] simpleTransfer(HydraOperator sender,
-                                 HydraOperator receiver,
+    public byte[] simpleTransfer(CardanoOperator sender,
+                                 CardanoOperator receiver,
                                  int adaAmount) throws CborSerializationException {
         var senderAddress = sender.getAddress();
         var receiverAddress = receiver.getAddress();

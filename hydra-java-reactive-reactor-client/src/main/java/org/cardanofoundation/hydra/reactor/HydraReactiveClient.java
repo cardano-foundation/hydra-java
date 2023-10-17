@@ -1,5 +1,6 @@
 package org.cardanofoundation.hydra.reactor;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.cardanofoundation.hydra.client.HydraClientOptions;
 import org.cardanofoundation.hydra.client.HydraQueryEventListener;
@@ -22,7 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 
-import static org.cardanofoundation.hydra.client.HydraClientOptions.TransactionFormat.CBOR;
+import static org.cardanofoundation.hydra.client.HydraClientOptions.TransactionFormat.JSON;
 import static org.cardanofoundation.hydra.core.model.HydraState.*;
 import static org.cardanofoundation.hydra.core.model.Tag.FanoutTx;
 import static org.cardanofoundation.hydra.core.utils.HexUtils.encodeHexString;
@@ -80,7 +81,7 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
 
         this.hydraClientOptions = HydraClientOptions.builder(baseUrl)
                 .utxoStore(uTxOStore)
-                .transactionFormat(CBOR)
+                .transactionFormat(JSON)
                 .history(false)
                 .snapshotUtxo(true)
                 .build();
@@ -163,7 +164,7 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
     @Override
     public void onResponse(Response response) {
         log.debug("Tag:{}, seq:{}", response.getTag(), response.getSeq());
-        log.info("monoSinkMap current size: {}", monoSinkMap.size()); // this is debugging only
+        log.debug("monoSinkMap current size: {}", monoSinkMap.size());
 
         if (response instanceof GreetingsResponse gr) {
             var snapshotUtxo = gr.getSnapshotUtxo();
@@ -195,9 +196,9 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
             for (var txId : sc.getSnapshot().getConfirmedTransactions()) {
                 var txSubmitGlobalCommand = TxSubmitGlobalCommand.of(txId);
 
-                var txResult = new TxConfirmedResult(txId);
+                var txConfirmedResult = new TxConfirmedResult(txId);
 
-                applyMonoSuccess(txSubmitGlobalCommand.key(), txResult);
+                applyMonoSuccess(txSubmitGlobalCommand.key(), txConfirmedResult);
             }
         }
 
@@ -220,18 +221,23 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
         }
 
         if (response instanceof TxValidResponse txValidResponse) {
-            var txId = txValidResponse.getTransaction().getId();
-            var txResult = new TxResult(txId, true);
+            JsonNode transactionJson = txValidResponse.getTransaction();
+            var txId = transactionJson.get("id").asText();
+            var isValid = transactionJson.get("isValid").asBoolean();
+            var txResult = new TxResult(txId, isValid);
 
             applyMonoSuccess(TxSubmitLocalCommand.of(txId).key(), txResult);
         }
         if (response instanceof TxInvalidResponse txInvalidResponse) {
-            var txId = txInvalidResponse.getTransaction().getId();
-            var reason = txInvalidResponse.getValidationError().getReason();
+            JsonNode transaction = txInvalidResponse.getTransaction();
+            var txId = transaction.get("id").asText();
+            var isValid = transaction.get("isValid").asBoolean();
 
-            var txResult = new TxResult(txId, false, reason);
+            var txResult = new TxResult(txId, isValid, txInvalidResponse.getValidationError().getReason());
 
             applyMonoSuccess(TxSubmitLocalCommand.of(txId).key(), txResult);
+//            // TODO perhaps we should not confirm it but resolve it on the submit method
+            applyMonoError(TxSubmitGlobalCommand.of(txId).key(), String.format("TransactionId: %s is invalid, reason: %s", txId, txInvalidResponse.getValidationError().getReason()));
         }
 
         if (response instanceof GetUTxOResponse getUTxOResponse) {
@@ -361,11 +367,16 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
 
         return localTxMono
                 .flatMap(localTxResult -> {
-                    return Mono.<TxResult>create(monoSink -> {
+                    if (!localTxResult.isValid()) {
+                        log.warn("Local tx is invalid, txId: {}", txId);
+                        return Mono.just(localTxResult);
+                    }
+
+                    return Mono.<TxConfirmedResult>create(monoSink -> {
                         storeMonoSinkReference(commandKey, monoSink);
                     })
                     .map(txConfirmedResult -> {
-                        var confirmedTxId = txConfirmedResult.getTxId();
+                        var confirmedTxId = txConfirmedResult.txId();
                         var isTxValid = localTxResult.isValid();
                         var reason = localTxResult.getReason();
 
@@ -399,12 +410,20 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
     protected <T extends Request> void applyMonoSuccess(String key) {
         var monoSink = monoSinkMap.remove(key);
 
+        if (monoSink == null) {
+            return;
+        }
+
         monoSink.success();
     }
 
     protected <T extends Request> void applyMonoError(String key,
                                                       Object result) {
         var monoSink = monoSinkMap.remove(key);
+
+        if (monoSink == null) {
+            return;
+        }
 
         monoSink.error(new HydraException(String.valueOf(result)));
     }

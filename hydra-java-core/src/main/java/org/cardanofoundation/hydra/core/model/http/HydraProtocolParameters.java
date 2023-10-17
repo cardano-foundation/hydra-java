@@ -5,57 +5,55 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.ToString;
 
-import java.math.BigDecimal;
-
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @ToString
 public class HydraProtocolParameters {
 
     @JsonProperty("minFeeA")
-    private Integer minFeeA;
+    private int minFeeA;
 
     @JsonProperty("minFeeB")
-    private Integer minFeeB;
+    private int minFeeB;
 
     @JsonProperty("maxBlockBodySize")
-    private Integer maxBlockBodySize;
+    private int maxBlockBodySize;
 
     @JsonProperty("maxTxSize")
-    private Integer maxTxSize;
+    private int maxTxSize;
 
     @JsonProperty("maxBlockHeaderSize")
-    private Integer maxBlockHeaderSize;
+    private int maxBlockHeaderSize;
 
     @JsonProperty("keyDeposit")
-    private Long keyDeposit;
+    private int keyDeposit;
 
     @JsonProperty("poolDeposit")
-    private Long poolDeposit;
+    private int poolDeposit;
 
     @JsonProperty("eMax")
-    private Integer eMax;
+    private int eMax;
 
     @JsonProperty("nOpt")
-    private Integer nOpt;
+    private int nOpt;
 
     @JsonProperty("a0")
-    private BigDecimal a0;
+    private double a0;
 
     @JsonProperty("rho")
-    private BigDecimal rho;
+    private double rho;
 
     @JsonProperty("tau")
-    private BigDecimal tau;
+    private double tau;
 
     @JsonProperty("protocolVersion")
     private ProtocolVersion protocolVersion;
 
     @JsonProperty("minPoolCost")
-    private Integer minPoolCost;
+    private int minPoolCost;
 
     @JsonProperty("costmdls")
-    private CostModels costmdls;
+    private CostModels costModels;
 
     @JsonProperty("prices")
     private Prices prices;
@@ -67,46 +65,57 @@ public class HydraProtocolParameters {
     private ExUnits maxBlockExUnits;
 
     @JsonProperty("maxValSize")
-    private Integer maxValSize;
+    private int maxValSize;
 
     @JsonProperty("collateralPercentage")
-    private Integer collateralPercentage;
+    private int collateralPercentage;
 
     @JsonProperty("maxCollateralInputs")
-    private Integer maxCollateralInputs;
+    private int maxCollateralInputs;
 
     @JsonProperty("coinsPerUTxOByte")
-    private Integer coinsPerUTxOByte;
+    private int coinsPerUTxOByte;
 
     @Data
     public static class ProtocolVersion {
         @JsonProperty("major")
-        private Integer major;
+        private int major;
 
         @JsonProperty("minor")
-        private Integer minor;
+        private int minor;
+
     }
 
     @Data
     public static class CostModels {
+        @JsonProperty("PlutusV1")
+        private long[] plutusV1;
+
+        @JsonProperty("PlutusV2")
+        private long[] plutusV2;
+
     }
 
     @Data
     public static class Prices {
+
         @JsonProperty("prMem")
-        private Integer prMem;
+        private int prMem;
 
         @JsonProperty("prSteps")
-        private Integer prSteps;
+        private int prSteps;
+
     }
 
     @Data
+
     public static class ExUnits {
         @JsonProperty("exUnitsMem")
-        private Long exUnitsMem;
+        private long exUnitsMem;
 
         @JsonProperty("exUnitsSteps")
-        private Long exUnitsSteps;
+        private long exUnitsSteps;
+
     }
 
 }

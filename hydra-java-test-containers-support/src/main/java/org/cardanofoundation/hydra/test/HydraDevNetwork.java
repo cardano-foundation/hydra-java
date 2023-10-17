@@ -94,7 +94,6 @@ public class HydraDevNetwork implements Startable {
 
         return initialFunds;
     }
-
     public String getCardanoLocalSocketPath() {
         return "/devnet/node.socket";
     }

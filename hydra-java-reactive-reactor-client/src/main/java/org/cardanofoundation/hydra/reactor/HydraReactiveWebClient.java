@@ -1,5 +1,6 @@
 package org.cardanofoundation.hydra.reactor;
 
+import lombok.extern.slf4j.Slf4j;
 import org.cardanofoundation.hydra.core.HydraException;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.http.HeadCommitResponse;
@@ -9,14 +10,16 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static java.lang.String.format;
+import static java.net.http.HttpResponse.BodyHandlers;
 import static org.cardanofoundation.hydra.core.utils.MoreJson.readValue;
 import static org.cardanofoundation.hydra.core.utils.MoreJson.serialise;
 
+@Slf4j
 public class HydraReactiveWebClient {
 
     private static final Duration DEF_TIMEOUT = Duration.ofMinutes(1);
@@ -47,6 +50,9 @@ public class HydraReactiveWebClient {
         return URI.create(format("%s/protocol-parameters", baseUrl));
     }
 
+    private URI cardanoTransactionUrl() {
+        return URI.create(format("%s/cardano-transaction", baseUrl));
+    }
 
     public Mono<HydraProtocolParameters> fetchProtocolParameters() {
         HttpRequest request = HttpRequest.newBuilder()
@@ -54,12 +60,22 @@ public class HydraReactiveWebClient {
                 .GET()
                 .build();
 
-        return Mono.fromFuture(() ->
-                        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                                .thenApply(HttpResponse::body)
-                                .thenApply(responseBody -> readValue(responseBody, HydraProtocolParameters.class))
-                ).timeout(timeout)
-                .onErrorMap(this::handleError);
+        CompletableFuture<HydraProtocolParameters> responseC = httpClient.sendAsync(request, BodyHandlers.ofString())
+                .thenApply(r -> {
+                    log.info("Status code: " + r.statusCode());
+
+                    if (r.statusCode() != 200) {
+                        var errorMessage = String.format("Error fetching protocol parameters, status code: %d, response body: %s",
+                                r.statusCode(), r.body());
+                        throw new HydraException(errorMessage);
+                    }
+
+                    return r.body();
+                })
+                .thenApply(responseBody -> readValue(responseBody, HydraProtocolParameters.class));
+
+        return Mono.fromFuture(responseC)
+                .timeout(timeout);
     }
 
     public Mono<HeadCommitResponse> commitRequest(Map<String, UTXO> commitDataMap) {
@@ -71,16 +87,22 @@ public class HydraReactiveWebClient {
                 .POST(HttpRequest.BodyPublishers.ofString(serialisedJson))
                 .build();
 
-        return Mono.fromFuture(() ->
-                        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                                .thenApply(HttpResponse::body)
-                                .thenApply(responseBody -> readValue(responseBody, HeadCommitResponse.class))
-                ).timeout(timeout)
-                .onErrorMap(this::handleError);
-    }
+        return Mono.fromFuture(() -> {
+                    return httpClient.sendAsync(request, BodyHandlers.ofString())
+                            .thenApply(r -> {
+                                log.info("Status code: " + r.statusCode());
 
-    private Throwable handleError(Throwable t) {
-        return new HydraException("An error occurred during the public class HydraReactiveWebClient {\n request", t);
+                                if (r.statusCode() != 200) {
+                                    var errorMessage = String.format("Error committing UTxOs, status code: %d, response body: %s",
+                                            r.statusCode(), r.body());
+                                    throw new HydraException(errorMessage);
+                                }
+
+                                return r.body();
+                            })
+                            .thenApply(responseBody -> readValue(responseBody, HeadCommitResponse.class));
+                }
+                ).timeout(timeout);
     }
 
 }

@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.val;
 import org.cardanofoundation.hydra.core.model.Tag;
-import org.cardanofoundation.hydra.core.model.Transaction;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.ValidationError;
 import org.cardanofoundation.hydra.core.utils.MoreJson;
@@ -24,14 +23,14 @@ public class TxInvalidResponse extends Response implements FailureResponse {
     private final LocalDateTime timestamp;
 
     private final Map<String, UTXO> utxo;
-    private final Transaction transaction;
+    private final JsonNode transaction;
     private final ValidationError validationError;
 
     public TxInvalidResponse(String headId,
                              int seq,
                              LocalDateTime timestamp,
                              Map<String, UTXO> utxo,
-                             Transaction transaction,
+                             JsonNode transaction,
                              ValidationError validationError) {
         super(Tag.TxInvalid, seq, true);
         this.headId = headId;
@@ -43,7 +42,7 @@ public class TxInvalidResponse extends Response implements FailureResponse {
 
     public static TxInvalidResponse create(JsonNode raw) {
         val utxo = MoreJson.convertUTxOMap(raw.get("utxo"));
-        val transaction = MoreJson.convert(raw.get("transaction"), Transaction.class);
+        val transaction = raw.get("transaction");
         val validationError = MoreJson.convert(raw.get("validationError"), ValidationError.class);
         val headId = raw.get("headId").asText();
         val seq = raw.get("seq").asInt();

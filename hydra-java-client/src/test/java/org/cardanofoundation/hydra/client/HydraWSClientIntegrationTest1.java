@@ -11,13 +11,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.cardanofoundation.hydra.cardano.client.lib.HydraNodeProtocolParametersAdapter;
-import org.cardanofoundation.hydra.cardano.client.lib.JacksonClasspathSecretKeySupplierHydra;
+import org.cardanofoundation.hydra.cardano.client.lib.JacksonClasspathSecretKeyCardanoOperatorSupplier;
 import org.cardanofoundation.hydra.core.model.HydraState;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.query.response.GreetingsResponse;
 import org.cardanofoundation.hydra.core.model.query.response.Response;
 import org.cardanofoundation.hydra.core.store.InMemoryUTxOStore;
-import org.cardanofoundation.hydra.core.utils.HexUtils;
 import org.cardanofoundation.hydra.test.HydraDevNetwork;
 import org.junit.jupiter.api.Test;
 
@@ -68,13 +67,14 @@ public class HydraWSClientIntegrationTest1 {
             localClientProvider.start();
             var txSubmissionClient = localClientProvider.getTxSubmissionClient();
 
-            var aliceOperator = new JacksonClasspathSecretKeySupplierHydra(new ObjectMapper(),
+            var aliceOperator = new JacksonClasspathSecretKeyCardanoOperatorSupplier(
                     "devnet/credentials/alice-funds.sk",
                     NETWORK).getOperator();
 
-            var bobOperator = new JacksonClasspathSecretKeySupplierHydra(new ObjectMapper(),
+            var bobOperator = new JacksonClasspathSecretKeyCardanoOperatorSupplier(
                     "devnet/credentials/bob-funds.sk",
-                    NETWORK).getOperator();
+                    NETWORK)
+                    .getOperator();
 
             var aliceHydraContainer = hydraDevNetwork.getAliceHydraContainer();
             var bobHydraContainer = hydraDevNetwork.getBobHydraContainer();

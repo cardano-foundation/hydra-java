@@ -411,6 +411,10 @@ public class HydraWSClient {
 
         @Override
         public void onError(Exception e) {
+            if (e == null) {
+                log.error("Hydra websocket error: null");
+                return;
+            }
             log.error("Hydra websocket error: {}", e.getMessage());
         }
     }

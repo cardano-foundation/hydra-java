@@ -4,6 +4,10 @@ import com.bloxbean.cardano.client.api.ProtocolParamsSupplier;
 import com.bloxbean.cardano.client.api.model.ProtocolParams;
 import org.cardanofoundation.hydra.core.model.http.HydraProtocolParameters;
 
+import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import static org.cardanofoundation.hydra.cardano.client.lib.utils.MoreObjects.toBigDecimal;
 import static org.cardanofoundation.hydra.cardano.client.lib.utils.MoreObjects.toStringNullSafe;
 
@@ -16,9 +20,20 @@ public class HydraNodeProtocolParametersAdapter implements ProtocolParamsSupplie
     }
 
     public ProtocolParams getProtocolParams() {
+        var costModels = hydraProtocolParameters.getCostModels();
+
         return ProtocolParams.builder()
                 .minFeeA(hydraProtocolParameters.getMinFeeA())
                 .minFeeB(hydraProtocolParameters.getMinFeeB())
+
+                .costModels(
+                        Map.of(
+                        "PlutusV1",
+                                newCostModelToCCLCostModel(costModels.getPlutusV1()),
+                        "PlutusV2",
+                                newCostModelToCCLCostModel(costModels.getPlutusV2())
+                        ))
+
                 .maxBlockSize(hydraProtocolParameters.getMaxBlockBodySize())
                 .maxBlockHeaderSize(hydraProtocolParameters.getMaxBlockHeaderSize())
                 .maxTxSize(hydraProtocolParameters.getMaxTxSize())
@@ -26,9 +41,9 @@ public class HydraNodeProtocolParametersAdapter implements ProtocolParamsSupplie
                 .poolDeposit(toStringNullSafe(hydraProtocolParameters.getPoolDeposit()))
                 .eMax(hydraProtocolParameters.getEMax())
                 .nOpt(hydraProtocolParameters.getNOpt())
-                .a0(hydraProtocolParameters.getA0())
-                .rho(hydraProtocolParameters.getRho())
-                .tau(hydraProtocolParameters.getTau())
+                .a0(BigDecimal.valueOf(hydraProtocolParameters.getA0()))
+                .rho(BigDecimal.valueOf(hydraProtocolParameters.getRho()))
+                .tau(BigDecimal.valueOf(hydraProtocolParameters.getTau()))
                 .protocolMajorVer(hydraProtocolParameters.getProtocolVersion().getMajor())
                 .protocolMinorVer(hydraProtocolParameters.getProtocolVersion().getMinor())
                 .minPoolCost(toStringNullSafe(hydraProtocolParameters.getMinPoolCost()))
@@ -43,6 +58,17 @@ public class HydraNodeProtocolParametersAdapter implements ProtocolParamsSupplie
                 .maxCollateralInputs(hydraProtocolParameters.getMaxCollateralInputs())
                 .coinsPerUtxoSize(toStringNullSafe(hydraProtocolParameters.getCoinsPerUTxOByte()))
                 .build();
+    }
+
+    private Map<String, Long> newCostModelToCCLCostModel(long[] newCostModel) {
+        Map<String, Long> costModel = new LinkedHashMap<>();
+
+        int index = 0;
+        for (Long cost : newCostModel) {
+            costModel.put(String.format("%03d", index++), cost);
+        }
+
+        return costModel;
     }
 
 }

@@ -12,7 +12,7 @@ import static com.bloxbean.cardano.client.function.helper.SignerProviders.signer
 /**
  * A static secret key supplier.
  */
-public class StaticSecretKeySupplier implements HydraOperatorSupplier {
+public class StaticSecretKeySupplier implements CardanoOperatorSupplier {
 
     private final SecretKey secretKey;
     private final Network network;
@@ -34,10 +34,10 @@ public class StaticSecretKeySupplier implements HydraOperatorSupplier {
     }
 
     @Override
-    public HydraOperator getOperator() {
+    public CardanoOperator getOperator() {
         var address = MoreAddress.getBech32AddressFromVerificationKey(verificationKey.getCborHex(), network);
 
-        return new HydraOperator(address, signerFrom(secretKey));
+        return new CardanoOperator(address, verificationKey, secretKey, signerFrom(secretKey));
     }
 
 }
