@@ -43,11 +43,11 @@ public class HydraDevNetwork implements Startable {
 
     protected final static ObjectMapper objectMapper = new ObjectMapper();
 
-    private final static String MARKER_DATUM_HASH = "a654fb60d21c1fed48db2c320aa6df9737ec0204c0ba53b9b94a09fb40e757f3";
-
     public final static int CARDANO_REMOTE_PORT = 3001;
 
     public final static int HYDRA_API_REMOTE_PORT = 4001;
+
+    public final static int TX_SUBMIT_API_PORT = 8090;
 
     private final boolean cardanoLogging;
 
@@ -63,6 +63,9 @@ public class HydraDevNetwork implements Startable {
 
     @Getter
     protected GenericContainer<?> bobHydraContainer;
+
+    @Getter
+    private GenericContainer<?> txSubmitContainer;
 
     public HydraDevNetwork(boolean withCardanoLogging,
                            boolean withHydraLogging,
@@ -87,8 +90,8 @@ public class HydraDevNetwork implements Startable {
 
     public static Map<String, Integer> getInitialFunds() {
         var initialFunds = new LinkedHashMap<String, Integer>();
-        initialFunds.put("alice", 100);
-        initialFunds.put("bob", 100);
+        initialFunds.put("alice", 1000);
+        initialFunds.put("bob", 1000);
         initialFunds.put("alice-funds", 100);
         initialFunds.put("bob-funds", 100);
 
@@ -99,7 +102,6 @@ public class HydraDevNetwork implements Startable {
     }
 
     public String getRemoteCardanoLocalSocketPath() {
-        //return "/devnet/node.socket";
         return getClass().getClassLoader().getResource("devnet/node.socket").getFile();
     }
 
@@ -141,8 +143,15 @@ public class HydraDevNetwork implements Startable {
         this.aliceHydraContainer = createAliceHydraNode(cardanoContainer, referenceScriptsTxId, network);
         this.bobHydraContainer = createBobHydraNode(cardanoContainer, referenceScriptsTxId, network);
 
+        this.txSubmitContainer = createTxSubmitAPI(cardanoContainer, network);
+
         this.aliceHydraContainer.dependsOn(cardanoContainer);
         this.bobHydraContainer.dependsOn(cardanoContainer);
+
+        this.txSubmitContainer.dependsOn(cardanoContainer);
+
+        log.info("Starting tx-submit-api...");
+        this.txSubmitContainer.start();
 
         log.info("Starting alice and bob hydra nodes in parallel...");
         Startables.deepStart(aliceHydraContainer, bobHydraContainer).get();
@@ -152,6 +161,11 @@ public class HydraDevNetwork implements Startable {
     @SneakyThrows
     public void stop() {
         log.info("Cleaning up container resources...");
+
+        if (txSubmitContainer != null && txSubmitContainer.isRunning()) {
+            txSubmitContainer.stop();
+            txSubmitContainer = null;
+        }
 
         if (aliceHydraContainer != null && aliceHydraContainer.isRunning()) {
             aliceHydraContainer.stop();
@@ -184,13 +198,16 @@ public class HydraDevNetwork implements Startable {
 
     public static String getHydraApiWebUrl(GenericContainer<?> container) {
         var host = container.getHost();
-        var mappedPort = container.getMappedPort(HYDRA_API_REMOTE_PORT);
+        var mappedPort = container.getMappedPort(TX_SUBMIT_API_PORT);
 
         return String.format("http://%s:%d", host, mappedPort);
     }
 
-    public int getCardanoPort() {
-        return getCardanoContainer().getMappedPort(CARDANO_REMOTE_PORT);
+    public static String getCardanoRemoteNetworkSocketUrl(GenericContainer<?> container) {
+        var host = container.getHost();
+        var mappedPort = container.getMappedPort(3001);
+
+        return String.format("http://%s:%d", host, mappedPort);
     }
 
     // docker run --rm -it -v ./devnet:/devnet ghcr.io/input-output-hk/hydra-node:unstable publish-scripts --testnet-magic 42 --node-socket /devnet/node.socket --cardano-signing-key /devnet/credentials/faucet.sk
@@ -384,8 +401,36 @@ public class HydraDevNetwork implements Startable {
         }
     }
 
-    protected void seedActor(GenericContainer<?> cardanoNodeContainer, String faucetAddress, String actor, int adaAmount, boolean marker) throws IOException, InterruptedException {
-        log.info(String.format("Seeding a UTXO from faucet to %s with %d ADA, faucet address:%s ", actor, adaAmount, faucetAddress));
+    protected GenericContainer<?> createTxSubmitAPI(GenericContainer<?> cardanoContainer, Network network) {
+        String containerName = "tx-submit-api";
+
+        try (var txSubmitContainer = new GenericContainer<>("ghcr.io/blinklabs-io/tx-submit-api:latest")) {
+            txSubmitContainer.withExposedPorts(TX_SUBMIT_API_PORT)
+                    .withAccessToHost(true)
+                    .withNetwork(network)
+                    .withNetworkAliases(containerName)
+                    .withVolumesFrom(cardanoContainer, READ_WRITE)
+                    .waitingFor(Wait.forListeningPort())
+                    .withEnv(Map.of(
+                            "CARDANO_NODE_SOCKET_PATH", getCardanoLocalSocketPath(),
+                            "CARDANO_NODE_NETWORK_MAGIC", "42",
+                            "CARDANO_NETWORK", "testnet"
+                    ))
+                    .withCreateContainerCmdModifier(cmd -> {
+                        cmd.withName(containerName)
+                                .withHostName(containerName)
+                                .withAliases(containerName)
+                                .withIpv4Address("172.16.238.4");
+                    })
+                    //.withCommand("/bin/tx-submit-api")
+                    ;
+
+            return txSubmitContainer;
+        }
+    }
+
+    protected void seedActor(GenericContainer<?> cardanoNodeContainer, String faucetAddress, String actor, int adaAmount) throws IOException, InterruptedException {
+        log.info(String.format("Seeding a UTXO from faucet to: %s with: %d ADA, faucet address: %s", actor, adaAmount, faucetAddress));
         val actorLovelaces = adaAmount * 1_000_000L;
 
         val faucetUTxOExecResult = cardanoNodeContainer.execInContainer("cardano-cli", "query", "utxo", "--testnet-magic", "42", "--address", faucetAddress, "--out-file", "/dev/stdout");
@@ -406,26 +451,15 @@ public class HydraDevNetwork implements Startable {
 
         log.info("Seeding actor:{}...", actor);
 
-        var txBuildExecResult = marker ? cardanoNodeContainer.execInContainer("cardano-cli",
+        var txBuildExecResult = cardanoNodeContainer.execInContainer("cardano-cli",
                 "transaction", "build",
                 "--testnet-magic", "42",
                 "--babbage-era", "--cardano-mode",
                 "--change-address", faucetAddress,
                 "--tx-in", faucetUTxO,
                 "--tx-out", String.format("%s+%d", actorAddr, actorLovelaces),
-                "--tx-out-datum-hash", MARKER_DATUM_HASH,
                 "--out-file", String.format("/tmp/seed-%s.draft", actor)
-        )
-                :
-                cardanoNodeContainer.execInContainer("cardano-cli",
-                        "transaction", "build",
-                        "--testnet-magic", "42",
-                        "--babbage-era", "--cardano-mode",
-                        "--change-address", faucetAddress,
-                        "--tx-in", faucetUTxO,
-                        "--tx-out", String.format("%s+%d", actorAddr, actorLovelaces),
-                        "--out-file", String.format("/tmp/seed-%s.draft", actor)
-                );
+        );
 
         if (txBuildExecResult.getExitCode() != 0) {
             throw new RuntimeException("Unable to build transaction for actor, error:" + txBuildExecResult);
@@ -499,12 +533,8 @@ public class HydraDevNetwork implements Startable {
         for (Map.Entry<String, Integer> entry : initialFunds.entrySet()) {
             String actor = entry.getKey();
             Integer ada = entry.getValue();
-            seedActor(cardanoContainer, faucetAddr, actor, ada, false);
-            seedActor(cardanoContainer, faucetAddr, actor, ada, false);
+            seedActor(cardanoContainer, faucetAddr, actor, ada);
         }
-
-        seedActor(cardanoContainer, faucetAddr, "alice", 100, true);
-        seedActor(cardanoContainer, faucetAddr, "bob", 100, true);
     }
 
 }

@@ -23,7 +23,6 @@
         <jackson.databind.version>2.15.0</jackson.databind.version>
         <jetbrains.annotations.version>24.0.1</jetbrains.annotations.version>
         <cardano.client.lib.version>0.5.0</cardano.client.lib.version>
-        <yaci.version>0.2.5</yaci.version>
         <reactor.netty.version>1.1.9</reactor.netty.version>
         <reactor.test.version>3.5.8</reactor.test.version>
 
@@ -163,13 +162,6 @@
                 <groupId>org.awaitility</groupId>
                 <artifactId>awaitility</artifactId>
                 <version>${awaitability.version}</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>com.bloxbean.cardano</groupId>
-                <artifactId>yaci</artifactId>
-                <version>${yaci.version}</version>
                 <scope>test</scope>
             </dependency>
 
