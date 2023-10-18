@@ -53,7 +53,9 @@ public class SnapshotUTxOSupplier implements UtxoSupplier {
 
     @Override
     public Optional<Utxo> getTxOutput(String txHash, int outputIndex) {
-        return getAll().stream()
+        List<Utxo> allUtxos = getAll();
+
+        return allUtxos.stream()
                 .filter(utxo -> utxo.getTxHash().equals(txHash) && utxo.getOutputIndex() == outputIndex)
                 .findFirst();
     }
