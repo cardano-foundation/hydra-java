@@ -27,16 +27,20 @@ public class GreetingsResponse extends Response {
 
     private final Map<String, UTXO> snapshotUtxo;
 
+    private final String hydraNodeVersion;
+
     public GreetingsResponse(Party party,
                              int seq,
                              LocalDateTime timestamp,
                              HydraState headStatus,
-                             Map<String, UTXO> snapshotUtxo) {
+                             Map<String, UTXO> snapshotUtxo,
+                             String hydraNodeVersion) {
         super(Tag.Greetings, seq);
         this.me = party;
         this.timestamp = timestamp;
         this.headStatus = headStatus;
         this.snapshotUtxo = snapshotUtxo;
+        this.hydraNodeVersion = hydraNodeVersion;
     }
 
     public static GreetingsResponse create(UTxOStore uTxOStore, JsonNode raw) {
@@ -44,15 +48,17 @@ public class GreetingsResponse extends Response {
         val seq = raw.get("seq").asInt();
         val timestamp = MoreJson.convert(raw.get("timestamp"), LocalDateTime.class);
         val headStatus = MoreJson.convert(raw.get("headStatus"), HydraState.class);
+        val hydraNodeVersion = raw.get("hydraNodeVersion").asText();
+
         if (raw.has("snapshotUtxo")) {
             val utxo = MoreJson.convertUTxOMap(raw.get("snapshotUtxo"));
 
             uTxOStore.storeLatestUtxO(utxo);
 
-            return new GreetingsResponse(party, seq, timestamp, headStatus, utxo);
+            return new GreetingsResponse(party, seq, timestamp, headStatus, utxo, hydraNodeVersion);
         }
 
-        return new GreetingsResponse(party, seq, timestamp, headStatus, Map.of());
+        return new GreetingsResponse(party, seq, timestamp, headStatus, Map.of(), hydraNodeVersion);
     }
 
 }
