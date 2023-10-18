@@ -1,4 +1,4 @@
-package org.cardanofoundation.hydra.cardano.client.lib.utils;
+package org.cardanofoundation.hydra.core.utils;
 
 import org.jetbrains.annotations.Nullable;
 

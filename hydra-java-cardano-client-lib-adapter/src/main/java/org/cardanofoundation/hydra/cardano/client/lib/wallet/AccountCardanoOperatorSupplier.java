@@ -1,4 +1,4 @@
-package org.cardanofoundation.hydra.cardano.client.lib;
+package org.cardanofoundation.hydra.cardano.client.lib.wallet;
 
 import com.bloxbean.cardano.client.account.Account;
 import com.bloxbean.cardano.client.crypto.SecretKey;

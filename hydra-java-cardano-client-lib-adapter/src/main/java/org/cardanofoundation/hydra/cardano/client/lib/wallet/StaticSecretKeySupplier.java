@@ -1,10 +1,12 @@
-package org.cardanofoundation.hydra.cardano.client.lib;
+package org.cardanofoundation.hydra.cardano.client.lib.wallet;
 
 import com.bloxbean.cardano.client.common.model.Network;
 import com.bloxbean.cardano.client.crypto.SecretKey;
 import com.bloxbean.cardano.client.crypto.VerificationKey;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
 import org.cardanofoundation.hydra.cardano.client.lib.utils.MoreAddress;
+import org.cardanofoundation.hydra.cardano.client.lib.wallet.CardanoOperator;
+import org.cardanofoundation.hydra.cardano.client.lib.wallet.CardanoOperatorSupplier;
 
 import static com.bloxbean.cardano.client.crypto.KeyGenUtil.getPublicKeyFromPrivateKey;
 import static com.bloxbean.cardano.client.function.helper.SignerProviders.signerFrom;

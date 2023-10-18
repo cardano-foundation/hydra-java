@@ -1,4 +1,4 @@
-package org.cardanofoundation.hydra.cardano.client.lib;
+package org.cardanofoundation.hydra.cardano.client.lib.utxo;
 
 import com.bloxbean.cardano.client.api.UtxoSupplier;
 import com.bloxbean.cardano.client.api.common.OrderEnum;

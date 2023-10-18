@@ -1,4 +1,4 @@
-package org.cardanofoundation.hydra.cardano.client.lib;
+package org.cardanofoundation.hydra.cardano.client.lib.submit;
 
 import com.bloxbean.cardano.client.api.model.Result;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
@@ -16,12 +16,13 @@ import static org.cardanofoundation.hydra.core.utils.HexUtils.decodeHexString;
 
 @RequiredArgsConstructor
 @Slf4j
-public class CardanoTxSubmissionClient {
+public class HttpCardanoTxSubmissionService implements TransactionSubmissionService {
 
     private final HttpClient httpClient;
 
     private final String cardanoSubmitApiUrl;
 
+    @Override
     public Result<String> submitTransaction(Transaction transaction) {
         try {
             return submitTransaction(transaction.serializeToHex());
@@ -30,10 +31,12 @@ public class CardanoTxSubmissionClient {
         }
     }
 
+    @Override
     public Result<String> submitTransaction(String cborHex) {
         return submitTransaction(decodeHexString(cborHex));
     }
 
+    @Override
     public Result<String> submitTransaction(byte[] txData) {
         var txTransactionSubmitPostRequest = HttpRequest.newBuilder()
                 .uri(URI.create(cardanoSubmitApiUrl))

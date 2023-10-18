@@ -6,7 +6,7 @@ import com.bloxbean.cardano.client.exception.CborSerializationException;
 import com.bloxbean.cardano.client.function.Output;
 import com.bloxbean.cardano.client.function.TxBuilderContext;
 import lombok.val;
-import org.cardanofoundation.hydra.cardano.client.lib.CardanoOperator;
+import org.cardanofoundation.hydra.cardano.client.lib.wallet.CardanoOperator;
 
 import static com.bloxbean.cardano.client.common.ADAConversionUtil.adaToLovelace;
 import static com.bloxbean.cardano.client.common.CardanoConstants.LOVELACE;

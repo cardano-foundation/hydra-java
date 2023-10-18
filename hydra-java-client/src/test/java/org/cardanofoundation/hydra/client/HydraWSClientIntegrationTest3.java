@@ -5,10 +5,10 @@ import com.bloxbean.cardano.client.common.model.Networks;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
-import org.cardanofoundation.hydra.cardano.client.lib.CardanoTxSubmissionClient;
-import org.cardanofoundation.hydra.cardano.client.lib.HydraNodeProtocolParametersAdapter;
-import org.cardanofoundation.hydra.cardano.client.lib.JacksonClasspathSecretKeyCardanoOperatorSupplier;
-import org.cardanofoundation.hydra.cardano.client.lib.SnapshotUTxOSupplier;
+import org.cardanofoundation.hydra.cardano.client.lib.submit.HttpCardanoTxSubmissionService;
+import org.cardanofoundation.hydra.cardano.client.lib.params.HydraNodeProtocolParametersAdapter;
+import org.cardanofoundation.hydra.cardano.client.lib.wallet.JacksonClasspathSecretKeyCardanoOperatorSupplier;
+import org.cardanofoundation.hydra.cardano.client.lib.utxo.SnapshotUTxOSupplier;
 import org.cardanofoundation.hydra.client.helpers.HydraTransactionGenerator;
 import org.cardanofoundation.hydra.core.model.HydraState;
 import org.cardanofoundation.hydra.core.model.UTXO;
@@ -61,7 +61,7 @@ public class HydraWSClientIntegrationTest3 {
             var httpClient = HttpClient.newBuilder().build();
             var txSubmitWebUrl = getTxSubmitWebUrl(hydraDevNetwork.getTxSubmitContainer());
             log.info("Tx submit web url: {}", txSubmitWebUrl);
-            var txSubmissionClient = new CardanoTxSubmissionClient(httpClient, txSubmitWebUrl);
+            var txSubmissionClient = new HttpCardanoTxSubmissionService(httpClient, txSubmitWebUrl);
 
             var aliceHydraWebClient = new HydraWebClient(HttpClient.newHttpClient(), HydraDevNetwork.getHydraApiWebUrl(hydraDevNetwork.getAliceHydraContainer()));
             var bobHydraWebClient = new HydraWebClient(HttpClient.newHttpClient(), HydraDevNetwork.getHydraApiWebUrl(hydraDevNetwork.getBobHydraContainer()));

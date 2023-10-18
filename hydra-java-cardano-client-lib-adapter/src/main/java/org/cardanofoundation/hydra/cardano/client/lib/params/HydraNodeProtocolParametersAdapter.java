@@ -1,4 +1,4 @@
-package org.cardanofoundation.hydra.cardano.client.lib;
+package org.cardanofoundation.hydra.cardano.client.lib.params;
 
 import com.bloxbean.cardano.client.api.ProtocolParamsSupplier;
 import com.bloxbean.cardano.client.api.model.ProtocolParams;
@@ -8,8 +8,8 @@ import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static org.cardanofoundation.hydra.cardano.client.lib.utils.MoreObjects.toBigDecimal;
-import static org.cardanofoundation.hydra.cardano.client.lib.utils.MoreObjects.toStringNullSafe;
+import static org.cardanofoundation.hydra.core.utils.MoreObjects.toBigDecimal;
+import static org.cardanofoundation.hydra.core.utils.MoreObjects.toStringNullSafe;
 
 public class HydraNodeProtocolParametersAdapter implements ProtocolParamsSupplier {
 
