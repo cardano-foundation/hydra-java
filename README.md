@@ -48,12 +48,12 @@ mvn clean verify -P with-integration-tests
     </dependency>
     <dependency>
         <groupId>org.cardanofoundation</groupId>
-        <artifactId>cardano-client-lib-adapter</artifactId>
+        <artifactId>hydra-java-rcardano-client-lib-adapter</artifactId>
         <version>0.0.9-SNAPSHOT</version>
     </dependency>
     <dependency>
         <groupId>org.cardanofoundation</groupId>
-        <artifactId>reactive-reactor-client</artifactId>
+        <artifactId>hydra-java-reactive-reactor-client</artifactId>
         <version>0.0.9-SNAPSHOT</version>
     </dependency>
 </dependencies>
