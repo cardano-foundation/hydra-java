@@ -35,7 +35,8 @@ mvn clean verify -P with-integration-tests
 |---------------|-----------------|--------------------------------|-------------|
 | 0.10.x        | 0.0.6           | 0.4.x                          | JDK 11      |
 | 0.10.x        | 0.0.7           | 0.5.x                          | JDK 11      |
-| 0.13.x        | 0.0.9           | 0.5.x                          | JDK 17      |
+| 0.10.x        | 0.0.8           | 0.4.x                          | JDK 11      |
+| 0.13.x        | 0.0.9-SNAPSHOT  | 0.5.x                          | JDK 17      |
 
 ## Dependency
 ```xml
@@ -43,17 +44,17 @@ mvn clean verify -P with-integration-tests
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java-client</artifactId>
-        <version>0.0.9</version>
+        <version>0.0.9-SNAPSHOT</version>
     </dependency>
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>cardano-client-lib-adapter</artifactId>
-        <version>0.0.9</version>
+        <version>0.0.9-SNAPSHOT</version>
     </dependency>
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>reactive-reactor-client</artifactId>
-        <version>0.0.9</version>
+        <version>0.0.9-SNAPSHOT</version>
     </dependency>
 </dependencies>
 ```
@@ -79,39 +80,4 @@ The current version may not contain exactly what you need. If there is a missing
 
 ## Example usage (client)
 
-```
-var wsUrl = "ws://localhost:4001"; // locally running hydra instance
-var hydraClientOptions = HydraClientOptions.builder(wsUrl)
-                    .uTxOStore(new InMemoryUTxOStore())
-                    .build()
-
-var hydraWSClient = new HydraWSClient(hydraClientOptions);
-var hydraLogger = SLF4JHydraLogger.of(log, "my_hydra_node");
-hydraWSClient.addHydraQueryEventListener(hydraLogger);
-hydraWSClient.addHydraStateEventListener(hydraLogger);
-hydraWSClient.connectBlocking(60, TimeUnit.SECONDS);
-
-System.out.println(hydraWSClient.getState()); // HydraState.Idle
-
-hydraWSClient.init(); // fires init request for this client
-// at least one client needs to initialise the network
-
-System.out.println(hydraWSClient.getState()); // HydraState.HeadIsInitializing
-
-// when all head participants commit their UTxOs then Hydra head is open, you can also commit empty UTxO but at least one head operator needs to commit // something
-
-// commitment from L1 will mean that funds will be frozen on L1 by Hydra smart contract
-var utxo = new UTXO();
-utxo.setAddress("addr_test1vru2drx33ev6dt8gfq245r5k0tmy7ngqe79va69de9dxkrg09c7d3");
-utxo.setValue(Map.of("lovelace", BigInteger.valueOf(1000 * 1_000_000))); // 1000 ADA
-
-hydraWSClient.commit("ddf1db5cc1d110528828e22984d237b275af510dc82d0e7a8fc941469277e31e#0", utxo);
-
-// time passes and then you will be able to see that HydraState becomes open
-
-System.out.println(hydraWSClient.getState()); // HydraState.Open
-
-// now one can send transactions and wait for confirmation...
-
-// after finishing operator can close the head... after contenstation period remaining funds will be unlocked on L1
-```
+For examples please refer to integration tests in hydra-java-client projects.
