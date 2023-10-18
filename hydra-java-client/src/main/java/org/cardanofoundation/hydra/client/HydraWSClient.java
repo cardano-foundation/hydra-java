@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.cardanofoundation.hydra.core.model.HydraState;
 import org.cardanofoundation.hydra.core.model.Tag;
-import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.query.request.*;
 import org.cardanofoundation.hydra.core.model.query.response.FailureResponse;
 import org.cardanofoundation.hydra.core.model.query.response.GreetingsResponse;
@@ -16,7 +15,6 @@ import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -247,48 +245,6 @@ public class HydraWSClient {
      */
     public void abort() {
         val request = new AbortHeadRequest();
-        hydraWebSocketHandler.send(request.getRequestBody());
-    }
-
-    /**
-     * Join an initialized Hydra head and commit a single UTXO.
-     *
-     * This is how parties get to inject funds inside a head. Note, however,
-     * that the utxo is an object and can be empty should a participant wants to join a head without locking any funds.
-     *
-     * Note that once all Hydra head participants commit the hydra head will open.
-     */
-    @Deprecated
-    // use HydraWebClient instead
-    public void commit(String utxoId, UTXO utxo) {
-        val request = new CommitRequest();
-        request.addUTXO(utxoId, utxo);
-        hydraWebSocketHandler.send(request.getRequestBody());
-    }
-
-    /**
-     * Join an initialized Hydra head and commit multiple UTXOs.
-     *
-     * Note that once all Hydra head participants commit the hydra head will open.
-     * @param utxoMap
-     */
-    @Deprecated
-    // use HydraWebClient instead
-    public void commit(Map<String, UTXO> utxoMap) {
-        val request = new CommitRequest();
-        utxoMap.forEach(request::addUTXO);
-        hydraWebSocketHandler.send(request.getRequestBody());
-    }
-
-    /**
-     ** Join an initialized Hydra head and commit no UTXOs.
-     *
-     * Note that once all Hydra head participants commit the hydra head will open.
-     */
-    @Deprecated
-    // use HydraWebClient instead
-    public void commit() {
-        val request = new CommitRequest();
         hydraWebSocketHandler.send(request.getRequestBody());
     }
 
