@@ -3,6 +3,7 @@ package org.cardanofoundation.hydra.test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -36,35 +37,55 @@ public class HydraDevNetwork implements Startable {
 
     private final static String ISO_8601BASIC_DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
-    private static final String INPUT_OUTPUT_CARDANO_NODE = "inputoutput/cardano-node:1.35.7";
+    private static final String INPUT_OUTPUT_CARDANO_NODE = "inputoutput/cardano-node:8.1.2";
 
-    private static final String INPUT_OUTPUT_HYDRA_NODE = "ghcr.io/input-output-hk/hydra-node:0.10.0";
+    private static final String INPUT_OUTPUT_HYDRA_NODE = "ghcr.io/input-output-hk/hydra-node:0.13.0";
 
     protected final static ObjectMapper objectMapper = new ObjectMapper();
-
-    private final static String MARKER_DATUM_HASH = "a654fb60d21c1fed48db2c320aa6df9737ec0204c0ba53b9b94a09fb40e757f3";
 
     public final static int CARDANO_REMOTE_PORT = 3001;
 
     public final static int HYDRA_API_REMOTE_PORT = 4001;
+
+    public final static int TX_SUBMIT_API_PORT = 8090;
+    public static final String GHCR_IO_BLINKLABS_IO_TX_SUBMIT_API_LATEST = "ghcr.io/blinklabs-io/tx-submit-api:latest";
 
     private final boolean cardanoLogging;
 
     private final boolean hydraLogging;
 
     private final Map<String, Integer> initialFunds;
+    private final Network.NetworkImpl network;
 
+    @Getter
     protected GenericContainer<?> cardanoContainer;
 
+    @Getter
     protected GenericContainer<?> aliceHydraContainer;
 
+    @Getter
     protected GenericContainer<?> bobHydraContainer;
 
-    public HydraDevNetwork(boolean withCardanoLogging, boolean withHydraLogging, Map<String, Integer> initialFunds) {
+    @Getter
+    private GenericContainer<?> txSubmitContainer;
+
+    public HydraDevNetwork(boolean withCardanoLogging,
+                           boolean withHydraLogging,
+                           Map<String, Integer> initialFunds) {
+
+        this.network = Network.builder()
+                .driver("bridge")
+                .build();
+
         this.cardanoLogging = withCardanoLogging;
         this.hydraLogging = withHydraLogging;
         this.initialFunds = initialFunds;
-        this.cardanoContainer = createCardanoNodeContainer();
+        this.cardanoContainer = createCardanoNodeContainer(network);
+    }
+
+    public HydraDevNetwork(boolean withCardanoLogging,
+                           boolean withHydraLogging) {
+        this(withCardanoLogging, withHydraLogging, getInitialFunds());
     }
 
     public HydraDevNetwork() {
@@ -74,9 +95,18 @@ public class HydraDevNetwork implements Startable {
     public static Map<String, Integer> getInitialFunds() {
         var initialFunds = new LinkedHashMap<String, Integer>();
         initialFunds.put("alice", 1000);
-        initialFunds.put("bob", 500);
+        initialFunds.put("bob", 1000);
+        initialFunds.put("alice-funds", 100);
+        initialFunds.put("bob-funds", 100);
 
         return initialFunds;
+    }
+    public String getCardanoLocalSocketPath() {
+        return "/devnet/node.socket";
+    }
+
+    public String getRemoteCardanoLocalSocketPath() {
+        return getClass().getClassLoader().getResource("devnet/node.socket").getFile();
     }
 
     @Override
@@ -94,34 +124,36 @@ public class HydraDevNetwork implements Startable {
         log.info("Publishing Hydra contract scripts to devnet cardano network.");
         var referenceScriptsTxId = publishReferenceScripts(cardanoContainer);
 
-        log.info("ReferenceScriptsTxId:{}", referenceScriptsTxId);
-
-        var network = Network.builder().driver("bridge").build();
+        log.info("ReferenceScriptsTxId: {}", referenceScriptsTxId);
 
         log.info("Creating network:" + network);
 
         this.aliceHydraContainer = createAliceHydraNode(cardanoContainer, referenceScriptsTxId, network);
         this.bobHydraContainer = createBobHydraNode(cardanoContainer, referenceScriptsTxId, network);
 
+        this.txSubmitContainer = createTxSubmitAPI(cardanoContainer, network);
+
         this.aliceHydraContainer.dependsOn(cardanoContainer);
         this.bobHydraContainer.dependsOn(cardanoContainer);
 
+        this.txSubmitContainer.dependsOn(cardanoContainer);
+
+        log.info("Starting tx-submit-api...");
+        this.txSubmitContainer.start();
+
         log.info("Starting alice and bob hydra nodes in parallel...");
         Startables.deepStart(aliceHydraContainer, bobHydraContainer).get();
-    }
-
-    public GenericContainer<?> getAliceHydraContainer() {
-        return aliceHydraContainer;
-    }
-
-    public GenericContainer<?> getBobHydraContainer() {
-        return bobHydraContainer;
     }
 
     @Override
     @SneakyThrows
     public void stop() {
         log.info("Cleaning up container resources...");
+
+        if (txSubmitContainer != null && txSubmitContainer.isRunning()) {
+            txSubmitContainer.stop();
+            txSubmitContainer = null;
+        }
 
         if (aliceHydraContainer != null && aliceHydraContainer.isRunning()) {
             aliceHydraContainer.stop();
@@ -145,14 +177,35 @@ public class HydraDevNetwork implements Startable {
         java.nio.file.Files.deleteIfExists(Paths.get(devnetPath, "genesis-shelley.json"));
     }
 
-    public static String getHydraApiUrl(GenericContainer<?> container) {
+    public static String getHydraApiWebSocketUrl(GenericContainer<?> container) {
         var host = container.getHost();
         var mappedPort = container.getMappedPort(HYDRA_API_REMOTE_PORT);
 
         return String.format("ws://%s:%d", host, mappedPort);
     }
 
-    // docker run --rm -it -v ./devnet:/devnet ghcr.io/input-output-hk/hydra-node:unstable publish-scripts --testnet-magic 42 --node-socket /devnet/node.socket --cardano-signing-key /devnet/credentials/faucet.sk
+    public static String getHydraApiWebUrl(GenericContainer<?> container) {
+        var host = container.getHost();
+        var mappedPort = container.getMappedPort(HYDRA_API_REMOTE_PORT);
+
+        return String.format("http://%s:%d", host, mappedPort);
+    }
+
+    public static String getTxSubmitWebUrl(GenericContainer<?> container) {
+        var host = container.getHost();
+        var mappedPort = container.getMappedPort(TX_SUBMIT_API_PORT);
+
+        return String.format("http://%s:%d/api/submit/tx", host, mappedPort);
+    }
+
+    public static String getCardanoRemoteNetworkSocketUrl(GenericContainer<?> container) {
+        var host = container.getHost();
+        var mappedPort = container.getMappedPort(3001);
+
+        return String.format("http://%s:%d", host, mappedPort);
+    }
+
+    // docker run --rm -it -v ./devnet:/devnet ghcr.io/input-output-hk/hydra-node:0.13 publish-scripts --testnet-magic 42 --node-socket /devnet/node.socket --cardano-signing-key /devnet/credentials/faucet.sk
     private String publishReferenceScripts(GenericContainer<?> cardanoContainer) {
         StringBuilder commandOutputBuilder = new StringBuilder();
         try (var hydraCliContainer = new GenericContainer<>(INPUT_OUTPUT_HYDRA_NODE)) {
@@ -168,7 +221,7 @@ public class HydraDevNetwork implements Startable {
                     .withCommand(
                             "publish-scripts",
                             "--testnet-magic", "42",
-                            "--node-socket", "/devnet/node.socket",
+                            "--node-socket", getCardanoLocalSocketPath(),
                             "--cardano-signing-key", "/devnet/credentials/faucet.sk"
                     );
 
@@ -211,17 +264,20 @@ public class HydraDevNetwork implements Startable {
         java.nio.file.Files.setPosixFilePermissions(vrfPath, PosixFilePermissions.fromString("rw-------"));
     }
 
-    protected GenericContainer<?> createCardanoNodeContainer() {
+    protected GenericContainer<?> createCardanoNodeContainer(Network network) {
         //val mem = 32 * 1024L * 1024L * 1024L;
         try (var cardanoNode = new GenericContainer<>(INPUT_OUTPUT_CARDANO_NODE)) {
-                cardanoNode.withClasspathResourceMapping("/devnet",
+                cardanoNode
+                        .withExposedPorts(3001)
+                        .withAccessToHost(true)
+                        .withClasspathResourceMapping("/devnet",
                     "/devnet",
                     READ_WRITE
-            )
+            )       .withNetwork(network)
                     .withEnv(Map.of(
                             "CARDANO_BLOCK_PRODUCER", "true",
-                            "CARDANO_NODE_SOCKET_PATH", "/devnet/node.socket",
-                            "CARDANO_SOCKET_PATH", "/devnet/node.socket"
+                            "CARDANO_NODE_SOCKET_PATH", getCardanoLocalSocketPath(),
+                            "CARDANO_SOCKET_PATH", getCardanoLocalSocketPath()
                     ))
                     .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("cardano-node").withSeparateOutputStreams())
                     .withExposedPorts(CARDANO_REMOTE_PORT)
@@ -236,17 +292,18 @@ public class HydraDevNetwork implements Startable {
                             , "--shelley-operational-certificate", "/devnet/opcert.cert"
                             , "--byron-delegation-certificate", "/devnet/byron-delegation.cert"
                             , "--byron-signing-key", "/devnet/byron-delegate.key"
-                    );
+                    )
+                    .addExposedPort(CARDANO_REMOTE_PORT);
 
                 return cardanoNode;
         }
     }
 
     protected GenericContainer<?> createAliceHydraNode(GenericContainer<?> cardanoContainer, String scriptsTxId, Network network) {
-        String containerName = "alice-hydra-node";
+        String containerName = "hydra-node-alice";
 
         try (var aliceHydraNode = new GenericContainer<>(INPUT_OUTPUT_HYDRA_NODE)) {
-                aliceHydraNode.withExposedPorts(4001)
+                aliceHydraNode.withExposedPorts(4001, 5001)
                     .withAccessToHost(true)
                     .withNetwork(network)
                     .withNetworkAliases(containerName)
@@ -255,28 +312,32 @@ public class HydraDevNetwork implements Startable {
                             READ_ONLY
                     )
                     .withVolumesFrom(cardanoContainer, READ_WRITE)
-                    .waitingFor(Wait.forLogMessage(".+bob-hydra-node.+PeerConnected.+", 1).withStartupTimeout(Duration.ofMinutes(10)))
+                    .waitingFor(Wait.forLogMessage(".+Required subscriptions started.+", 1).withStartupTimeout(Duration.ofMinutes(1)))
                     .withEnv(Map.of("HYDRA_SCRIPTS_TX_ID", scriptsTxId))
 
-                    .withCreateContainerCmdModifier(cmd -> cmd.withName(containerName).withHostName(containerName).withAliases(containerName))
+                    .withCreateContainerCmdModifier(cmd -> {
+                        cmd.withName(containerName)
+                                .withHostName(containerName)
+                                .withAliases(containerName)
+                                ;
+                    })
                     .withCommand(
-                            "--node-id", containerName
+                            "--node-id", "alice"
                             , "--api-host", "0.0.0.0"
-                            , "--monitoring-port", "6001"
-                            , "--port", "5001"
-                            , "--api-port", "4001"
-                            , "--peer", "bob-hydra-node" + ":5001"
                             , "--host", "0.0.0.0"
+                            , "--monitoring-port", "6001"
+                            , "--peer", "hydra-node-bob:5001"
                             , "--hydra-scripts-tx-id", scriptsTxId
                             , "--hydra-signing-key", "/keys/alice.sk"
                             , "--hydra-verification-key", "/keys/bob.vk"
                             , "--cardano-signing-key", "/devnet/credentials/alice.sk"
                             , "--cardano-verification-key", "/devnet/credentials/bob.vk"
-                            , "--ledger-genesis", "/devnet/genesis-shelley.json"
                             , "--ledger-protocol-parameters", "/devnet/protocol-parameters.json"
                             , "--persistence-dir", "/tmp/alice-hydra-node_db" + System.currentTimeMillis()
                             , "--testnet-magic", "42"
-                            , "--node-socket", "/devnet/node.socket");
+                            , "--node-socket", "/devnet/node.socket"
+                            //, "--quiet"
+                    );
 
             if (hydraLogging) {
                 aliceHydraNode.withLogConsumer(new Slf4jLogConsumer(log).withSeparateOutputStreams());
@@ -288,10 +349,10 @@ public class HydraDevNetwork implements Startable {
     }
 
     protected GenericContainer<?> createBobHydraNode(GenericContainer<?> cardanoContainer, String scriptsTxId, Network network) {
-        String containerName = "bob-hydra-node";
+        String containerName = "hydra-node-bob";
 
         try (var bobHydraNode = new GenericContainer<>(INPUT_OUTPUT_HYDRA_NODE)) {
-                bobHydraNode.withExposedPorts(4001)
+                bobHydraNode.withExposedPorts(4001, 5001)
                     .withAccessToHost(true)
                     .withNetwork(network)
                     .withNetworkAliases(containerName)
@@ -300,27 +361,32 @@ public class HydraDevNetwork implements Startable {
                             "/keys",
                             READ_ONLY
                     )
-                        .waitingFor(Wait.forLogMessage(".+bob-hydra-node.+PeerConnected.+", 1).withStartupTimeout(Duration.ofMinutes(10)))
+                    .waitingFor(Wait.forLogMessage(".+Required subscriptions started.+", 1).withStartupTimeout(Duration.ofMinutes(1)))
                     .withEnv(Map.of("HYDRA_SCRIPTS_TX_ID", scriptsTxId))
-                    .withCreateContainerCmdModifier(cmd -> cmd.withName(containerName).withHostName(containerName).withAliases(containerName))
+                    .withCreateContainerCmdModifier(cmd -> {
+                        cmd.withName(containerName)
+                        .withHostName(containerName)
+                        .withAliases(containerName)
+                        ;
+                    })
                     .withCommand(
-                            "--node-id", containerName
+                            "--node-id", "bob"
                             , "--api-host", "0.0.0.0"
+                            , "--host", "0.0.0.0"
                             , "--monitoring-port", "6001"
                             , "--api-port", "4001"
-                            , "--port", "5001"
-                            , "--peer", "alice-hydra-node" + ":5001"
-                            , "--host", "0.0.0.0"
+                            , "--peer", "hydra-node-alice:5001"
                             , "--hydra-scripts-tx-id", scriptsTxId
                             , "--hydra-signing-key", "/keys/bob.sk"
                             , "--hydra-verification-key", "/keys/alice.vk"
                             , "--cardano-signing-key", "/devnet/credentials/bob.sk"
                             , "--cardano-verification-key", "/devnet/credentials/alice.vk"
-                            , "--ledger-genesis", "/devnet/genesis-shelley.json"
                             , "--ledger-protocol-parameters", "/devnet/protocol-parameters.json"
                             , "--persistence-dir", "/tmp/bob-hydra-node_db" + System.currentTimeMillis()
                             , "--testnet-magic", "42"
-                            , "--node-socket", "/devnet/node.socket");
+                            , "--node-socket", "/devnet/node.socket"
+                            //, "--quiet"
+                    );
 
                 if (hydraLogging) {
                     bobHydraNode.withLogConsumer(new Slf4jLogConsumer(log).withSeparateOutputStreams());
@@ -330,8 +396,36 @@ public class HydraDevNetwork implements Startable {
         }
     }
 
-    protected void seedActor(GenericContainer<?> cardanoNodeContainer, String faucetAddress, String actor, int adaAmount, boolean marker) throws IOException, InterruptedException {
-        log.info(String.format("Seeding a UTXO from faucet to %s with %d ADA, faucet address:%s ", actor, adaAmount, faucetAddress));
+    protected GenericContainer<?> createTxSubmitAPI(GenericContainer<?> cardanoContainer, Network network) {
+        String containerName = "tx-submit-api";
+
+        try (var txSubmitContainer = new GenericContainer<>(GHCR_IO_BLINKLABS_IO_TX_SUBMIT_API_LATEST)) {
+            txSubmitContainer.withExposedPorts(TX_SUBMIT_API_PORT)
+                    .withAccessToHost(true)
+                    .withNetwork(network)
+                    .withNetworkAliases(containerName)
+                    .withVolumesFrom(cardanoContainer, READ_WRITE)
+                    .waitingFor(Wait.forLogMessage(".+starting API listener on :.+", 1))
+                    .withStartupTimeout(Duration.ofMinutes(1))
+                    .withEnv(Map.of(
+                            "CARDANO_NODE_SOCKET_PATH", getCardanoLocalSocketPath(),
+                            "CARDANO_NODE_NETWORK_MAGIC", "42",
+                            "CARDANO_NETWORK", "testnet"
+                    ))
+                    .withCreateContainerCmdModifier(cmd -> {
+                        cmd.withName(containerName)
+                                .withHostName(containerName)
+                                .withAliases(containerName)
+                         ;
+                    })
+                    ;
+
+            return txSubmitContainer;
+        }
+    }
+
+    protected void seedActor(GenericContainer<?> cardanoNodeContainer, String faucetAddress, String actor, int adaAmount) throws IOException, InterruptedException {
+        log.info(String.format("Seeding a UTXO from faucet to: %s with: %d ADA, faucet address: %s", actor, adaAmount, faucetAddress));
         val actorLovelaces = adaAmount * 1_000_000L;
 
         val faucetUTxOExecResult = cardanoNodeContainer.execInContainer("cardano-cli", "query", "utxo", "--testnet-magic", "42", "--address", faucetAddress, "--out-file", "/dev/stdout");
@@ -352,26 +446,15 @@ public class HydraDevNetwork implements Startable {
 
         log.info("Seeding actor:{}...", actor);
 
-        var txBuildExecResult = marker ? cardanoNodeContainer.execInContainer("cardano-cli",
+        var txBuildExecResult = cardanoNodeContainer.execInContainer("cardano-cli",
                 "transaction", "build",
                 "--testnet-magic", "42",
                 "--babbage-era", "--cardano-mode",
                 "--change-address", faucetAddress,
                 "--tx-in", faucetUTxO,
                 "--tx-out", String.format("%s+%d", actorAddr, actorLovelaces),
-                "--tx-out-datum-hash", MARKER_DATUM_HASH,
                 "--out-file", String.format("/tmp/seed-%s.draft", actor)
-        )
-                :
-                cardanoNodeContainer.execInContainer("cardano-cli",
-                        "transaction", "build",
-                        "--testnet-magic", "42",
-                        "--babbage-era", "--cardano-mode",
-                        "--change-address", faucetAddress,
-                        "--tx-in", faucetUTxO,
-                        "--tx-out", String.format("%s+%d", actorAddr, actorLovelaces),
-                        "--out-file", String.format("/tmp/seed-%s.draft", actor)
-                );
+        );
 
         if (txBuildExecResult.getExitCode() != 0) {
             throw new RuntimeException("Unable to build transaction for actor, error:" + txBuildExecResult);
@@ -445,12 +528,8 @@ public class HydraDevNetwork implements Startable {
         for (Map.Entry<String, Integer> entry : initialFunds.entrySet()) {
             String actor = entry.getKey();
             Integer ada = entry.getValue();
-            seedActor(cardanoContainer, faucetAddr, actor, ada, false);
-            seedActor(cardanoContainer, faucetAddr, actor, ada, false);
+            seedActor(cardanoContainer, faucetAddr, actor, ada);
         }
-
-        seedActor(cardanoContainer, faucetAddr, "alice", 100, true);
-        seedActor(cardanoContainer, faucetAddr, "bob", 100, true);
     }
 
 }

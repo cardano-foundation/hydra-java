@@ -2,6 +2,7 @@ package org.cardanofoundation.hydra.core.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -16,8 +17,9 @@ import java.util.Map;
 public class Snapshot {
 
     private int snapshotNumber;
-    private Map<String, UTXO> utxo;
 
-    private List<Transaction> confirmedTransactions;
+    @Nullable private Map<String, UTXO> utxo;
+
+    private List<String> confirmedTransactions;
 
 }

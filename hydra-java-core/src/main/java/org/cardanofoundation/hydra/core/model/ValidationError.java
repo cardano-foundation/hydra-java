@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ValidationError {
 
-    String reason;
+    private String reason;
 
     @Override
     public String toString() {

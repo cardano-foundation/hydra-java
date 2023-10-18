@@ -17,10 +17,4 @@ public class Transaction {
     /** whether this transaction is valid or not */
     Boolean isValid;
 
-    TxBody txBody;
-
-    // TODO
-    // String witnesses
-    // String auxiliaryData
-
 }

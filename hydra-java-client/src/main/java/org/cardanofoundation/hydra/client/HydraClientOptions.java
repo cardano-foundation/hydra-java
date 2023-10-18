@@ -4,7 +4,8 @@ import lombok.Builder;
 import lombok.Getter;
 import org.cardanofoundation.hydra.core.store.EmptyUTxOStore;
 import org.cardanofoundation.hydra.core.store.UTxOStore;
-import org.jetbrains.annotations.Nullable;
+
+import static org.cardanofoundation.hydra.client.HydraClientOptions.TransactionFormat.CBOR;
 
 @Getter
 @Builder(builderMethodName = "hiddenBuilder")
@@ -18,14 +19,17 @@ public class HydraClientOptions {
     @Builder.Default
     private UTxOStore utxoStore = new EmptyUTxOStore();
 
+    @Builder.Default
+    private boolean snapshotUtxo = false;
+
     /**
      * Hydra internal consensus level errors are not propagated to the developer
      */
     @Builder.Default
     private boolean doNotPropagateLowLevelFailures = true;
 
-    @Nullable
-    private TransactionFormat transactionFormat;
+    @Builder.Default
+    private TransactionFormat transactionFormat = CBOR;
 
     /**
      *

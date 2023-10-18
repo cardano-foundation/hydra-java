@@ -14,4 +14,8 @@ public class HydraException extends RuntimeException {
         super(message, e);
     }
 
+    public HydraException(String message, Throwable t) {
+        super(message, t);
+    }
+
 }

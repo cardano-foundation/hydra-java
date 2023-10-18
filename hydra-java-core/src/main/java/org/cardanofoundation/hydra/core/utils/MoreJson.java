@@ -11,6 +11,8 @@ import org.cardanofoundation.hydra.core.HydraException;
 import org.cardanofoundation.hydra.core.model.Party;
 import org.cardanofoundation.hydra.core.model.UTXO;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +39,22 @@ public class MoreJson {
     public static JsonNode read(String json) throws HydraException {
         try {
             return MAPPER.readTree(json);
+        } catch (JsonProcessingException e) {
+            throw new HydraException("Unable to deserialise json", e);
+        }
+    }
+
+    public static JsonNode read(InputStream is) throws HydraException {
+        try {
+            return MAPPER.readTree(is);
+        } catch (IOException e) {
+            throw new HydraException("Unable to deserialise json", e);
+        }
+    }
+
+    public static <T> T readValue(String json, Class<T> clazz) throws HydraException {
+        try {
+            return MAPPER.readValue(json, clazz);
         } catch (JsonProcessingException e) {
             throw new HydraException("Unable to deserialise json", e);
         }

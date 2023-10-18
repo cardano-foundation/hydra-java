@@ -1,4 +1,4 @@
-package org.cardanofoundation.hydra.cardano.client.lib;
+package org.cardanofoundation.hydra.cardano.client.lib.utxo;
 
 import com.bloxbean.cardano.client.api.UtxoSupplier;
 import com.bloxbean.cardano.client.api.common.OrderEnum;
@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static com.bloxbean.cardano.client.plutus.spec.serializers.PlutusDataJsonConverter.toPlutusData;
 import static org.cardanofoundation.hydra.core.utils.StringUtils.split;
@@ -49,14 +48,14 @@ public class SnapshotUTxOSupplier implements UtxoSupplier {
                 .map(utxoEntry -> new Tuple<>(split(utxoEntry.getKey(), "#"), utxoEntry.getValue()))
                 .map(tuple -> createUtxo(address, tuple))
                 .limit(items)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public Optional<Utxo> getTxOutput(String txHash, int outputIndex) {
-        var all = getAll();
+        List<Utxo> allUtxos = getAll();
 
-        return all.stream()
+        return allUtxos.stream()
                 .filter(utxo -> utxo.getTxHash().equals(txHash) && utxo.getOutputIndex() == outputIndex)
                 .findFirst();
     }
@@ -73,8 +72,9 @@ public class SnapshotUTxOSupplier implements UtxoSupplier {
 
                     return createUtxo(address, tuple);
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
+
 
     private static @Nullable String convertInlineDatum(@Nullable JsonNode inlineDatum) {
         if (inlineDatum == null || inlineDatum.isNull()) {
@@ -103,7 +103,7 @@ public class SnapshotUTxOSupplier implements UtxoSupplier {
                 .amount(utxo.getValue().entrySet()
                         .stream()
                         .map(entry -> new Amount(entry.getKey(), entry.getValue()))
-                        .collect(Collectors.toList()))
+                        .toList())
                 .dataHash(utxo.getDatumhash())
                 .inlineDatum(convertInlineDatum(utxo.getInlineDatum()))
                 .referenceScriptHash(utxo.getReferenceScript())

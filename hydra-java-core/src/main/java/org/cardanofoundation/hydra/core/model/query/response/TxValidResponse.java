@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.val;
 import org.cardanofoundation.hydra.core.model.Tag;
-import org.cardanofoundation.hydra.core.model.Transaction;
 import org.cardanofoundation.hydra.core.utils.MoreJson;
 
 import java.time.LocalDateTime;
@@ -15,13 +14,16 @@ import java.time.LocalDateTime;
 @ToString(callSuper = true)
 public class TxValidResponse extends Response {
 
-    private final Transaction transaction;
+    private final JsonNode transaction;
 
     private final String headId;
 
     private final LocalDateTime timestamp;
 
-    public TxValidResponse(Transaction transaction, String headId, int seq, LocalDateTime timestamp) {
+    public TxValidResponse(JsonNode transaction,
+                           String headId,
+                           int seq,
+                           LocalDateTime timestamp) {
         super(Tag.TxValid, seq);
         this.transaction = transaction;
         this.headId = headId;
@@ -29,7 +31,7 @@ public class TxValidResponse extends Response {
     }
 
     public static TxValidResponse create(JsonNode raw) {
-        val transaction = MoreJson.convert(raw.get("transaction"), Transaction.class);
+        val transaction = raw.get("transaction");
         val headId = raw.get("headId").asText();
         val seq = raw.get("seq").asInt();
         val timestamp = MoreJson.convert(raw.get("timestamp"), LocalDateTime.class);

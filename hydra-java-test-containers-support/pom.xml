@@ -5,13 +5,13 @@
     <parent>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java</artifactId>
-        <version>0.0.8</version>
+        <version>0.0.9-SNAPSHOT</version>
     </parent>
 
     <artifactId>hydra-java-test-containers-support</artifactId>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 

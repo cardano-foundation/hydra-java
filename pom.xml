@@ -4,7 +4,7 @@
 
     <groupId>org.cardanofoundation</groupId>
     <artifactId>hydra-java</artifactId>
-    <version>0.0.8</version>
+    <version>0.0.9-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Hydra Java Client is a java library that simplifies communication with a Hydra node over websockets.</description>
@@ -12,7 +12,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>11</java.version>
+
+        <java.version>17</java.version>
 
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
         <slf4j.version>2.0.7</slf4j.version>
@@ -22,12 +23,14 @@
         <jackson.databind.version>2.15.0</jackson.databind.version>
         <jetbrains.annotations.version>24.0.1</jetbrains.annotations.version>
         <cardano.client.lib.version>0.5.0</cardano.client.lib.version>
-        <reactor.core.lib.version>3.5.10</reactor.core.lib.version>
+        <reactor.netty.version>1.1.9</reactor.netty.version>
+        <reactor.test.version>3.5.8</reactor.test.version>
 
-        <test.containers.version>1.18.1</test.containers.version>
+        <test.containers.version>1.19.1</test.containers.version>
         <assertj.core.version>3.24.2</assertj.core.version>
         <awaitability.version>4.2.0</awaitability.version>
         <guava.version>32.0.0-jre</guava.version>
+        <wiremock.version>3.0.1</wiremock.version>
 
         <junit-jupiter-engine.version>5.9.3</junit-jupiter-engine.version>
         <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
@@ -109,9 +112,9 @@
             </dependency>
 
             <dependency>
-                <groupId>io.projectreactor</groupId>
-                <artifactId>reactor-core</artifactId>
-                <version>${reactor.core.lib.version}</version>
+                <groupId>io.projectreactor.netty</groupId>
+                <artifactId>reactor-netty</artifactId>
+                <version>${reactor.netty.version}</version>
             </dependency>
 
             <dependency>
@@ -122,21 +125,31 @@
             </dependency>
 
             <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers</artifactId>
+                <version>${test.containers.version}</version>
+            </dependency>
+
+            <!-- test scope -->
+            <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
                 <version>${assertj.core.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-engine</artifactId>
                 <version>${junit-jupiter-engine.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-simple</artifactId>
                 <version>${slf4j.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
@@ -149,13 +162,23 @@
                 <groupId>org.awaitility</groupId>
                 <artifactId>awaitility</artifactId>
                 <version>${awaitability.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>testcontainers</artifactId>
-                <version>${test.containers.version}</version>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-test</artifactId>
+                <version>${reactor.test.version}</version>
+                <scope>test</scope>
             </dependency>
+
+            <dependency>
+                <groupId>com.github.tomakehurst</groupId>
+                <artifactId>wiremock</artifactId>
+                <version>${wiremock.version}</version>
+                <scope>test</scope>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -337,8 +360,8 @@
 
     <licenses>
       <license>
-        <name>MPL 2.0</name>
-        <url>https://www.mozilla.org/en-US/MPL/2.0/</url>
+        <name>MIT</name>
+        <url>https://opensource.org/license/mit/</url>
        <distribution>repo</distribution>
      </license>
     </licenses>
