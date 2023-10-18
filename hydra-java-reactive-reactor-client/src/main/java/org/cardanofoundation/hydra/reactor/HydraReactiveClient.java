@@ -367,11 +367,6 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
 
         return localTxMono
                 .flatMap(localTxResult -> {
-                    if (!localTxResult.isValid()) {
-                        log.warn("Local tx is invalid, txId: {}", txId);
-                        return Mono.just(localTxResult);
-                    }
-
                     return Mono.<TxConfirmedResult>create(monoSink -> {
                         storeMonoSinkReference(commandKey, monoSink);
                     })
