@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.0.9](https://github.com/cardano-foundation/hydra-java/compare/v0.0.8...v0.0.9) (2023-10-19)
+
+
+### Features
+
+* attempting to force a release ([bbfc160](https://github.com/cardano-foundation/hydra-java/commit/bbfc160f54f4f6bf18bd4a26c2ab3c05030d9c45))
+* Hydra 0.13.x support ([#45](https://github.com/cardano-foundation/hydra-java/issues/45)) ([6f4108a](https://github.com/cardano-foundation/hydra-java/commit/6f4108a3277f3c660cf366fb99353296ddef37ca))
+
+
+### Bug Fixes
+
+* removed CommitRequest in websockets as this has been removed after initial deprecation. ([1e2c56d](https://github.com/cardano-foundation/hydra-java/commit/1e2c56ded72af43a32c1fc065afc04c77b64d019))
+* silly code removal ([187665e](https://github.com/cardano-foundation/hydra-java/commit/187665eba3f618cdd5ae8e8435ac7bf3f84b8c54))
+
 ## [0.0.8](https://github.com/cardano-foundation/hydra-java/compare/v0.0.7...v0.0.8) (2023-10-16)
 
 
