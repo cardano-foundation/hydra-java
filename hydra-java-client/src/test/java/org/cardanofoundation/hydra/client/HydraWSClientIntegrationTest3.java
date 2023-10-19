@@ -292,8 +292,6 @@ public class HydraWSClientIntegrationTest3 {
 
                         var snapshot = snapshotConfirmed.getSnapshot().getUtxo();
 
-                        System.out.println(snapshot);
-
                         return
                             snapshot.get("2af765b516d9d99777333029e9abfb4d2bfe462df9c6a8366a4bd11a8ec8d4bd#0").getAddress().equals("addr_test1vp0yug22dtwaxdcjdvaxr74dthlpunc57cm639578gz7algset3fh") &&
                             snapshot.get("2af765b516d9d99777333029e9abfb4d2bfe462df9c6a8366a4bd11a8ec8d4bd#0").getValue().get("lovelace").longValue() == 100_000_000L &&
