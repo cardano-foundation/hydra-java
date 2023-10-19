@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java</artifactId>
-        <version>0.0.9-SNAPSHOT</version>
+        <version>0.0.9</version>
     </parent>
 
     <artifactId>hydra-java-client</artifactId>
@@ -19,7 +19,7 @@
         <dependency>
             <groupId>org.cardanofoundation</groupId>
             <artifactId>hydra-java-core</artifactId>
-            <version>0.0.9-SNAPSHOT</version>
+            <version>0.0.9</version>
         </dependency>
 
         <dependency>
@@ -43,14 +43,14 @@
         <dependency>
             <groupId>org.cardanofoundation</groupId>
             <artifactId>hydra-java-cardano-client-lib-adapter</artifactId>
-            <version>0.0.9-SNAPSHOT</version>
+            <version>0.0.9</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.cardanofoundation</groupId>
             <artifactId>hydra-java-test-containers-support</artifactId>
-            <version>0.0.9-SNAPSHOT</version>
+            <version>0.0.9</version>
             <scope>test</scope>
         </dependency>
 
