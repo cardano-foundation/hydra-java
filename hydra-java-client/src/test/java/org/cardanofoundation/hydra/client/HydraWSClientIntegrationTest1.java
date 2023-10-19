@@ -187,17 +187,11 @@ public class HydraWSClientIntegrationTest1 {
             var aliceHeadCommitted = aliceHydraWebClient.commitRequest(aliceUtxoMap);
             var bobHeadCommitted = bobHydraWebClient.commitRequest(bobUtxoMap);
 
-            log.info("Alice head committed: {}", aliceHeadCommitted);
-            log.info("Bob head committed: {}", bobHeadCommitted);
-
             var aliceCommitTxToSign = aliceHeadCommitted.getCborHex();
             var bobCommitTxToSign = bobHeadCommitted.getCborHex();
 
             var aliceCommitTxSigned = sign(decodeHexString(aliceCommitTxToSign), aliceOperator.getSecretKey());
             var bobCommitTxSigned = sign(decodeHexString(bobCommitTxToSign), bobOperator.getSecretKey());
-
-            log.info("Alice aliceCommitTxSigned: {}", aliceCommitTxSigned);
-            log.info("Bob bobCommitTxSigned: {}", bobCommitTxSigned);
 
             var aliceCommitResult = txSubmissionClient.submitTransaction(aliceCommitTxSigned);
             var bobCommitResult = txSubmissionClient.submitTransaction(bobCommitTxSigned);

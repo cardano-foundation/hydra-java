@@ -126,8 +126,6 @@ public class HydraDevNetwork implements Startable {
 
         log.info("ReferenceScriptsTxId: {}", referenceScriptsTxId);
 
-        log.info("Creating network:" + network);
-
         this.aliceHydraContainer = createAliceHydraNode(cardanoContainer, referenceScriptsTxId, network);
         this.bobHydraContainer = createBobHydraNode(cardanoContainer, referenceScriptsTxId, network);
 
