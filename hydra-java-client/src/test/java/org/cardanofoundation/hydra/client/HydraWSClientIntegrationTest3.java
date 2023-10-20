@@ -5,11 +5,11 @@ import com.bloxbean.cardano.client.common.model.Networks;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
-import org.cardanofoundation.hydra.cardano.client.lib.submit.HttpCardanoTxSubmissionService;
 import org.cardanofoundation.hydra.cardano.client.lib.params.HydraNodeProtocolParametersAdapter;
-import org.cardanofoundation.hydra.cardano.client.lib.wallet.JacksonClasspathSecretKeyCardanoOperatorSupplier;
+import org.cardanofoundation.hydra.cardano.client.lib.submit.HttpCardanoTxSubmissionService;
+import org.cardanofoundation.hydra.cardano.client.lib.transaction.SimpleTransactionCreator;
 import org.cardanofoundation.hydra.cardano.client.lib.utxo.SnapshotUTxOSupplier;
-import org.cardanofoundation.hydra.client.helpers.HydraTransactionGenerator;
+import org.cardanofoundation.hydra.cardano.client.lib.wallet.JacksonClasspathSecretKeyCardanoOperatorSupplier;
 import org.cardanofoundation.hydra.core.model.HydraState;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.query.response.*;
@@ -34,6 +34,7 @@ import static org.cardanofoundation.hydra.core.model.HydraState.Open;
 import static org.cardanofoundation.hydra.core.utils.HexUtils.decodeHexString;
 import static org.cardanofoundation.hydra.core.utils.HexUtils.encodeHexString;
 import static org.cardanofoundation.hydra.test.HydraDevNetwork.getTxSubmitWebUrl;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @Slf4j
 public class HydraWSClientIntegrationTest3 {
@@ -188,27 +189,21 @@ public class HydraWSClientIntegrationTest3 {
             var aliceHeadCommitted = aliceHydraWebClient.commitRequest(aliceUtxoMap);
             var bobHeadCommitted = bobHydraWebClient.commitRequest(bobUtxoMap);
 
-            log.info("Alice head committed: {}", aliceHeadCommitted);
-            log.info("Bob head committed: {}", bobHeadCommitted);
-
             var aliceCommitTxToSign = aliceHeadCommitted.getCborHex();
             var bobCommitTxToSign = bobHeadCommitted.getCborHex();
 
             var aliceCommitTxSigned = sign(decodeHexString(aliceCommitTxToSign), aliceOperator.getSecretKey());
             var bobCommitTxSigned = sign(decodeHexString(bobCommitTxToSign), bobOperator.getSecretKey());
 
-            log.info("Alice aliceCommitTxSigned: {}", aliceCommitTxSigned);
-            log.info("Bob bobCommitTxSigned: {}", bobCommitTxSigned);
-
             var aliceCommitResult = txSubmissionClient.submitTransaction(aliceCommitTxSigned);
             var bobCommitResult = txSubmissionClient.submitTransaction(bobCommitTxSigned);
 
             if (!aliceCommitResult.isSuccessful()) {
-                log.warn("Alice funds commitment failed, reason: {}", aliceCommitResult.getResponse());
+                fail("Alice funds commitment failed, reason: " + aliceCommitResult.getResponse());
             }
 
             if (!bobCommitResult.isSuccessful()) {
-                log.warn("Bob funds commitment failed, reason: {}", bobCommitResult.getResponse());
+                fail("Bob funds commitment failed, reason: " + bobCommitResult.getResponse());
             }
 
             Assertions.assertTrue(aliceCommitResult.isSuccessful());
@@ -259,7 +254,7 @@ public class HydraWSClientIntegrationTest3 {
                                 && localBobUtxo.getValue().get("lovelace").longValue() == 100_000_000L;
                     });
 
-            var transactionSender = new HydraTransactionGenerator(snapshotUTxOSupplier, protocolParamsSupplier);
+            var transactionSender = new SimpleTransactionCreator(snapshotUTxOSupplier, protocolParamsSupplier);
 
             log.info("Let's check if alice sends bob 10 ADA...");
             var trxBytes = transactionSender.simpleTransfer(aliceOperator, bobOperator, 10);

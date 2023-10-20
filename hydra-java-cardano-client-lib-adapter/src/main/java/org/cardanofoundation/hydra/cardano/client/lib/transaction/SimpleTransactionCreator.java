@@ -1,4 +1,4 @@
-package org.cardanofoundation.hydra.client.helpers;
+package org.cardanofoundation.hydra.cardano.client.lib.transaction;
 
 import com.bloxbean.cardano.client.api.ProtocolParamsSupplier;
 import com.bloxbean.cardano.client.api.UtxoSupplier;
@@ -13,14 +13,14 @@ import static com.bloxbean.cardano.client.common.CardanoConstants.LOVELACE;
 import static com.bloxbean.cardano.client.function.helper.BalanceTxBuilders.balanceTx;
 import static com.bloxbean.cardano.client.function.helper.InputBuilders.createFromSender;
 
-public class HydraTransactionGenerator {
+public class SimpleTransactionCreator {
 
     private final UtxoSupplier utxoSupplier;
 
     private final ProtocolParamsSupplier protocolParamsSupplier;
 
-    public HydraTransactionGenerator(UtxoSupplier utxoSupplier,
-                                     ProtocolParamsSupplier protocolParamsSupplier) {
+    public SimpleTransactionCreator(UtxoSupplier utxoSupplier,
+                                    ProtocolParamsSupplier protocolParamsSupplier) {
         this.utxoSupplier = utxoSupplier;
         this.protocolParamsSupplier = protocolParamsSupplier;
     }
