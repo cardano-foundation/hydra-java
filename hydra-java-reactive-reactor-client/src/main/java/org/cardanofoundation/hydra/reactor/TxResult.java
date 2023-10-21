@@ -31,7 +31,9 @@ public class TxResult {
      * @param isValid Indicates whether the transaction is valid or not.
      * @param reason An optional reason explaining why the transaction is invalid.
      */
-    public TxResult(String txId, boolean isValid, @Nullable String reason) {
+    public TxResult(String txId,
+                    boolean isValid,
+                    @Nullable String reason) {
         this.txId = txId;
         this.isValid = isValid;
         this.reason = reason;
@@ -47,5 +49,5 @@ public class TxResult {
         this.txId = txId;
         this.isValid = isValid;
     }
-}
 
+}
