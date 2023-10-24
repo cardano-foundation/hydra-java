@@ -3,16 +3,18 @@ package org.cardanofoundation.hydra.reactor;
 import com.bloxbean.cardano.client.common.model.Network;
 import com.bloxbean.cardano.client.common.model.Networks;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.cardanofoundation.hydra.cardano.client.lib.submit.HttpCardanoTxSubmissionService;
-import org.cardanofoundation.hydra.cardano.client.lib.wallet.JacksonClasspathSecretKeyCardanoOperatorSupplier;
+import org.cardanofoundation.hydra.cardano.client.lib.wallet.JsonClasspathWalletSupplierFactory;
 import org.cardanofoundation.hydra.core.model.query.response.HeadIsAbortedResponse;
 import org.cardanofoundation.hydra.core.store.InMemoryUTxOStore;
 import org.cardanofoundation.hydra.test.HydraDevNetwork;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.net.http.HttpClient;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -28,6 +30,8 @@ public class HydraReactiveClientIntegrationTest2 {
 
     private final static Network NETWORK = Networks.testnet();
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     /**
      * Here we will test the following things:
      * - connecting to the head
@@ -36,7 +40,7 @@ public class HydraReactiveClientIntegrationTest2 {
      * - head reaches aborted final
      */
     @Test
-    public void test() throws InterruptedException, CborSerializationException {
+    public void test() throws InterruptedException, CborSerializationException, IOException {
         var stopWatch = Stopwatch.createStarted();
 
         try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
@@ -49,14 +53,18 @@ public class HydraReactiveClientIntegrationTest2 {
             var nodeSocketPath = hydraDevNetwork.getRemoteCardanoLocalSocketPath();
             log.info("Node socket path: {}", nodeSocketPath);
 
-            var aliceOperator = new JacksonClasspathSecretKeyCardanoOperatorSupplier(
+            var aliceWallet = new JsonClasspathWalletSupplierFactory(
                     "devnet/credentials/alice-funds.sk",
-                    NETWORK).getOperator();
+                    "devnet/credentials/alice-funds.vk",
+                    objectMapper).loadWallet()
+                    .getWallet();
 
-            var bobOperator = new JacksonClasspathSecretKeyCardanoOperatorSupplier(
+            var bobWallet = new JsonClasspathWalletSupplierFactory(
                     "devnet/credentials/bob-funds.sk",
-                    NETWORK)
-                    .getOperator();
+                    "devnet/credentials/bob-funds.vk",
+                    objectMapper).loadWallet()
+                    .getWallet();
+
 
             var aliceHydraContainer = hydraDevNetwork.getAliceHydraContainer();
             var bobHydraContainer = hydraDevNetwork.getBobHydraContainer();

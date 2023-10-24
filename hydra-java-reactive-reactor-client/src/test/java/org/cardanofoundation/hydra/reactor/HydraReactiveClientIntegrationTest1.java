@@ -3,10 +3,11 @@ package org.cardanofoundation.hydra.reactor;
 import com.bloxbean.cardano.client.common.model.Network;
 import com.bloxbean.cardano.client.common.model.Networks;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.cardanofoundation.hydra.cardano.client.lib.submit.HttpCardanoTxSubmissionService;
-import org.cardanofoundation.hydra.cardano.client.lib.wallet.JacksonClasspathSecretKeyCardanoOperatorSupplier;
+import org.cardanofoundation.hydra.cardano.client.lib.wallet.JsonClasspathWalletSupplierFactory;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.query.response.HeadIsClosedResponse;
 import org.cardanofoundation.hydra.core.store.InMemoryUTxOStore;
@@ -14,6 +15,7 @@ import org.cardanofoundation.hydra.test.HydraDevNetwork;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -32,6 +34,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 @Slf4j
 public class HydraReactiveClientIntegrationTest1 {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     private final static Network NETWORK = Networks.testnet();
 
     /**
@@ -48,7 +52,7 @@ public class HydraReactiveClientIntegrationTest1 {
      * - Head reaches final state
      */
     @Test
-    public void test() throws InterruptedException, CborSerializationException {
+    public void test() throws InterruptedException, CborSerializationException, IOException {
         var stopWatch = Stopwatch.createStarted();
 
         try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
@@ -61,14 +65,17 @@ public class HydraReactiveClientIntegrationTest1 {
             var nodeSocketPath = hydraDevNetwork.getRemoteCardanoLocalSocketPath();
             log.info("Node socket path: {}", nodeSocketPath);
 
-            var aliceOperator = new JacksonClasspathSecretKeyCardanoOperatorSupplier(
+            var aliceWallet = new JsonClasspathWalletSupplierFactory(
                     "devnet/credentials/alice-funds.sk",
-                    NETWORK).getOperator();
+                    "devnet/credentials/alice-funds.vk",
+                    objectMapper).loadWallet()
+                    .getWallet();
 
-            var bobOperator = new JacksonClasspathSecretKeyCardanoOperatorSupplier(
+            var bobWallet = new JsonClasspathWalletSupplierFactory(
                     "devnet/credentials/bob-funds.sk",
-                    NETWORK)
-                    .getOperator();
+                    "devnet/credentials/bob-funds.vk",
+                    objectMapper).loadWallet()
+                    .getWallet();
 
             var aliceHydraContainer = hydraDevNetwork.getAliceHydraContainer();
             var bobHydraContainer = hydraDevNetwork.getBobHydraContainer();
@@ -138,8 +145,8 @@ public class HydraReactiveClientIntegrationTest1 {
             var aliceCommitTxToSign = aliceHeadCommitted.getCborHex();
             var bobCommitTxToSign = bobHeadCommitted.getCborHex();
 
-            var aliceCommitTxSigned = sign(decodeHexString(aliceCommitTxToSign), aliceOperator.getSecretKey());
-            var bobCommitTxSigned = sign(decodeHexString(bobCommitTxToSign), bobOperator.getSecretKey());
+            var aliceCommitTxSigned = sign(decodeHexString(aliceCommitTxToSign), aliceWallet.getSecretKey());
+            var bobCommitTxSigned = sign(decodeHexString(bobCommitTxToSign), bobWallet.getSecretKey());
 
             var aliceCommitResult = txSubmissionClient.submitTransaction(aliceCommitTxSigned);
             var bobCommitResult = txSubmissionClient.submitTransaction(bobCommitTxSigned);

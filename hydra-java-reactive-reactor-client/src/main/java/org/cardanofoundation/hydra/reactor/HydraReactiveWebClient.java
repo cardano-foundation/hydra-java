@@ -62,8 +62,6 @@ public class HydraReactiveWebClient {
 
         CompletableFuture<HydraProtocolParameters> responseC = httpClient.sendAsync(request, BodyHandlers.ofString())
                 .thenApply(r -> {
-                    log.info("Status code: " + r.statusCode());
-
                     if (r.statusCode() != 200) {
                         var errorMessage = String.format("Error fetching protocol parameters, status code: %d, response body: %s",
                                 r.statusCode(), r.body());
@@ -90,8 +88,6 @@ public class HydraReactiveWebClient {
         return Mono.fromFuture(() -> {
                     return httpClient.sendAsync(request, BodyHandlers.ofString())
                             .thenApply(r -> {
-                                log.info("Status code: " + r.statusCode());
-
                                 if (r.statusCode() != 200) {
                                     var errorMessage = String.format("Error committing UTxOs, status code: %d, response body: %s",
                                             r.statusCode(), r.body());

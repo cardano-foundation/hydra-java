@@ -11,6 +11,10 @@ import java.util.Map;
 import static org.cardanofoundation.hydra.core.utils.MoreObjects.toBigDecimal;
 import static org.cardanofoundation.hydra.core.utils.MoreObjects.toStringNullSafe;
 
+/**
+ * This class is used to convert the HydraProtocolParameters to ProtocolParams, following
+ * format found in Hydra-Node 1.35.x
+ */
 public class HydraNodeProtocolParametersAdapter implements ProtocolParamsSupplier {
 
     private final HydraProtocolParameters hydraProtocolParameters;

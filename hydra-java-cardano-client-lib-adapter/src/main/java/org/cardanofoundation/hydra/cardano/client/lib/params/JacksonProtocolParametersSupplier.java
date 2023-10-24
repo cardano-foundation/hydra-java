@@ -13,6 +13,11 @@ import java.util.Map;
 
 @Getter
 @Setter
+/**
+ * This class is used to convert the HydraProtocolParameters to ProtocolParams, following legacy
+ * protocol-parameters format found in node 1.35.x
+ */
+@Deprecated
 public class JacksonProtocolParametersSupplier implements ProtocolParamsSupplier {
 
     private int minFeeA = 44;

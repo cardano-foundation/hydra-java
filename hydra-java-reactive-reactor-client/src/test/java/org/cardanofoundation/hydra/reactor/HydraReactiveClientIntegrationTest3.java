@@ -4,13 +4,14 @@ import com.bloxbean.cardano.client.common.model.Network;
 import com.bloxbean.cardano.client.common.model.Networks;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
 import com.bloxbean.cardano.client.transaction.util.TransactionUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.cardanofoundation.hydra.cardano.client.lib.params.HydraNodeProtocolParametersAdapter;
 import org.cardanofoundation.hydra.cardano.client.lib.submit.HttpCardanoTxSubmissionService;
 import org.cardanofoundation.hydra.cardano.client.lib.transaction.SimpleTransactionCreator;
 import org.cardanofoundation.hydra.cardano.client.lib.utxo.SnapshotUTxOSupplier;
-import org.cardanofoundation.hydra.cardano.client.lib.wallet.JacksonClasspathSecretKeyCardanoOperatorSupplier;
+import org.cardanofoundation.hydra.cardano.client.lib.wallet.JsonClasspathWalletSupplierFactory;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.query.response.GetUTxOResponse;
 import org.cardanofoundation.hydra.core.model.query.response.HeadIsClosedResponse;
@@ -19,6 +20,7 @@ import org.cardanofoundation.hydra.test.HydraDevNetwork;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -38,6 +40,8 @@ public class HydraReactiveClientIntegrationTest3 {
 
     private final static Network NETWORK = Networks.testnet();
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     /**
      * Scenario tests:
      * - asserts head opening
@@ -49,7 +53,7 @@ public class HydraReactiveClientIntegrationTest3 {
      * - we close the head and finalise by a fan-out to L1
      */
     @Test
-    public void test() throws InterruptedException, CborSerializationException {
+    public void test() throws InterruptedException, CborSerializationException, IOException {
         var stopWatch = Stopwatch.createStarted();
 
         try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
@@ -62,14 +66,17 @@ public class HydraReactiveClientIntegrationTest3 {
             var nodeSocketPath = hydraDevNetwork.getRemoteCardanoLocalSocketPath();
             log.info("Node socket path: {}", nodeSocketPath);
 
-            var aliceOperator = new JacksonClasspathSecretKeyCardanoOperatorSupplier(
+            var aliceWallet = new JsonClasspathWalletSupplierFactory(
                     "devnet/credentials/alice-funds.sk",
-                    NETWORK).getOperator();
+                    "devnet/credentials/alice-funds.vk",
+                    objectMapper).loadWallet()
+                    .getWallet();
 
-            var bobOperator = new JacksonClasspathSecretKeyCardanoOperatorSupplier(
+            var bobWallet = new JsonClasspathWalletSupplierFactory(
                     "devnet/credentials/bob-funds.sk",
-                    NETWORK)
-                    .getOperator();
+                    "devnet/credentials/bob-funds.vk",
+                    objectMapper).loadWallet()
+                    .getWallet();
 
             var aliceInMemoryStore = new InMemoryUTxOStore();
             var bobInMemoryStore = new InMemoryUTxOStore();
@@ -147,8 +154,8 @@ public class HydraReactiveClientIntegrationTest3 {
             var aliceCommitTxToSign = aliceHeadCommitted.getCborHex();
             var bobCommitTxToSign = bobHeadCommitted.getCborHex();
 
-            var aliceCommitTxSigned = sign(decodeHexString(aliceCommitTxToSign), aliceOperator.getSecretKey());
-            var bobCommitTxSigned = sign(decodeHexString(bobCommitTxToSign), bobOperator.getSecretKey());
+            var aliceCommitTxSigned = sign(decodeHexString(aliceCommitTxToSign), aliceWallet.getSecretKey());
+            var bobCommitTxSigned = sign(decodeHexString(bobCommitTxToSign), bobWallet.getSecretKey());
 
             var aliceCommitResult = txSubmissionClient.submitTransaction(aliceCommitTxSigned);
             var bobCommitResult = txSubmissionClient.submitTransaction(bobCommitTxSigned);
@@ -172,10 +179,14 @@ public class HydraReactiveClientIntegrationTest3 {
             Assertions.assertEquals(Open, aliceHydraReactiveClient.getHydraState());
             Assertions.assertEquals(Open, bobHydraReactiveClient.getHydraState());
 
-            var transactionSender = new SimpleTransactionCreator(aliceSnapshotUTxOSupplier, protocolParamsSupplier);
+            var transactionSender = new SimpleTransactionCreator(
+                    aliceSnapshotUTxOSupplier,
+                    protocolParamsSupplier,
+                    NETWORK
+            );
 
             log.info("Let's check if alice sends bob 1 ADA...");
-            byte[] trxBytes = transactionSender.simpleTransfer(aliceOperator, bobOperator, 1);
+            byte[] trxBytes = transactionSender.simpleTransfer(aliceWallet, bobWallet, 1);
 
             TxResult txResult = aliceHydraReactiveClient.submitTxFullConfirmation(TransactionUtil.getTxHash(trxBytes), trxBytes)
                     .block();
