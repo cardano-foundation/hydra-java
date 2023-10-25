@@ -310,7 +310,7 @@ public class HydraDevNetwork implements Startable {
                             READ_ONLY
                     )
                     .withVolumesFrom(cardanoContainer, READ_WRITE)
-                    .waitingFor(Wait.forLogMessage(".+Required subscriptions started.+", 1).withStartupTimeout(Duration.ofMinutes(1)))
+                    .waitingFor(Wait.forLogMessage(".+Required subscriptions started.+", 1).withStartupTimeout(Duration.ofMinutes(5)))
                     .withEnv(Map.of("HYDRA_SCRIPTS_TX_ID", scriptsTxId))
 
                     .withCreateContainerCmdModifier(cmd -> {
@@ -359,7 +359,7 @@ public class HydraDevNetwork implements Startable {
                             "/keys",
                             READ_ONLY
                     )
-                    .waitingFor(Wait.forLogMessage(".+Required subscriptions started.+", 1).withStartupTimeout(Duration.ofMinutes(1)))
+                    .waitingFor(Wait.forLogMessage(".+Required subscriptions started.+", 1).withStartupTimeout(Duration.ofMinutes(5)))
                     .withEnv(Map.of("HYDRA_SCRIPTS_TX_ID", scriptsTxId))
                     .withCreateContainerCmdModifier(cmd -> {
                         cmd.withName(containerName)
@@ -404,7 +404,7 @@ public class HydraDevNetwork implements Startable {
                     .withNetworkAliases(containerName)
                     .withVolumesFrom(cardanoContainer, READ_WRITE)
                     .waitingFor(Wait.forLogMessage(".+starting API listener on :.+", 1))
-                    .withStartupTimeout(Duration.ofMinutes(1))
+                    .withStartupTimeout(Duration.ofMinutes(5))
                     .withEnv(Map.of(
                             "CARDANO_NODE_SOCKET_PATH", getCardanoLocalSocketPath(),
                             "CARDANO_NODE_NETWORK_MAGIC", "42",

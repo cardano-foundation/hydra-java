@@ -20,7 +20,7 @@ import static org.cardanofoundation.hydra.core.utils.MoreJson.serialise;
 
 public class HydraWebClient {
 
-    private static final Duration DEF_TIMEOUT = Duration.ofMinutes(1);
+    private static final Duration DEF_TIMEOUT = Duration.ofMinutes(5);
 
     private final HttpClient httpClient;
     private final String baseUrl;

@@ -152,7 +152,7 @@ public class HydraWSClientIntegrationTest1 {
             bobHydraWSClient.connectBlocking(1, MINUTES);
 
             log.info("Check if greetings message was set to alice and contains hydra state and contains empty utxo snapshot...");
-            await().atMost(Duration.ofMinutes(1))
+            await().atMost(Duration.ofMinutes(5))
                     .until(() -> {
                         return aliceGreetingsFuture.isDone()
                                 && aliceGreetingsFuture.get().getHeadStatus() == Idle
@@ -160,7 +160,7 @@ public class HydraWSClientIntegrationTest1 {
                     });
 
             log.info("Check if greetings message was set to bob and contains hydra state and contains empty utxo snapshot...");
-            await().atMost(Duration.ofMinutes(1))
+            await().atMost(Duration.ofMinutes(5))
                     .until(() -> {
                         return bobGreetingsFuture.isDone()
                                 && bobGreetingsFuture.get().getHeadStatus() == Idle

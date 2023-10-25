@@ -34,7 +34,7 @@ public class HydraReactiveClient extends HydraQueryEventListener.Stub {
     /**
      * Default timeout duration for requests.
      */
-    private static final Duration DEF_TIMEOUT_DURATION = Duration.ofMinutes(1);
+    private static final Duration DEF_TIMEOUT_DURATION = Duration.ofMinutes(5);
 
     /**
      * WebSocket client for communication with the Hydra network.

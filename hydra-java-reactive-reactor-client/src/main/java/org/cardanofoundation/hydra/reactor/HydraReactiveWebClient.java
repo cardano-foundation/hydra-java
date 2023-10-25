@@ -22,7 +22,7 @@ import static org.cardanofoundation.hydra.core.utils.MoreJson.serialise;
 @Slf4j
 public class HydraReactiveWebClient {
 
-    private static final Duration DEF_TIMEOUT = Duration.ofMinutes(1);
+    private static final Duration DEF_TIMEOUT = Duration.ofMinutes(5);
 
     private final HttpClient httpClient;
 
