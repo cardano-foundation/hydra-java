@@ -2,12 +2,12 @@ package org.cardanofoundation.hydra.reactor;
 
 import com.bloxbean.cardano.client.common.model.Network;
 import com.bloxbean.cardano.client.common.model.Networks;
-import com.bloxbean.cardano.client.exception.CborSerializationException;
+import com.bloxbean.cardano.client.exception.CborDeserializationException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.cardanofoundation.hydra.cardano.client.lib.submit.HttpCardanoTxSubmissionService;
-import org.cardanofoundation.hydra.cardano.client.lib.wallet.JsonClasspathWalletSupplierFactory;
+import org.cardanofoundation.hydra.cardano.client.lib.wallet.JsonURLWalletSupplierFactory;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.query.response.HeadIsClosedResponse;
 import org.cardanofoundation.hydra.core.store.InMemoryUTxOStore;
@@ -52,7 +52,7 @@ public class HydraReactiveClientIntegrationTest1 {
      * - Head reaches final state
      */
     @Test
-    public void test() throws InterruptedException, CborSerializationException, IOException {
+    public void test() throws InterruptedException, IOException, CborDeserializationException {
         var stopWatch = Stopwatch.createStarted();
 
         try (HydraDevNetwork hydraDevNetwork = new HydraDevNetwork()) {
@@ -65,15 +65,19 @@ public class HydraReactiveClientIntegrationTest1 {
             var nodeSocketPath = hydraDevNetwork.getRemoteCardanoLocalSocketPath();
             log.info("Node socket path: {}", nodeSocketPath);
 
-            var aliceWallet = new JsonClasspathWalletSupplierFactory(
-                    "devnet/credentials/alice-funds.sk",
-                    "devnet/credentials/alice-funds.vk",
+            var aliceWallet = new JsonURLWalletSupplierFactory(
+                    getClass().getClassLoader()
+                            .getResource("devnet/credentials/alice-funds.sk"),
+                    getClass().getClassLoader()
+                            .getResource("devnet/credentials/alice-funds.vk"),
                     objectMapper).loadWallet()
                     .getWallet();
 
-            var bobWallet = new JsonClasspathWalletSupplierFactory(
-                    "devnet/credentials/bob-funds.sk",
-                    "devnet/credentials/bob-funds.vk",
+            var bobWallet = new JsonURLWalletSupplierFactory(
+                    getClass().getClassLoader()
+                            .getResource("devnet/credentials/bob-funds.sk"),
+                    getClass().getClassLoader()
+                            .getResource("devnet/credentials/bob-funds.vk"),
                     objectMapper).loadWallet()
                     .getWallet();
 

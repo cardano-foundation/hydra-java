@@ -27,8 +27,8 @@ public class SimpleTransactionCreator {
     public byte[] simpleTransfer(Wallet sender,
                                  Wallet receiver,
                                  int adaAmount) throws CborSerializationException {
-        var senderAddress = sender.getAddress(network);
-        var receiverAddress = receiver.getAddress(network);
+        var senderAddress = sender.getBech32Address(network);
+        var receiverAddress = receiver.getBech32Address(network);
 
         var output = Output.builder()
                 .address(receiverAddress)
