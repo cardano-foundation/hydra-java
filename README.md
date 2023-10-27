@@ -85,4 +85,4 @@ The current version may not contain exactly what you need. If there is a missing
 
 ## Example usage (client)
 
-For examples please refer to integration tests in hydra-java-client projects.
+For examples please refer to integration tests in hydra-java-client and hydra-java-reactive-reactor-client projects.
