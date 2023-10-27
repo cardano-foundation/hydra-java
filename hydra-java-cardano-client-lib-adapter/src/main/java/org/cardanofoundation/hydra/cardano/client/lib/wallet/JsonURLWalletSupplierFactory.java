@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.net.URL;
 
 @AllArgsConstructor
-public class JsonUriWalletSupplierFactory {
+public class JsonURLWalletSupplierFactory {
 
     private final URL signingKeyPath;
     private final URL verificationKeyPath;
@@ -17,7 +17,7 @@ public class JsonUriWalletSupplierFactory {
         var signingKeyEnvelope = objectMapper.readValue(signingKeyPath, KeyTextEnvelope.class);
         var verificationKeyEnvelope = objectMapper.readValue(verificationKeyPath, KeyTextEnvelope.class);
 
-        return new KeyTextEnvelopeWalletSupplier(signingKeyEnvelope, verificationKeyEnvelope);
+        return new PlainKeyTextEnvelopeWalletSupplier(signingKeyEnvelope, verificationKeyEnvelope);
     }
 
 }

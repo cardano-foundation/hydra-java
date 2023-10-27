@@ -2,6 +2,7 @@ package org.cardanofoundation.hydra.client;
 
 import com.bloxbean.cardano.client.common.model.Network;
 import com.bloxbean.cardano.client.common.model.Networks;
+import com.bloxbean.cardano.client.exception.CborDeserializationException;
 import com.bloxbean.cardano.client.exception.CborSerializationException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
@@ -10,7 +11,7 @@ import org.cardanofoundation.hydra.cardano.client.lib.params.HydraNodeProtocolPa
 import org.cardanofoundation.hydra.cardano.client.lib.submit.HttpCardanoTxSubmissionService;
 import org.cardanofoundation.hydra.cardano.client.lib.transaction.SimpleTransactionCreator;
 import org.cardanofoundation.hydra.cardano.client.lib.utxo.SnapshotUTxOSupplier;
-import org.cardanofoundation.hydra.cardano.client.lib.wallet.JsonClasspathWalletSupplierFactory;
+import org.cardanofoundation.hydra.cardano.client.lib.wallet.JsonURLWalletSupplierFactory;
 import org.cardanofoundation.hydra.core.model.HydraState;
 import org.cardanofoundation.hydra.core.model.UTXO;
 import org.cardanofoundation.hydra.core.model.query.response.*;
@@ -54,7 +55,7 @@ public class HydraWSClientIntegrationTest3 {
      * - assert that re-connection with full history works
      */
     @Test
-    public void testHydraOpeningWithInitialSnapshotAndSendingTransaction() throws InterruptedException, CborSerializationException, IOException {
+    public void testHydraOpeningWithInitialSnapshotAndSendingTransaction() throws InterruptedException, CborSerializationException, IOException, CborDeserializationException {
         var stopWatch = Stopwatch.createStarted();
         var aliceInMemoryStore = new InMemoryUTxOStore();
         var bobInMemoryStore = new InMemoryUTxOStore();
@@ -73,15 +74,19 @@ public class HydraWSClientIntegrationTest3 {
             var protocolParamsSupplier = new HydraNodeProtocolParametersAdapter(aliceHydraWebClient.fetchProtocolParameters());
             var snapshotUTxOSupplier = new SnapshotUTxOSupplier(aliceInMemoryStore);
 
-            var aliceWallet = new JsonClasspathWalletSupplierFactory(
-                    "devnet/credentials/alice-funds.sk",
-                    "devnet/credentials/alice-funds.vk",
+            var aliceWallet = new JsonURLWalletSupplierFactory(
+                    getClass().getClassLoader()
+                            .getResource("devnet/credentials/alice-funds.sk"),
+                    getClass().getClassLoader()
+                            .getResource("devnet/credentials/alice-funds.vk"),
                     objectMapper).loadWallet()
                     .getWallet();
 
-            var bobWallet = new JsonClasspathWalletSupplierFactory(
-                    "devnet/credentials/bob-funds.sk",
-                    "devnet/credentials/bob-funds.vk",
+            var bobWallet = new JsonURLWalletSupplierFactory(
+                    getClass().getClassLoader()
+                            .getResource("devnet/credentials/bob-funds.sk"),
+                    getClass().getClassLoader()
+                            .getResource("devnet/credentials/bob-funds.vk"),
                     objectMapper).loadWallet()
                     .getWallet();
 
