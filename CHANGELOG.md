@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.10](https://github.com/cardano-foundation/hydra-java/compare/v0.0.9...v0.0.10) (2023-10-27)
+
+
+### Features
+
+* default timeout increase. ([6227985](https://github.com/cardano-foundation/hydra-java/commit/62279855c59ab84c143785b99ad0d4f8e078b82f))
+* HydraReactiveClient integration test3 ([c2f1c8c](https://github.com/cardano-foundation/hydra-java/commit/c2f1c8c0117b7dd061f226c979a14cf703f430b8))
+* HydraReactiveClient integrations ([#51](https://github.com/cardano-foundation/hydra-java/issues/51)) ([b59cc1c](https://github.com/cardano-foundation/hydra-java/commit/b59cc1ceb449e134f45a288c4b0e81c95ba1e65c))
+* refactoring for wallet api. ([#55](https://github.com/cardano-foundation/hydra-java/issues/55)) ([b283ff9](https://github.com/cardano-foundation/hydra-java/commit/b283ff95c6f0bc28f257c469dd5aa88d6d547f83))
+* refactoring to the internal wallet api. ([adc25c5](https://github.com/cardano-foundation/hydra-java/commit/adc25c5c92325017214916eacb5c5807ed60b93b))
+* updates dependencies to latest stable versions. ([bc7e291](https://github.com/cardano-foundation/hydra-java/commit/bc7e2918e3c0ea8f4a28500462aa9d1bdd320b97))
+
 ## [0.0.9](https://github.com/cardano-foundation/hydra-java/compare/v0.0.8...v0.0.9) (2023-10-19)
 
 
