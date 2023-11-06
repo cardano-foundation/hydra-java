@@ -37,6 +37,7 @@ mvn clean verify -P with-integration-tests
 | 0.10.x        | 0.0.7           | 0.5.x                          | JDK 11      |
 | 0.10.x        | 0.0.8           | 0.5.x                          | JDK 11      |
 | 0.13.x        | 0.0.9           | 0.5.x                          | JDK 17      |
+| 0.13.x        | 0.0.10          | 0.5.x                          | JDK 17      |
 
 ## Dependency
 ```xml
@@ -44,22 +45,22 @@ mvn clean verify -P with-integration-tests
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java-core</artifactId>
-        <version>0.0.9</version>
+        <version>0.0.10</version>
     </dependency>
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java-client</artifactId>
-        <version>0.0.9</version>
+        <version>0.0.10</version>
     </dependency>
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java-cardano-client-lib-adapter</artifactId>
-        <version>0.0.9</version>
+        <version>0.0.10</version>
     </dependency>
     <dependency>
         <groupId>org.cardanofoundation</groupId>
         <artifactId>hydra-java-reactive-reactor-client</artifactId>
-        <version>0.0.9</version>
+        <version>0.0.10</version>
     </dependency>
 </dependencies>
 ```
