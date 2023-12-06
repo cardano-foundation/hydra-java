@@ -39,7 +39,7 @@ public class HydraDevNetwork implements Startable {
 
     private static final String INPUT_OUTPUT_CARDANO_NODE = "inputoutput/cardano-node:8.1.2";
 
-    private static final String INPUT_OUTPUT_HYDRA_NODE = "ghcr.io/input-output-hk/hydra-node:0.13.0";
+    private static final String INPUT_OUTPUT_HYDRA_NODE = "ghcr.io/input-output-hk/hydra-node:0.14.0";
 
     protected final static ObjectMapper objectMapper = new ObjectMapper();
 
